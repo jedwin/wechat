@@ -85,19 +85,24 @@ class WechatApp(models.Model):
         根据appid获取新的access_token
         :return: access_token
         """
-        http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        request_url = f'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={self.appid}&secret={self.secret}'
-        a = http.request('GET', request_url).data.decode('utf-8')
-        b = json.loads(a)
-        if 'errcode' in b.keys():
-            errcode = 0 - int(b['errcode'])
-            default_error_string = get_error_string(errcode)
-            return False
-        else:
-            self.acc_token = b['access_token']
+        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        # request_url = f'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={self.appid}&secret={self.secret}'
+        # a = http.request('GET', request_url).data.decode('utf-8')
+        # b = json.loads(a)
+        # if 'errcode' in b.keys():
+        #     errcode = 0 - int(b['errcode'])
+        #     default_error_string = get_error_string(errcode)
+        #     return False
+        # else:
+        #     self.acc_token = b['access_token']
+        #     self.save()
+        #     print(f'access_token is refreshed: {self.acc_token}')
+        #     return True
+        acc_token_file = '/.tencentcloudbase/wx/cloudbase_access_token'
+        with open(acc_token_file, 'r') as f:
+            self.acc_token = f.readline()
             self.save()
-            print(f'access_token is refreshed: {self.acc_token}')
-            return True
+        return True
 
     def get_subscr_players(self, next_openid=None):
         """
@@ -113,8 +118,8 @@ class WechatApp(models.Model):
         succ_count = 0  # 更新用户信息成功个数
         fail_count = 0  # 更新用户信息失败个数
         while got_count < total_count:
-            # request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={self.acc_token}'
-            request_url = f'http://api.weixin.qq.com/cgi-bin/user/get'
+            request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={self.acc_token}'
+            # request_url = f'http://api.weixin.qq.com/cgi-bin/user/get'
             if next_openid:
                 request_url += f'&next_openid={next_openid}'
 
@@ -163,8 +168,8 @@ class WechatApp(models.Model):
         resource_dict = dict()
         offset = 0
         if self.refresh_access_token():
-            # request_url = f'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={self.acc_token}'
-            request_url = f'http://api.weixin.qq.com/cgi-bin/material/batchget_material'
+            request_url = f'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={self.acc_token}'
+            # request_url = f'http://api.weixin.qq.com/cgi-bin/material/batchget_material'
             try:
                 total_count = self.get_resource_count(media_type=f'{media_type}_count')
                 if total_count > 0:
@@ -242,8 +247,8 @@ class WechatApp(models.Model):
         :return:
         """
         http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        # request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
-        request_count_url = f'http://api.weixin.qq.com/cgi-bin/material/get_materialcount'
+        request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
+        # request_count_url = f'http://api.weixin.qq.com/cgi-bin/material/get_materialcount'
         # 获取图片总数
         a = http.request('GET', request_count_url).data.decode('utf-8')
         b = json.loads(a)
