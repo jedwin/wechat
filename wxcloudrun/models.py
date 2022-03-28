@@ -5,6 +5,7 @@ from wxcloudrun.user_manage import gen_passwd
 from wxcloudrun.coordinate_converter import *
 from django.db.models import F, Q, When, Count
 import urllib3
+import requests
 import certifi
 import json
 import time
@@ -118,13 +119,16 @@ class WechatApp(models.Model):
         succ_count = 0  # 更新用户信息成功个数
         fail_count = 0  # 更新用户信息失败个数
         while got_count < total_count:
-            request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={self.acc_token}'
-            # request_url = f'http://api.weixin.qq.com/cgi-bin/user/get'
+            # request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={self.acc_token}'
+            request_url = f'http://api.weixin.qq.com/cgi-bin/user/get'
             if next_openid:
-                request_url += f'&next_openid={next_openid}'
+                # request_url += f'&next_openid={next_openid}'
+                request_url += f'?next_openid={next_openid}'
 
-            a = http.request('GET', request_url).data.decode('utf-8')
-            b = json.loads(a)
+            # a = http.request('GET', request_url).data.decode('utf-8')
+            # b = json.loads(a)
+            a = requests.get(request_url)
+            b = a.json()
             errcode = b.get('errcode', 0)
             if errcode == 0:
                 total_count = int(b['total'])
