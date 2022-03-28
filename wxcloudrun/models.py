@@ -65,7 +65,7 @@ class WechatApp(models.Model):
     appid = models.CharField(max_length=100)
     secret = models.CharField(max_length=100)
     token = models.CharField(max_length=200)
-    acc_token = models.CharField(max_length=200)
+    acc_token = models.CharField(max_length=500)
     name = models.CharField(max_length=100)
     en_name = models.CharField(max_length=100, default='')
     cur_game_name = models.CharField(max_length=100, default='')
