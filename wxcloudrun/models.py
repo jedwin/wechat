@@ -172,8 +172,8 @@ class WechatApp(models.Model):
         resource_dict = dict()
         offset = 0
         if self.refresh_access_token():
-            request_url = f'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={self.acc_token}'
-            # request_url = f'http://api.weixin.qq.com/cgi-bin/material/batchget_material'
+            # request_url = f'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={self.acc_token}'
+            request_url = f'http://api.weixin.qq.com/cgi-bin/material/batchget_material'
             try:
                 total_count = self.get_resource_count(media_type=f'{media_type}_count')
                 if total_count > 0:
@@ -189,9 +189,11 @@ class WechatApp(models.Model):
                             "offset":{offset},
                             "count":20
                         }}'''
-                        a = http.request('POST', request_url, body=form_data, encode_multipart=False).data.decode(
-                            'utf-8')
-                        b = json.loads(a)
+                        # a = http.request('POST', request_url, body=form_data, encode_multipart=False).data.decode(
+                        #     'utf-8')
+                        # b = json.loads(a)
+                        a = request.post(request_url, data=form_data)
+                        b = a.json()
                         errcode = int(b.get('errcode', 0))
                         if errcode == 0:
 
@@ -259,9 +261,12 @@ class WechatApp(models.Model):
         errcode = b.get('errcode', 0)
         if errcode in [errcode_access_token_expired, errcode_access_token_missing]:
             if self.refresh_access_token():
-                request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
-                a = http.request('GET', request_count_url).data.decode('utf-8')
-                b = json.loads(a)
+                # request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
+                request_count_url = f'http://api.weixin.qq.com/cgi-bin/material/get_materialcount'
+                # a = http.request('GET', request_count_url).data.decode('utf-8')
+                # b = json.loads(a)
+                a = request.get(request_count_url)
+                b = a.json()
                 errcode = b.get('errcode', 0)
                 # 由后面继续对error code进行判断
             else:
