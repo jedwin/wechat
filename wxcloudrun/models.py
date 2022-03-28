@@ -184,14 +184,15 @@ class WechatApp(models.Model):
                     # 获得图片总数后，进行全量抓取
                     media_id_in_server_list = list()
                     while offset <= total_count:
-                        form_data = f'''{{
-                            "type":"{media_type}",
-                            "offset":{offset},
-                            "count":20
-                        }}'''
+                        # form_data = f'''{{
+                        #     "type":"{media_type}",
+                        #     "offset":{offset},
+                        #     "count":20
+                        # }}'''
                         # a = http.request('POST', request_url, body=form_data, encode_multipart=False).data.decode(
                         #     'utf-8')
                         # b = json.loads(a)
+                        form_data = {'type': media_type, 'offset': offset, 'count': 20}
                         a = request.post(request_url, data=form_data)
                         b = a.json()
                         errcode = int(b.get('errcode', 0))
@@ -815,11 +816,14 @@ class WechatPlayer(models.Model):
         :return: 返回用户信息
         """
 
-        http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        request_url = f'https://api.weixin.qq.com/cgi-bin/user/info?access_token={self.app.acc_token}'
-        request_url += f'&openid={self.open_id}&lang=zh_CN'
-        a = http.request('GET', request_url).data.decode('utf-8')
-        b = json.loads(a)
+        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        # request_url = f'https://api.weixin.qq.com/cgi-bin/user/info?access_token={self.app.acc_token}'
+        # request_url += f'&openid={self.open_id}&lang=zh_CN'
+        request_url = f'https://api.weixin.qq.com/cgi-bin/user/info?openid={self.open_id}&lang=zh_CN'
+        # a = http.request('GET', request_url).data.decode('utf-8')
+        # b = json.loads(a)
+        a = request.get(request_url)
+        b = a.json()
         errcode = b.get('errcode', 0)
         if errcode == 0:
             self.nickname = b['nickname']
