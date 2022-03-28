@@ -193,7 +193,7 @@ class WechatApp(models.Model):
                         #     'utf-8')
                         # b = json.loads(a)
                         form_data = {'type': media_type, 'offset': offset, 'count': 20}
-                        a = request.post(request_url, data=form_data)
+                        a = requests.post(request_url, data=form_data)
                         b = a.json()
                         errcode = int(b.get('errcode', 0))
                         if errcode == 0:
@@ -254,11 +254,13 @@ class WechatApp(models.Model):
         :return:
         """
         http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
-        # request_count_url = f'http://api.weixin.qq.com/cgi-bin/material/get_materialcount'
+        # request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
+        request_count_url = f'http://api.weixin.qq.com/cgi-bin/material/get_materialcount'
         # 获取图片总数
-        a = http.request('GET', request_count_url).data.decode('utf-8')
-        b = json.loads(a)
+        # a = http.request('GET', request_count_url).data.decode('utf-8')
+        # b = json.loads(a)
+        a = requests.get(request_count_url)
+        b = a.json()
         errcode = b.get('errcode', 0)
         if errcode in [errcode_access_token_expired, errcode_access_token_missing]:
             if self.refresh_access_token():
@@ -266,7 +268,7 @@ class WechatApp(models.Model):
                 request_count_url = f'http://api.weixin.qq.com/cgi-bin/material/get_materialcount'
                 # a = http.request('GET', request_count_url).data.decode('utf-8')
                 # b = json.loads(a)
-                a = request.get(request_count_url)
+                a = requests.get(request_count_url)
                 b = a.json()
                 errcode = b.get('errcode', 0)
                 # 由后面继续对error code进行判断
@@ -822,7 +824,7 @@ class WechatPlayer(models.Model):
         request_url = f'https://api.weixin.qq.com/cgi-bin/user/info?openid={self.open_id}&lang=zh_CN'
         # a = http.request('GET', request_url).data.decode('utf-8')
         # b = json.loads(a)
-        a = request.get(request_url)
+        a = requests.get(request_url)
         b = a.json()
         errcode = b.get('errcode', 0)
         if errcode == 0:
