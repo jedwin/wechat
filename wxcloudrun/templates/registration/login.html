@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+ <!-- Bootstrap core CSS -->
+  <link href="{% static '/lib/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+  <!--external css-->
+  <link href="{% static '/lib/font-awesome/css/font-awesome.css' %}" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="{% static '/lib/gritter/css/jquery.gritter.css' %}" />
+  <!-- Custom styles for this template -->
+  <link href="{% static '/css/style.css' %}" rel="stylesheet">
+  <link href="{% static '/css/style-responsive.css' %}" rel="stylesheet">
+  <title>Log In</title>
+  <!-- =======================================================
+    Template Name: Dashio
+    Template URL: https://templatemag.com/dashio-bootstrap-admin-template/
+    Author: TemplateMag.com
+    License: https://templatemag.com/license/
+  ======================================================= -->
+</head>
+<body>
+    <div id="login-page">
+        <div class="container">
+            <form method="post" class="form-login" >
+                <h2 class="form-login-heading">欢迎登录微信游戏管理平台</h2>
+
+                {% csrf_token %}
+                <div class="login-wrap">
+                    <input type="text" class="form-control" name="username" autofocus="" autocapitalize="none"
+                           autocomplete="off" maxlength="150" required="" id="id_username"
+                           class="form-control" placeholder="用户名">
+                    <br>
+                    <input type="password" class="form-control" placeholder="密码" name="password"
+                           autocomplete="off" required="" id="id_password">
+                    <hr>
+                    <div class="login-social-link centered">
+                        <p>联系开发者：<a href="/cdn-cgi/l/email-protection#730b1a1609145d141733101b1a1d1207161f16101c1e5d101d"><span class="__cf_email__" data-cfemail="8cf4e5e9f6e4f9e3ebede2ebccebe1ede5e0a2efe3e1">[email&#160;protected]</span></a> </p>
+                    </div>
+                </div>
+                <button class="btn btn-theme btn-block" type="submit"><i class="fa fa-lock"></i>登录</button>
+            </form>
+
+        </div>
+    </div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>

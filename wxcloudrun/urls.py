@@ -14,13 +14,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from wxcloudrun import views
-from django.conf.urls import url
+from django.contrib import admin
+from django.urls import path, include
+from wxcloudrun import views2 as mpv2
 
 urlpatterns = (
-    # 计数器接口
-    url(r'^^api/count(/)?$', views.counter),
-
-    # 获取主页
-    url(r'(/)?$', views.index),
+    path('wechat/miaozan/', mpv2.check_signature),      # 淼赞文化专用
+    path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')),
 )
