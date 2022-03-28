@@ -33,7 +33,7 @@ RUN pip config set global.index-url http://mirrors.cloud.tencent.com/pypi/simple
 EXPOSE 80
 
 # 对模型进行migrate
-RUN python3 manage.py makemigrations
-RUN python3 manage.py migrate
+# RUN python3 manage.py makemigrations
+# RUN python3 manage.py migrate
 # 设定启动命令
 CMD ["python3", "manage.py", "runserver", "0.0.0.0:80"]
