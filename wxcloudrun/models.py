@@ -265,20 +265,6 @@ class WechatApp(models.Model):
             f.writelines(b)
 
         errcode = b.get('errcode', 0)
-        if errcode in [errcode_access_token_expired, errcode_access_token_missing]:
-            if self.refresh_access_token():
-                # request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
-                request_count_url = f'http://api.weixin.qq.com/cgi-bin/material/get_materialcount'
-                # a = http.request('GET', request_count_url).data.decode('utf-8')
-                # b = json.loads(a)
-                a = requests.get(request_count_url)
-                b = a.json()
-                errcode = b.get('errcode', 0)
-                # 由后面继续对error code进行判断
-            else:
-                print(f'Can not refresh access_token: {b}')
-                return errcode_access_token_refresh_failed
-
         if errcode > 0:
             # print(b)
             # returning the negative value for error indicator
@@ -1109,9 +1095,9 @@ class WechatMenu(models.Model):
     """
     app = models.ForeignKey(WechatApp, on_delete=models.CASCADE, null=True, blank=True)
     menu_string = models.JSONField(null=True, blank=True)
-    remark = models.CharField(max_length=100, default='')
+    remark = models.CharField(max_length=100, default='', blank=True)
     MatchRule = models.BooleanField(default=False)
-    match_tag_id = models.CharField(max_length=100, default='')
+    match_tag_id = models.CharField(max_length=100, default='', blank=True)
     
     def __str__(self):
         return self.remark
@@ -1142,8 +1128,9 @@ class WechatMenu(models.Model):
 
     def submit_menu(self):
         acc_token = self.app.acc_token
-        http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        request_url = f'https://api.weixin.qq.com/cgi-bin/menu/create?access_token={acc_token}'
+        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        # request_url = f'https://api.weixin.qq.com/cgi-bin/menu/create?access_token={acc_token}'
+        request_url = f'http://api.weixin.qq.com/cgi-bin/menu/create'
         try:
             pass
             # my_menu = json.loads(self.menu_string, encoding='utf-8')
@@ -1152,9 +1139,11 @@ class WechatMenu(models.Model):
             return False, 'menu_string is not valid'
 
         else:
-            a = http.request('POST', request_url, body=json.dumps(self.menu_string, ensure_ascii=False).encode('utf-8'),
-                             encode_multipart=False).data.decode('utf-8')
-            b = json.loads(a)
+            # a = http.request('POST', request_url, body=json.dumps(self.menu_string, ensure_ascii=False).encode('utf-8'),
+            #                  encode_multipart=False).data.decode('utf-8')
+            # b = json.loads(a)
+            a = requests.post(request_url, data=self.menu_string)
+            b = a.json()
             errcode = b.get('errcode', 0)
             errmsg = b.get('errmsg', 'OK')
             if errcode == 0:
