@@ -261,6 +261,9 @@ class WechatApp(models.Model):
         # b = json.loads(a)
         a = requests.get(request_count_url)
         b = a.json()
+        with open('temp.log', 'w') as f:
+            f.writelines(b)
+
         errcode = b.get('errcode', 0)
         if errcode in [errcode_access_token_expired, errcode_access_token_missing]:
             if self.refresh_access_token():
@@ -277,7 +280,7 @@ class WechatApp(models.Model):
                 return errcode_access_token_refresh_failed
 
         if errcode > 0:
-            print(b)
+            # print(b)
             # returning the negative value for error indicator
             return 0 - errcode
         else:
@@ -821,7 +824,7 @@ class WechatPlayer(models.Model):
         # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
         # request_url = f'https://api.weixin.qq.com/cgi-bin/user/info?access_token={self.app.acc_token}'
         # request_url += f'&openid={self.open_id}&lang=zh_CN'
-        request_url = f'https://api.weixin.qq.com/cgi-bin/user/info?openid={self.open_id}&lang=zh_CN'
+        request_url = f'http://api.weixin.qq.com/cgi-bin/user/info?openid={self.open_id}&lang=zh_CN'
         # a = http.request('GET', request_url).data.decode('utf-8')
         # b = json.loads(a)
         a = requests.get(request_url)
