@@ -5,10 +5,6 @@ import json
 from random import sample
 from wxcloudrun.models import *
 
-user_data_keys_count = 5  # 用于检测用户数据是否正常
-allowed_usesr_list_file = f'data/user_list.csv'
-open_id_file = f'data/user_data/user_open_id.json'
-
 
 def load_auto_reply_settings(auto_reply_for_non_player_file):
     """
