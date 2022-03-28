@@ -1142,7 +1142,7 @@ class WechatMenu(models.Model):
             # a = http.request('POST', request_url, body=json.dumps(self.menu_string, ensure_ascii=False).encode('utf-8'),
             #                  encode_multipart=False).data.decode('utf-8')
             # b = json.loads(a)
-            a = requests.post(request_url, data=json.dumps(self.menu_string, ensure_ascii=False))
+            a = requests.post(request_url, data=json.dumps(self.menu_string, ensure_ascii=False).encode('utf-8'))
             b = a.json()
             errcode = b.get('errcode', 0)
             errmsg = b.get('errmsg', 'OK')
