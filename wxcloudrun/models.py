@@ -34,6 +34,7 @@ keyword_change_process = '改变进度'
 error_reply_default = '你输入的答案不对，请再想想'
 errcode_file = 'errcode.csv'
 default_error_string = 'Unknow error'
+ACC_TOKEN_FILE = '/.tencentcloudbase/wx/cloudbase_access_token'
 
 
 def get_error_string(in_code, in_file=errcode_file, default_string=default_error_string):
@@ -112,8 +113,10 @@ class WechatApp(models.Model):
         got_count = 0  # 已获取的用户数量
         succ_count = 0  # 更新用户信息成功个数
         fail_count = 0  # 更新用户信息失败个数
+        with open(ACC_TOKEN_FILE, 'r') as f:
+            acc_token = f.readline()
         while got_count < total_count:
-            request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={self.acc_token}'
+            request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={acc_token}'
             if next_openid:
                 request_url += f'&next_openid={next_openid}'
 
@@ -158,11 +161,12 @@ class WechatApp(models.Model):
         :return: resource_dict
         """
         http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-
+        with open(ACC_TOKEN_FILE, 'r') as f:
+            acc_token = f.readline()
         resource_dict = dict()
         offset = 0
         if self.refresh_access_token():
-            request_url = f'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={self.acc_token}'
+            request_url = f'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={acc_token}'
             try:
                 total_count = self.get_resource_count(media_type=f'{media_type}_count')
                 if total_count > 0:
