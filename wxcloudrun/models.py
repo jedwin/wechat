@@ -167,7 +167,7 @@ class WechatApp(models.Model):
         :media_type:
         :return: resource_dict
         """
-        http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
 
         resource_dict = dict()
         offset = 0
@@ -176,7 +176,7 @@ class WechatApp(models.Model):
             request_url = f'http://api.weixin.qq.com/cgi-bin/material/batchget_material'
             try:
                 total_count = self.get_resource_count(media_type=f'{media_type}_count')
-                if total_count > 0:
+                if total_count >= 0:
                     # 从数据库中取出现有素材
                     images_in_db = WechatMedia.objects.filter(app=self, media_type=media_type)
                     media_id_in_db_list = [x.media_id for x in images_in_db]
@@ -262,7 +262,7 @@ class WechatApp(models.Model):
         a = requests.get(request_count_url)
         b = a.json()
         with open('temp.log', 'w') as f:
-            f.writelines(b)
+            f.writelines(json.dumps(b, ensure_ascii=False))
 
         errcode = b.get('errcode', 0)
         if errcode > 0:
