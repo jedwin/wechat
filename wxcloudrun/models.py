@@ -194,10 +194,9 @@ class WechatApp(models.Model):
                         form_data = {'type': media_type, 'offset': offset, 'count': 20}
                         a = requests.post(request_url, data=json.dumps(form_data, ensure_ascii=False).encode('utf-8'))
                         b = a.json()
-                        # print(f'b={b}')
-                        errcode = int(b.get('errcode', 0))
+                        print(f'a.encoding={a.encoding}')
+                        errcode = b.get('errcode', 0)
                         if errcode == 0:
-
                             items = b['item']
                             item_count = b['item_count']
                             if item_count == 0:
@@ -208,7 +207,7 @@ class WechatApp(models.Model):
                             for item_dict in items:
                                 # print(item_dict)
                                 media_id = item_dict['media_id']
-                                media_name = item_dict['name'].decode('utf-8')
+                                media_name = item_dict['name']
                                 media_id_in_server_list.append(media_id)
                                 # item_url = item_dict['url']
                                 if media_id in media_id_in_db_list:
@@ -217,11 +216,8 @@ class WechatApp(models.Model):
                                                                             media_type=media_type)
                                     old_medias.delete()
                                 my_media = WechatMedia(app=self, media_id=media_id, media_type=media_type,
-                                                       name=media_name, info=json.dumps(item_dict, ensure_ascii=False))
+                                                       name=media_name, info=item_dict)
                                 my_media.save()
-                                # elif media_type == 'video':
-                                #     item_url = item_dict['cover_url']
-
                         else:
                             errcode = 0 - errcode
                             error_string = get_error_string(errcode)

@@ -191,7 +191,7 @@ class AppAdmin(admin.ModelAdmin):
                 count
             ), messages.SUCCESS)
         elif count == errcode_unkown_error:
-            self.message_user(request, f'success to get media count, failed to get them', messages.WARNING)
+            self.message_user(request, f'发生未知错误', messages.WARNING)
         elif count == errcode_access_token_refresh_failed:
             self.message_user(request, f'failed to refresh token', messages.WARNING)
         elif count == errcode_media_type_incorrect:
@@ -212,7 +212,7 @@ class AppAdmin(admin.ModelAdmin):
                 count
             ), messages.SUCCESS)
         elif count == errcode_unkown_error:
-            self.message_user(request, f'success to get media count, failed to get them', messages.WARNING)
+            self.message_user(request, f'发生未知错误', messages.WARNING)
         elif count == errcode_access_token_refresh_failed:
             self.message_user(request, f'failed to refresh access token', messages.WARNING)
         elif count == errcode_media_type_incorrect:
