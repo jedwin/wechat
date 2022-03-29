@@ -473,13 +473,13 @@ def handle_event_msg(request, app_en_name):
             return None
     elif recMsg.Event in ['LOCATION']:
         # 用户上报了定位信息，无需回复，因此返回None
-        text_content = f'''经度={recMsg.Longitude},纬度={recMsg.Latitude},精度={recMsg.Precision}'''
+        # text_content = f'''经度={recMsg.Longitude},纬度={recMsg.Latitude},精度={recMsg.Precision}'''
         try:
             my_player.cur_longitude = recMsg.Longitude
             my_player.cur_latitude = recMsg.Latitude
             my_player.cur_Precision = recMsg.Precision
-            _, my_location = my_player.get_location_address()
-            my_player.cur_location = my_location
+            # _, my_location = my_player.get_location_address()
+            # my_player.cur_location = my_location
             my_player.save()
         except ObjectDoesNotExist:
             pass
@@ -503,7 +503,7 @@ def get_user_info_with_code(request):
             request_url = f'http://api.weixin.qq.com/sns/oauth2/access_token?appid={my_app.appid}'
             request_url += f'&secret={my_app.secret}&code={code}&grant_type=authorization_code'
             # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-            a = http.request('GET', request_url).data.decode('utf-8')
+            # a = http.request('GET', request_url).data.decode('utf-8')
             a = requests.get(request_url)
             a.encoding = 'utf-8'
             b = a.json()
@@ -519,7 +519,7 @@ def get_user_info_with_code(request):
                 scope = b.get('scope', '')
                 request_url = 'http://api.weixin.qq.com/sns/userinfo'
                 request_url += f'?access_token={temp_acc_token}&openid={openid}&lang=zh_CN'
-                c = http.request('GET', request_url).data.decode('utf-8')
+                # c = http.request('GET', request_url).data.decode('utf-8')
                 c = requests.get(request_url)
                 c.encoding = 'utf-8'
                 d = c.json()
