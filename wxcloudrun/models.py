@@ -194,7 +194,7 @@ class WechatApp(models.Model):
                         form_data = {'type': media_type, 'offset': offset, 'count': 20}
                         a = requests.post(request_url, data=json.dumps(form_data, ensure_ascii=False).encode('utf-8'))
                         b = a.json()
-                        print(f'b={b}')
+                        # print(f'b={b}')
                         errcode = int(b.get('errcode', 0))
                         if errcode == 0:
 
@@ -208,7 +208,7 @@ class WechatApp(models.Model):
                             for item_dict in items:
                                 # print(item_dict)
                                 media_id = item_dict['media_id']
-                                media_name = item_dict['name']
+                                media_name = item_dict['name'].decode('utf-8')
                                 media_id_in_server_list.append(media_id)
                                 # item_url = item_dict['url']
                                 if media_id in media_id_in_db_list:
