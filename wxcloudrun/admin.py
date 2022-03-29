@@ -6,7 +6,6 @@ import os
 
 errcode_file = 'errcode.csv'
 
-
 # Register your models here.
 class MenuButtonInline(admin.TabularInline):
     model = MenuButton
