@@ -764,7 +764,7 @@ class WechatPlayer(models.Model):
     # {'game_list': [WechatGameData]}
 
     def __str__(self):
-        return self.name
+        return self.nickname
 
     def game_data_count(self):
         return len(WechatGameData.objects.filter(player=self))
