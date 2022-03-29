@@ -36,7 +36,6 @@ error_reply_default = '你输入的答案不对，请再想想'
 errcode_file = 'errcode.csv'
 default_error_string = 'Unknow error'
 
-
 def get_error_string(in_code, in_file=errcode_file, default_string=default_error_string):
     """
     从腾讯的errcode文档中，找到对应的错误解释
