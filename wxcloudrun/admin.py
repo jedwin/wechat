@@ -157,7 +157,7 @@ class WechatGameAdmin(admin.ModelAdmin):
 class AppAdmin(admin.ModelAdmin):
     list_display = ('name', 'appid', 'image_count', 'video_count', 'subscriber_count')
     inlines = [GameInline, PlayerInline, ]
-    actions = ['get_subscriber_info', 'update_image', 'update_video']
+    actions = ['get_subscriber_info', 'update_image', 'update_video', 'gen_new_passwd_obj']
 
     @admin.action(description='更新关注用户信息')
     def get_subscriber_info(self, request, queryset):
@@ -222,6 +222,17 @@ class AppAdmin(admin.ModelAdmin):
         else:
             err_string = get_error_string(count)
             self.message_user(request, f'{err_string}：{count}', messages.WARNING)
+
+    @admin.action(description='生成20个随机新密码')
+    def gen_new_passwd_obj(self, request, queryset):
+        for obj in queryset:
+            result = obj.gen_passwd(how_many=20)
+            if result:
+                # 如果成功，return_string会返回拉取到的关注用户数，以及更新成功和失败的用户数
+                self.message_user(request, f'已生成新密码', messages.SUCCESS)
+            else:
+                # 生成失败，需要看docker的日志
+                self.message_user(request, f'生成失败，请查看docker的日志', messages.WARNING)
 
 
 class ErrorAutoReplyAdmin(admin.ModelAdmin):
