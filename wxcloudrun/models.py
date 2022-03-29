@@ -805,15 +805,14 @@ class WechatPlayer(models.Model):
         :return: 返回用户信息
         """
 
-        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        # request_url = f'https://api.weixin.qq.com/cgi-bin/user/info?access_token={self.app.acc_token}'
-        # request_url += f'&openid={self.open_id}&lang=zh_CN'
-        request_url = f'http://api.weixin.qq.com/cgi-bin/user/info?openid={self.open_id}&lang=zh_CN'
+        # request_url = f'http://api.weixin.qq.com/cgi-bin/user/info?openid={self.open_id}&lang=zh_CN'
+        request_url = f'http://api.weixin.qq.com/sns/userinfo?openid={openid}&lang=zh_CN'
         # a = http.request('GET', request_url).data.decode('utf-8')
         # b = json.loads(a)
         a = requests.get(request_url)
         a.encoding = 'utf-8'
         b = a.json()
+        print(b)
         errcode = b.get('errcode', 0)
         if errcode == 0:
             self.nickname = b['nickname']
