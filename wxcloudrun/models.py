@@ -922,7 +922,7 @@ class WechatGameData(models.Model):
 class WechatGamePasswd(models.Model):
     app = models.ForeignKey(WechatApp, default=None, on_delete=models.CASCADE)
     password = models.CharField(max_length=50, primary_key=True)
-    assigned_player = models.ForeignKey(WechatPlayer, default=None, on_delete=models.CASCADE, blank=True)
+    assigned_player = models.ForeignKey(WechatPlayer, default=None, on_delete=models.CASCADE, blank=True, null=True)
     is_assigned = models.BooleanField(default=False, verbose_name='是否已分配')
 
     def __str__(self):
