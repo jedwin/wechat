@@ -193,6 +193,8 @@ class WechatApp(models.Model):
                         # b = json.loads(a)
                         form_data = {'type': media_type, 'offset': offset, 'count': 20}
                         a = requests.post(request_url, data=json.dumps(form_data, ensure_ascii=False).encode('utf-8'))
+                        print(f'a.encoding={a.encoding}')
+                        a.encoding = 'utf-8'
                         b = a.json()
                         print(f'a.encoding={a.encoding}')
                         errcode = b.get('errcode', 0)
@@ -297,21 +299,21 @@ class WechatMedia(models.Model):
     media_type = models.CharField(max_length=20, null=True)
 
     def __str__(self):
-        my_info = json.loads(self.info)
-        return my_info['name']
+        my_info = self.info
+        return self.name
 
     def url(self):
-        my_info = json.loads(self.info)
-        return my_info['url']
+        my_info = self.info
+        return my_info.get('url', '')
 
     def update_time(self):
-        my_info = json.loads(self.info)
+        my_info = self.info
         time_str = time.localtime(my_info['update_time'])
         return time.strftime("%Y-%m-%d %H:%M:%S", time_str)
 
     def tags(self):
-        my_info = json.loads(self.info)
-        return my_info['tags']
+        my_info = self.info
+        return my_info.get('tags', '')
 
     def delete_from_wechat(self):
         """
