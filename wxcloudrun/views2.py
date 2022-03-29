@@ -558,16 +558,11 @@ def show_profile(request):
     """
     template = 'wechat_main.html'
     app_en_name = request.GET.get('app_en_name', '')
+    cur_game_name = request.GET.get('cur_game_name', '')
     openid = request.GET.get('openid', '')
+    cmd = request.GET.get('cmd', '')
     errmsg = request.GET.get('errmsg', '')
-    chk1 = request.GET.get('checkbox1', '')
-    chk2 = request.GET.get('checkbox2', '')
-    radio1 = request.GET.get('radio1', '')
-    radio2 = request.GET.get('radio2', '')
     ret_dict = dict()
-    act_list = [{'name': '走路'}, {'name': '跑步'}, {'name': '骑车'}, {'name': '游泳'}]
-    char_list = [{'name': '皮特'}, {'name': '玛丽'}, {'name': '小瑛'}, {'name': '杨过'}]
-
     if len(app_en_name) > 0:
         try:
             my_app = WechatApp.objects.get(en_name=app_en_name)
@@ -575,8 +570,6 @@ def show_profile(request):
             ret_dict['openid'] = openid
         except ObjectDoesNotExist:
             ret_dict['title'] = 'app_en_name is not valid'
-            ret_dict['act_list'] = act_list
-            ret_dict['char_list'] = char_list
             ret_dict['app_en_name'] = app_en_name
             ret_dict['openid'] = openid
         if len(openid) > 0:
@@ -584,24 +577,22 @@ def show_profile(request):
                 # 成功
                 try:
                     my_user = WechatPlayer.objects.get(app=my_app, open_id=openid)
+                    if cur_game_name == '':
+                        cur_game_name = my_user.cur_game_name
+                    my_game = ExploreGame.objects.get(app=my_app, name=cur_game_name)
+                    game_quests = ExploreGameQuest.objects.filter(game=my_game)
+                    ret_dict['opening'] = my_game.opening
+                    ret_dict['quest_triggers'] = [x.quest_trigger for x in game_quests]
                     ret_dict['app_en_name'] = app_en_name
-                    ret_dict['longitude'] = radio1
-                    ret_dict['latitude'] = radio2
-                    ret_dict['openid'] = openid
-                    ret_dict['user_name'] = my_user.nickname
-                    ret_dict['act_list'] = act_list
-                    ret_dict['char_list'] = char_list
+                    ret_dict['cur_game_name'] = cur_game_name
+                    ret_dict['head_image'] = str(my_user.head_image)
+                    ret_dict['nickname'] = my_user.nickname
+                    ret_dict['title'] = f'欢迎参加{cur_game_name}'
                 except ObjectDoesNotExist:
                     ret_dict['title'] = 'player not found'
-                    ret_dict['app_en_name'] = app_en_name
-                    # ret_dict['act_list'] = act_list
-                    # ret_dict['char_list'] = char_list
-                    ret_dict['openid'] = openid
+
             else:
                 ret_dict['app_en_name'] = app_en_name
-                ret_dict['act_list'] = act_list
-                ret_dict['char_list'] = char_list
-                ret_dict['openid'] = openid
                 ret_dict['title'] = errmsg
 
         else:  # openid is blank
@@ -611,18 +602,10 @@ def show_profile(request):
                 ret_dict['openid'] = openid
             else:
                 ret_dict['title'] = 'openid is blank'
-                ret_dict['longitude'] = radio1
-                ret_dict['latitude'] = radio2
-                ret_dict['act_list'] = act_list
-                ret_dict['char_list'] = char_list
                 ret_dict['app_en_name'] = app_en_name
-    else:  # app_en_name is blank
+    else: # app_en_name is blank
         ret_dict['title'] = 'app_en_name is blank'
         ret_dict['app_en_name'] = app_en_name
-        # ret_dict['longitude'] = f'{chk1}, {chk2}'
-        # ret_dict['latitude'] = f'{radio1} 和 {radio2}'
-        ret_dict['act_list'] = act_list
-        ret_dict['char_list'] = char_list
         ret_dict['openid'] = openid
 
     return render(request, template, ret_dict)
