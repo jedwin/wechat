@@ -227,9 +227,9 @@ class AppAdmin(admin.ModelAdmin):
     def gen_new_passwd_obj(self, request, queryset):
         for obj in queryset:
             result = obj.gen_passwd(how_many=20)
-            if result:
+            if result > 0:
                 # 如果成功，return_string会返回拉取到的关注用户数，以及更新成功和失败的用户数
-                self.message_user(request, f'已生成新密码', messages.SUCCESS)
+                self.message_user(request, f'已生成{result}个新密码', messages.SUCCESS)
             else:
                 # 生成失败，需要看docker的日志
                 self.message_user(request, f'生成失败，请查看docker的日志', messages.WARNING)
@@ -260,6 +260,10 @@ class ExploreGameQuestAdmin(admin.ModelAdmin):
     list_filter = ['game']
 
 
+class PasswdAdmin(admin.ModelAdmin):
+    list_display = ['password', 'app', 'assigned_player', 'is_assigned']
+    list_filter = ['app', 'is_assigned']
+
 admin.site.register(WechatMenu, MenuAdmin)
 admin.site.register(MenuButton, ButtonAdmin)
 admin.site.register(WechatApp, AppAdmin)
@@ -273,4 +277,4 @@ admin.site.register(AppKeyword, AppKeywordAdmin)
 admin.site.register(QqMap)
 admin.site.register(ExploreGame, ExploreGameAdmin)
 admin.site.register(ExploreGameQuest, ExploreGameQuestAdmin)
-admin.site.register(WechatGamePasswd)
+admin.site.register(WechatGamePasswd, PasswdAdmin)
