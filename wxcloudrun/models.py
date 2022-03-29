@@ -278,13 +278,16 @@ class WechatApp(models.Model):
         if how_many > 100:
             # 因为托管的mysql按业务次数收费，所以每次不能生成太多
             how_many = 100
+        count = 0
         for i in range(how_many):
             try:
                 new_passwd_str = gen_passwd(leng=5, use_number=True)
                 new_passwd = WechatGamePasswd(app=self, password=new_passwd_str)
                 new_passwd.save()
+                count += 1
             except:
-                return False
+                # 如果新建失败，例如密码重复了，就什么都不做，只是不新增count
+                pass
         return how_many
 
 class WechatMedia(models.Model):
