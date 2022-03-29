@@ -90,7 +90,7 @@ class ExploreGameQuestInline(admin.TabularInline):
 
 
 class WechatPlayerAdmin(admin.ModelAdmin):
-    list_display = ('open_id', 'name', 'app', 'cur_game_name', 'is_audit')
+    list_display = ('open_id', 'nickname', 'app', 'cur_game_name', 'is_audit')
     list_editable = ['cur_game_name', 'is_audit']
     list_filter = ['app']
     # inlines = [GameDataInline,]
