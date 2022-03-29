@@ -748,7 +748,7 @@ class WechatPlayer(models.Model):
     tagid_list = models.CharField(max_length=200, default='', blank=True)
     user_info = models.JSONField(null=True, blank=True)
     subscribe = models.IntegerField(default=0, blank=True)
-    head_image = models.URLField(max_length=100, default='',  blank=True)
+    head_image = models.URLField(max_length=500, default='',  blank=True)
     cur_location = models.CharField(max_length=200, default='', blank=True)
     cur_longitude = models.FloatField(null=True, blank=True)
     cur_latitude = models.FloatField(null=True, blank=True)
