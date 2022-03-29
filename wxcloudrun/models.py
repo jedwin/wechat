@@ -195,6 +195,7 @@ class WechatApp(models.Model):
                         form_data = {'type': media_type, 'offset': offset, 'count': 20}
                         a = requests.post(request_url, data=form_data)
                         b = a.json()
+                        print(f'b={b}')
                         errcode = int(b.get('errcode', 0))
                         if errcode == 0:
 
@@ -261,9 +262,7 @@ class WechatApp(models.Model):
         # b = json.loads(a)
         a = requests.get(request_count_url)
         b = a.json()
-        with open('temp.log', 'w') as f:
-            f.writelines(json.dumps(b, ensure_ascii=False))
-
+        print(f'b={b}')
         errcode = b.get('errcode', 0)
         if errcode > 0:
             # print(b)
