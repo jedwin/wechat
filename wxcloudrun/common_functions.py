@@ -4,7 +4,7 @@ import os
 import json
 from random import sample
 from wxcloudrun.models import *
-
+from django.core.exceptions import *
 
 def load_auto_reply_settings(auto_reply_for_non_player_file):
     """
@@ -170,31 +170,30 @@ def get_summary(user_data_dict, max_length=500):
         return return_string[:max_length]
 
 
-def auth_user(password, user_id=''):
+def auth_user(app, password, user_id=''):
     """
     根据密码对用户进行鉴权
-    :param user_id:
-    :param password:
-    :return: 鉴权通过则返回用户id，不通过则返回False
+    :param add:         进行鉴权的app
+    :param user_id:     要鉴权的open id
+    :param password:    提供的密码字符串
+    :return: 鉴权通过则返回True，不通过则返回False
     """
     if len(password) > 0:
-        user_passwd_dict = load_user_passwd_dict()
-        if user_passwd_dict:
-            if len(user_id) > 0:
-                if user_id in user_passwd_dict.keys():
-                    if password == user_passwd_dict[user_id]:
-                        return user_id
-                    else:
-                        return False  # 用户id和密码不匹配
-                else:
-                    return False  # 没有这个用户id
-            else:
-                for user, passwd in user_passwd_dict.items():
-                    if password == passwd:
-                        return user
-                return False  # 没有提供用户id的情况下，遍历后也没有找到有这个密码
+        available_passwd = WechatGamePasswd.objects.filter(app=app, password=password, is_assigned=False)
+        if len(available_passwd) > 0:
+            # password is valid
+            my_passwd = available_passwd[0]
+            try:
+                my_player = WechatPlayer.objects.get(app=app, open_id=user_id)
+            except ObjectDoesNotExist:
+                # 没有找到user_id对应的用户
+                return False
+            my_passwd.assigned_player = my_player
+            my_passwd.is_assigned = True
+            my_passwd.save()
+            return True
         else:
-            return False  # 没有找到密码文件
+            return False  # 没找到对应的密码，也就是密码不对
     else:
         return False  # 没有提供密码
 

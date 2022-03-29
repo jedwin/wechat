@@ -13,7 +13,7 @@ import os
 import csv
 import re
 from wxcloudrun import reply
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+# from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
 
 errcode_access_token_expired = 42001
@@ -82,22 +82,9 @@ class WechatApp(models.Model):
 
     def refresh_access_token(self):
         """
-        根据appid获取新的access_token
+        从docker本地读取access_token
         :return: access_token
         """
-        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        # request_url = f'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={self.appid}&secret={self.secret}'
-        # a = http.request('GET', request_url).data.decode('utf-8')
-        # b = json.loads(a)
-        # if 'errcode' in b.keys():
-        #     errcode = 0 - int(b['errcode'])
-        #     default_error_string = get_error_string(errcode)
-        #     return False
-        # else:
-        #     self.acc_token = b['access_token']
-        #     self.save()
-        #     print(f'access_token is refreshed: {self.acc_token}')
-        #     return True
         acc_token_file = '/.tencentcloudbase/wx/cloudbase_access_token'
         with open(acc_token_file, 'r') as f:
             self.acc_token = f.readline()
@@ -112,7 +99,7 @@ class WechatApp(models.Model):
         :return: True/False
         """
 
-        http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
         total_count = 1  # 所有关注用户数量，预设为1，为了发起第一次拉取
         got_count = 0  # 已获取的用户数量
         succ_count = 0  # 更新用户信息成功个数
@@ -127,6 +114,7 @@ class WechatApp(models.Model):
             # a = http.request('GET', request_url).data.decode('utf-8')
             # b = json.loads(a)
             a = requests.get(request_url)
+            a.encoding = 'utf-8'
             b = a.json()
             errcode = b.get('errcode', 0)
             if errcode == 0:
@@ -193,10 +181,10 @@ class WechatApp(models.Model):
                         # b = json.loads(a)
                         form_data = {'type': media_type, 'offset': offset, 'count': 20}
                         a = requests.post(request_url, data=json.dumps(form_data, ensure_ascii=False).encode('utf-8'))
-                        print(f'a.encoding={a.encoding}')
+                        # print(f'a.encoding={a.encoding}')
                         a.encoding = 'utf-8'
                         b = a.json()
-                        print(f'a.encoding={a.encoding}')
+                        # print(f'a.encoding={a.encoding}')
                         errcode = b.get('errcode', 0)
                         if errcode == 0:
                             items = b['item']
@@ -256,6 +244,7 @@ class WechatApp(models.Model):
         # a = http.request('GET', request_count_url).data.decode('utf-8')
         # b = json.loads(a)
         a = requests.get(request_count_url)
+        a.encoding = 'utf-8'
         b = a.json()
         print(f'b={b}')
         errcode = b.get('errcode', 0)
@@ -285,6 +274,18 @@ class WechatApp(models.Model):
         my_menu = WechatMenu(app=self, remark=remark, menu_string=menu_string)
         my_menu.save()
 
+    def gen_passwd(self, how_many=20):
+        if how_many > 100:
+            # 因为托管的mysql按业务次数收费，所以每次不能生成太多
+            how_many = 100
+        for i in range(how_many):
+            try:
+                new_passwd_str = gen_passwd(leng=5, use_number=True)
+                new_passwd = WechatGamePasswd(app=self, password=new_passwd_str)
+                new_passwd.save()
+            except:
+                return False
+        return how_many
 
 class WechatMedia(models.Model):
     """
@@ -808,6 +809,7 @@ class WechatPlayer(models.Model):
         # a = http.request('GET', request_url).data.decode('utf-8')
         # b = json.loads(a)
         a = requests.get(request_url)
+        a.encoding = 'utf-8'
         b = a.json()
         errcode = b.get('errcode', 0)
         if errcode == 0:
@@ -920,7 +922,8 @@ class WechatGameData(models.Model):
 class WechatGamePasswd(models.Model):
     app = models.ForeignKey(WechatApp, default=None, on_delete=models.CASCADE)
     password = models.CharField(max_length=50, primary_key=True)
-    assigned_player = models.ForeignKey(WechatPlayer, default=None, on_delete=models.CASCADE)
+    assigned_player = models.ForeignKey(WechatPlayer, default=None, on_delete=models.CASCADE, blank=True)
+    is_assigned = models.BooleanField(defaul=False, verbose='是否已分配')
 
     def __str__(self):
         return self.password
@@ -928,8 +931,9 @@ class WechatGamePasswd(models.Model):
     def assign_to_player(self, open_id, force=False):
         try:
             my_player = WechatPlayer.objects.get(app=self.app, open_id=open_id)
-            if self.assigned_player is None or force:
+            if not self.is_assigned or force:
                 self.assigned_player = my_player
+                self.is_assigned = True
                 self.save()
                 return True
             else:
@@ -950,6 +954,8 @@ class WechatGamePasswd(models.Model):
 
     def clear_player(self):
         self.assigned_player = None
+        self.is_assigned = False
+        self.save()
         return True
 
 
@@ -1137,6 +1143,7 @@ class WechatMenu(models.Model):
             #                  encode_multipart=False).data.decode('utf-8')
             # b = json.loads(a)
             a = requests.post(request_url, data=json.dumps(self.menu_string, ensure_ascii=False).encode('utf-8'))
+            a.encoding = 'utf-8'
             b = a.json()
             errcode = b.get('errcode', 0)
             errmsg = b.get('errmsg', 'OK')

@@ -257,9 +257,9 @@ def handle_text_msg(request, app_en_name):
         # 等待用户输入认证密码
         elif cur_player.waiting_status == WAITING_FOR_PASSWORD:
             # 玩家正在输入密码
-            user_id = auth_user(password=content, user_id=open_id)
-            if user_id:
-                cur_player.name = user_id
+            result = auth_user(app=my_app, password=content, user_id=open_id)
+            if result:
+                # cur_player.name = user_id  # 鉴权后不再返回user id
                 player_is_audit = True
                 cur_player.waiting_status = ''
                 player_game_dict = cur_player.game_hist
