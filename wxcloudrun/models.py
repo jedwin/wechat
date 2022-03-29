@@ -176,7 +176,7 @@ class WechatApp(models.Model):
             request_url = f'http://api.weixin.qq.com/cgi-bin/material/batchget_material'
             try:
                 total_count = self.get_resource_count(media_type=f'{media_type}_count')
-                if total_count >= 0:
+                if total_count > 0:
                     # 从数据库中取出现有素材
                     images_in_db = WechatMedia.objects.filter(app=self, media_type=media_type)
                     media_id_in_db_list = [x.media_id for x in images_in_db]
@@ -193,7 +193,7 @@ class WechatApp(models.Model):
                         #     'utf-8')
                         # b = json.loads(a)
                         form_data = {'type': media_type, 'offset': offset, 'count': 20}
-                        a = requests.post(request_url, data=form_data)
+                        a = requests.post(request_url, data=json.dumps(form_data, ensure_ascii=False).encode('utf-8'))
                         b = a.json()
                         print(f'b={b}')
                         errcode = int(b.get('errcode', 0))
@@ -271,10 +271,10 @@ class WechatApp(models.Model):
         else:
             if media_type in b.keys():
                 total_count = b[media_type]
-                # print(f'total count: {total_count}')
+                print(f'return count: {total_count}')
                 return total_count
             else:
-                # print(f'media_type incorrect: {media_type}')
+                print(f'media_type incorrect: {media_type}')
                 return errcode_media_type_incorrect
 
     def image_count(self):

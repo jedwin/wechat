@@ -23,20 +23,14 @@ class MenuAdmin(admin.ModelAdmin):
     @admin.action(description='提交自定义菜单')
     def submit_menu(self, request, queryset):
         for obj in queryset:
-            result, return_string = obj.submit_menu()
-            if result:
-                self.message_user(request, return_string, messages.SUCCESS)
-            else:
-                self.message_user(request, return_string, messages.WARNING)
-                return False
-        return True
-
-    @admin.action(description='更新自定义菜单内容')
-    def update_menu(self, request, queryset):
-        for obj in queryset:
             result, return_string = obj.save()  # MenuButton模型的save会自动更新json字符串
             if result:
-                self.message_user(request, return_string, messages.SUCCESS)
+                result, return_string = obj.submit_menu()  # 提交到腾讯服务器
+                if result:
+                    self.message_user(request, return_string, messages.SUCCESS)
+                else:
+                    self.message_user(request, return_string, messages.WARNING)
+                    return False
             else:
                 self.message_user(request, return_string, messages.WARNING)
                 return False
