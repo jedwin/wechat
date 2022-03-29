@@ -5,6 +5,7 @@ from wxcloudrun.user_manage import gen_passwd
 from wxcloudrun.coordinate_converter import *
 from django.db.models import F, Q, When, Count
 import urllib3
+import requests
 import certifi
 import json
 import time
@@ -34,7 +35,6 @@ keyword_change_process = '改变进度'
 error_reply_default = '你输入的答案不对，请再想想'
 errcode_file = 'errcode.csv'
 default_error_string = 'Unknow error'
-ACC_TOKEN_FILE = '/.tencentcloudbase/wx/cloudbase_access_token'
 
 
 def get_error_string(in_code, in_file=errcode_file, default_string=default_error_string):
@@ -66,7 +66,7 @@ class WechatApp(models.Model):
     appid = models.CharField(max_length=100)
     secret = models.CharField(max_length=100)
     token = models.CharField(max_length=200)
-    acc_token = models.CharField(max_length=200)
+    acc_token = models.CharField(max_length=500)
     name = models.CharField(max_length=100)
     en_name = models.CharField(max_length=100, default='')
     cur_game_name = models.CharField(max_length=100, default='')
@@ -86,19 +86,24 @@ class WechatApp(models.Model):
         根据appid获取新的access_token
         :return: access_token
         """
-        http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        request_url = f'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={self.appid}&secret={self.secret}'
-        a = http.request('GET', request_url).data.decode('utf-8')
-        b = json.loads(a)
-        if 'errcode' in b.keys():
-            errcode = 0 - int(b['errcode'])
-            default_error_string = get_error_string(errcode)
-            return False
-        else:
-            self.acc_token = b['access_token']
+        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        # request_url = f'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={self.appid}&secret={self.secret}'
+        # a = http.request('GET', request_url).data.decode('utf-8')
+        # b = json.loads(a)
+        # if 'errcode' in b.keys():
+        #     errcode = 0 - int(b['errcode'])
+        #     default_error_string = get_error_string(errcode)
+        #     return False
+        # else:
+        #     self.acc_token = b['access_token']
+        #     self.save()
+        #     print(f'access_token is refreshed: {self.acc_token}')
+        #     return True
+        acc_token_file = '/.tencentcloudbase/wx/cloudbase_access_token'
+        with open(acc_token_file, 'r') as f:
+            self.acc_token = f.readline()
             self.save()
-            print(f'access_token is refreshed: {self.acc_token}')
-            return True
+        return True
 
     def get_subscr_players(self, next_openid=None):
         """
@@ -113,15 +118,17 @@ class WechatApp(models.Model):
         got_count = 0  # 已获取的用户数量
         succ_count = 0  # 更新用户信息成功个数
         fail_count = 0  # 更新用户信息失败个数
-        with open(ACC_TOKEN_FILE, 'r') as f:
-            acc_token = f.readline()
         while got_count < total_count:
-            request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={acc_token}'
+            # request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={self.acc_token}'
+            request_url = f'http://api.weixin.qq.com/cgi-bin/user/get'
             if next_openid:
-                request_url += f'&next_openid={next_openid}'
+                # request_url += f'&next_openid={next_openid}'
+                request_url += f'?next_openid={next_openid}'
 
-            a = http.request('GET', request_url).data.decode('utf-8')
-            b = json.loads(a)
+            # a = http.request('GET', request_url).data.decode('utf-8')
+            # b = json.loads(a)
+            a = requests.get(request_url)
+            b = a.json()
             errcode = b.get('errcode', 0)
             if errcode == 0:
                 total_count = int(b['total'])
@@ -161,12 +168,12 @@ class WechatApp(models.Model):
         :return: resource_dict
         """
         http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        with open(ACC_TOKEN_FILE, 'r') as f:
-            acc_token = f.readline()
+
         resource_dict = dict()
         offset = 0
         if self.refresh_access_token():
-            request_url = f'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={acc_token}'
+            # request_url = f'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={self.acc_token}'
+            request_url = f'http://api.weixin.qq.com/cgi-bin/material/batchget_material'
             try:
                 total_count = self.get_resource_count(media_type=f'{media_type}_count')
                 if total_count > 0:
@@ -177,14 +184,17 @@ class WechatApp(models.Model):
                     # 获得图片总数后，进行全量抓取
                     media_id_in_server_list = list()
                     while offset <= total_count:
-                        form_data = f'''{{
-                            "type":"{media_type}",
-                            "offset":{offset},
-                            "count":20
-                        }}'''
-                        a = http.request('POST', request_url, body=form_data, encode_multipart=False).data.decode(
-                            'utf-8')
-                        b = json.loads(a)
+                        # form_data = f'''{{
+                        #     "type":"{media_type}",
+                        #     "offset":{offset},
+                        #     "count":20
+                        # }}'''
+                        # a = http.request('POST', request_url, body=form_data, encode_multipart=False).data.decode(
+                        #     'utf-8')
+                        # b = json.loads(a)
+                        form_data = {'type': media_type, 'offset': offset, 'count': 20}
+                        a = requests.post(request_url, data=form_data)
+                        b = a.json()
                         errcode = int(b.get('errcode', 0))
                         if errcode == 0:
 
@@ -244,25 +254,19 @@ class WechatApp(models.Model):
         :return:
         """
         http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
-
+        # request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
+        request_count_url = f'http://api.weixin.qq.com/cgi-bin/material/get_materialcount'
         # 获取图片总数
-        a = http.request('GET', request_count_url).data.decode('utf-8')
-        b = json.loads(a)
-        errcode = b.get('errcode', 0)
-        if errcode in [errcode_access_token_expired, errcode_access_token_missing]:
-            if self.refresh_access_token():
-                request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
-                a = http.request('GET', request_count_url).data.decode('utf-8')
-                b = json.loads(a)
-                errcode = b.get('errcode', 0)
-                # 由后面继续对error code进行判断
-            else:
-                print(f'Can not refresh access_token: {b}')
-                return errcode_access_token_refresh_failed
+        # a = http.request('GET', request_count_url).data.decode('utf-8')
+        # b = json.loads(a)
+        a = requests.get(request_count_url)
+        b = a.json()
+        with open('temp.log', 'w') as f:
+            f.writelines(b)
 
+        errcode = b.get('errcode', 0)
         if errcode > 0:
-            print(b)
+            # print(b)
             # returning the negative value for error indicator
             return 0 - errcode
         else:
@@ -803,11 +807,14 @@ class WechatPlayer(models.Model):
         :return: 返回用户信息
         """
 
-        http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        request_url = f'https://api.weixin.qq.com/cgi-bin/user/info?access_token={self.app.acc_token}'
-        request_url += f'&openid={self.open_id}&lang=zh_CN'
-        a = http.request('GET', request_url).data.decode('utf-8')
-        b = json.loads(a)
+        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        # request_url = f'https://api.weixin.qq.com/cgi-bin/user/info?access_token={self.app.acc_token}'
+        # request_url += f'&openid={self.open_id}&lang=zh_CN'
+        request_url = f'http://api.weixin.qq.com/cgi-bin/user/info?openid={self.open_id}&lang=zh_CN'
+        # a = http.request('GET', request_url).data.decode('utf-8')
+        # b = json.loads(a)
+        a = requests.get(request_url)
+        b = a.json()
         errcode = b.get('errcode', 0)
         if errcode == 0:
             self.nickname = b['nickname']
@@ -1088,9 +1095,9 @@ class WechatMenu(models.Model):
     """
     app = models.ForeignKey(WechatApp, on_delete=models.CASCADE, null=True, blank=True)
     menu_string = models.JSONField(null=True, blank=True)
-    remark = models.CharField(max_length=100, default='')
+    remark = models.CharField(max_length=100, default='', blank=True)
     MatchRule = models.BooleanField(default=False)
-    match_tag_id = models.CharField(max_length=100, default='')
+    match_tag_id = models.CharField(max_length=100, default='', blank=True)
     
     def __str__(self):
         return self.remark
@@ -1121,8 +1128,9 @@ class WechatMenu(models.Model):
 
     def submit_menu(self):
         acc_token = self.app.acc_token
-        http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        request_url = f'https://api.weixin.qq.com/cgi-bin/menu/create?access_token={acc_token}'
+        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        # request_url = f'https://api.weixin.qq.com/cgi-bin/menu/create?access_token={acc_token}'
+        request_url = f'http://api.weixin.qq.com/cgi-bin/menu/create'
         try:
             pass
             # my_menu = json.loads(self.menu_string, encoding='utf-8')
@@ -1131,9 +1139,11 @@ class WechatMenu(models.Model):
             return False, 'menu_string is not valid'
 
         else:
-            a = http.request('POST', request_url, body=json.dumps(self.menu_string, ensure_ascii=False).encode('utf-8'),
-                             encode_multipart=False).data.decode('utf-8')
-            b = json.loads(a)
+            # a = http.request('POST', request_url, body=json.dumps(self.menu_string, ensure_ascii=False).encode('utf-8'),
+            #                  encode_multipart=False).data.decode('utf-8')
+            # b = json.loads(a)
+            a = requests.post(request_url, data=json.dumps(self.menu_string, ensure_ascii=False).encode('utf-8'))
+            b = a.json()
             errcode = b.get('errcode', 0)
             errmsg = b.get('errmsg', 'OK')
             if errcode == 0:

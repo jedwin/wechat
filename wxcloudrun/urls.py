@@ -20,6 +20,7 @@ from wxcloudrun import views2 as mpv2
 
 urlpatterns = (
     path('wechat/miaozan/', mpv2.check_signature),      # 淼赞文化专用
+    path('<str:filename>', mpv2.download),         # 用于微信公众号域名验证下载文件
     path('admin/', admin.site.urls),
     path('accounts/', include('django.contrib.auth.urls')),
 )
