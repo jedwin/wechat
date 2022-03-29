@@ -201,9 +201,7 @@ class WechatApp(models.Model):
                             item_count = b['item_count']
                             if item_count == 0:
                                 break
-                            # print(f'item_count: {item_count}')
                             offset += item_count
-                            # offset += 20
                             for item_dict in items:
                                 # print(item_dict)
                                 media_id = item_dict['media_id']
