@@ -492,7 +492,7 @@ def get_user_info_with_code(request):
     基于微信网页授权流程第二步，获取用户信息
     """
     code = request.GET.get('code', '')
-    app_en_name = request.GET.get('state', '')  # 微信会通过state参数携带自定义变量，我们在这里放入app_en_name
+    app_en_name, game_name = request.GET.get('state', '').split('_')  # 微信会通过state参数携带自定义变量，我们在这里放入app_en_name
     openid = ''
     appid = ''
     errmsg = ''
@@ -504,8 +504,9 @@ def get_user_info_with_code(request):
             request_url += f'&secret={my_app.secret}&code={code}&grant_type=authorization_code'
             # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
             a = http.request('GET', request_url).data.decode('utf-8')
-
-            b = json.loads(a)
+            a = requests.get(request_url)
+            a.encoding = 'utf-8'
+            b = a.json()
             errcode = b.get('errcode', 0)
             if errcode > 0:
                 errmsg = b.get('errmsg', '')
@@ -516,10 +517,12 @@ def get_user_info_with_code(request):
                 refresh_token = b.get('refresh_token', '')
                 openid = b.get('openid', '')
                 scope = b.get('scope', '')
-                request_url = 'https://api.weixin.qq.com/sns/userinfo'
+                request_url = 'http://api.weixin.qq.com/sns/userinfo'
                 request_url += f'?access_token={temp_acc_token}&openid={openid}&lang=zh_CN'
                 c = http.request('GET', request_url).data.decode('utf-8')
-                d = json.loads(c)
+                c = requests.get(request_url)
+                c.encoding = 'utf-8'
+                d = c.json()
                 errcode = d.get('errcode', 0)
                 if errcode > 0:
                     errmsg = d.get('errmsg', '')
@@ -542,6 +545,8 @@ def get_user_info_with_code(request):
         # app_en_name参数传递错误
         errmsg = f'app_en_name参数传递错误: {app_en_name}，或者没有找到对应的用户{openid}'
 
+    if game_name == 'game1':
+        cur_game_name = ''
     redirect_url = f'/profile/?app_en_name={app_en_name}&openid={openid}&errmsg={errmsg}#wechat_redirect'
     return HttpResponseRedirect(redirect_url)
 

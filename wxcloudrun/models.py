@@ -805,8 +805,9 @@ class WechatPlayer(models.Model):
         :return: 返回用户信息
         """
 
-        # request_url = f'http://api.weixin.qq.com/cgi-bin/user/info?openid={self.open_id}&lang=zh_CN'
-        request_url = f'http://api.weixin.qq.com/sns/userinfo?openid={openid}&lang=zh_CN'
+        request_url = f'http://api.weixin.qq.com/cgi-bin/user/info?openid={self.open_id}&lang=zh_CN'
+        # acc_token = self.app.refresh_access_token()
+        # request_url = f'http://api.weixin.qq.com/sns/userinfo?access_token={acc_token}&openid={self.open_id}&lang=zh_CN'
         # a = http.request('GET', request_url).data.decode('utf-8')
         # b = json.loads(a)
         a = requests.get(request_url)
