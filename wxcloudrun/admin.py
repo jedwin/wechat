@@ -236,7 +236,7 @@ class AppAdmin(admin.ModelAdmin):
 
 
 class ErrorAutoReplyAdmin(admin.ModelAdmin):
-    list_display = ('pk', 'reply_type', 'reply_content', 'is_active')
+    list_display = ('reply_content', 'reply_type', 'is_active')
     list_editable = ['reply_type', 'reply_content', 'is_active']
     save_on_top = True
 

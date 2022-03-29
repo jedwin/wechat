@@ -1074,6 +1074,7 @@ class ErrorAutoReply(models.Model):
         content_data = self.reply_content
         if content_type in ['文字', 'TEXT']:
             text_content = content_data.replace('<br>', '\n').strip()
+            text_content = replace_content_with_hyperlink(text_content)
             replyMsg = reply.TextMsg(toUser, fromUser, text_content)
         elif content_type in ['图片', 'PIC']:
             my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
