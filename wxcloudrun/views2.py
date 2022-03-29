@@ -500,9 +500,9 @@ def get_user_info_with_code(request):
         my_app = WechatApp.objects.get(en_name=app_en_name)
         appid = my_app.appid
         if len(code) > 0:
-            request_url = f'https://api.weixin.qq.com/sns/oauth2/access_token?appid={my_app.appid}'
+            request_url = f'http://api.weixin.qq.com/sns/oauth2/access_token?appid={my_app.appid}'
             request_url += f'&secret={my_app.secret}&code={code}&grant_type=authorization_code'
-            http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+            # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
             a = http.request('GET', request_url).data.decode('utf-8')
 
             b = json.loads(a)
