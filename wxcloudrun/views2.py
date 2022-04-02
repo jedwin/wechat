@@ -634,8 +634,11 @@ def get_cur_player_game_dict(player, game_name):
     return cur_player_game_dict
 
 def download(request, filename):
-    file = open(f'/app/{filename}', 'rb')
-    response = HttpResponse(file)
-    response['Content-Type'] = 'application/octet-stream'                #设置头信息，告诉浏览器这是个文件
-    response['Content-Disposition'] = f'attachment;filename="{filename}"'
-    return response
+    if os.path.exists(f'/app/{filename}'):
+        file = open(f'/app/{filename}', 'rb')
+        response = HttpResponse(file)
+        response['Content-Type'] = 'application/octet-stream'  # 设置头信息，告诉浏览器这是个文件
+        response['Content-Disposition'] = f'attachment;filename="{filename}"'
+        return response
+    else:
+        return None
