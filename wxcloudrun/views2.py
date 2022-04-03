@@ -583,6 +583,7 @@ def show_profile(request):
                                          cmd=cmd, for_text=False)
     else:
         print(f'errmsg= {errmsg}')
+    print(ret_dict)
     return render(request, template, ret_dict)
 
 
