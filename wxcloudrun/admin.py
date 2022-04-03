@@ -87,7 +87,7 @@ class WechatPlayerAdmin(admin.ModelAdmin):
 
 class AppAdmin(admin.ModelAdmin):
     list_display = ('name', 'appid', 'image_count', 'video_count', 'subscriber_count')
-    inlines = [GameInline, PlayerInline, ]
+    inlines = [PlayerInline, ]
     actions = ['get_subscriber_info', 'update_image', 'update_video', 'gen_new_passwd_obj']
 
     @admin.action(description='更新关注用户信息')
