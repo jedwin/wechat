@@ -77,7 +77,11 @@
                 <div class="page__bd page__bd_spacing">
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showIOSDialog1">提示</a>
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showProgress">查看进度</a>
+                    {% if clear_code|length > 0 %}
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showClearCode">查看通关码</a>
+                    {% endif %}
+                    <a href="/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}"
+                       role="button" class="weui-btn weui-btn_primary" id="back2index">返回</a>
                 </div>
                 <div id="dialogs">
                     <div class="js_dialog" role="dialog"  aria-hidden="true" aria-modal="true" aria-labelledby="js_title1" id="iosDialog1" style="display: none;">
@@ -123,7 +127,7 @@
             my_trigger = $('input[name="quest"]:checked').val();
 		    $notice = $('#notice');
 		    if (my_trigger){
-		        globalThis.location = "/profile/?app_en_name={{ app_en_name }}&cur_game_name={{cur_game_name}}&openid={{openid}}&cmd="+my_trigger;
+		        globalThis.location = "/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{openid}}&cmd="+my_trigger;
 		    }else{
 		        $(this).parents('.js_dialog').fadeOut(200);
                 $(this).parents('.js_dialog').attr('aria-hidden','true');
@@ -174,7 +178,7 @@
         });
         $('#showTooltips').on('click', function(){
         if ($(this).hasClass('weui-btn_disabled')) return;
-        window.location.href='/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{openid}}&cmd='+$input.val();
+        globalThis.location='/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd='+$input.val();
         });
     });
 

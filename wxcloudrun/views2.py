@@ -547,8 +547,8 @@ def get_user_info_with_code(request):
         errmsg = f'app_en_name参数传递错误: {app_en_name}，或者没有找到对应的用户{openid}'
 
     if game_name == 'game1':
-        cur_game_name = ''
-    redirect_url = f'/profile/?app_en_name={app_en_name}&openid={openid}&errmsg={errmsg}#wechat_redirect'
+        cur_game_name = '老广新痕（4月版）'
+    redirect_url = f'/profile/?app_en_name={app_en_name}&cur_game_name={cur_game_name}&openid={openid}&errmsg={errmsg}#wechat_redirect'
     return HttpResponseRedirect(redirect_url)
 
 def show_profile(request):
