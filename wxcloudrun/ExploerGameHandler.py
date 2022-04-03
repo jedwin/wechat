@@ -236,7 +236,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                         cur_player.game_hist[cur_game_name] = cur_player_game_dict
                         cur_player.save()
                         my_error_auto_replys = list(ErrorAutoReply.objects.filter(is_active=True))
-                        ret_dict = set_quest(trigger=cur_player.waiting_status, ret_dict=ret_dict)
+                        ret_dict = set_quest(cur_game=cur_game, trigger=cur_player.waiting_status, ret_dict=ret_dict)
                         if len(my_error_auto_replys) > 0:
                             choose_reply = sample(my_error_auto_replys, 1)[0]
                             ret_dict['error_msg'] = choose_reply.reply_msg(toUser=open_id, fromUser=fromUser,
@@ -324,7 +324,7 @@ def new_game(cur_game, reward_list, ret_dict):
     return ret_dict
 
 
-def set_quest(trigger, ret_dict):
+def set_quest(cur_game, trigger, ret_dict):
     cur_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=trigger)
     ret_dict['reply_obj'] = cur_quest.reply_msg(type='question', toUser=open_id,
                                                 fromUser=fromUser, for_text=for_text)
