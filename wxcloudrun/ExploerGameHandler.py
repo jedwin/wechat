@@ -38,7 +38,8 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
     'hint_string': string,      当前任务的提示信息，放在前端随时显示
     'clear_code': string,       通关密码，放在前端显示，未通关时为空
     'progress': string,         当前进度，放在前端随时显示
-    'error_msg': string,
+    'notify_msg': string,       绿色的提醒
+    'error_msg': string,        红色的提醒
     }
     """
     # 初始化返回对象
@@ -53,6 +54,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
     ret_dict['hint_string'] = ''
     ret_dict['clear_code'] = ''
     ret_dict['progress'] = ''
+    ret_dict['notify_msg'] = ''
     ret_dict['error_msg'] = ''
 
     # 为了和文字版统一处理，增加fromUser空变量
@@ -190,6 +192,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                         cur_player.save()
                         answer_list = list()
                         cur_quest = None
+                        ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
                         text_content = f'任务已取消，请重新开始另一个任务'
                         ret_dict['error_msg'] = text_content
                         return ret_dict
@@ -204,6 +207,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                             cur_player_game_dict[FIELD_REWARD_LIST] = reward_list
                             cur_player_game_dict[FIELD_COMMAND_LIST] = cmd_list
                             cur_player.game_hist[cur_game_name] = cur_player_game_dict
+                            ret_dict['notify_msg'] = cur_quest.reward
 
                         # 重置玩家当前等待状态，并保存
                         cur_player.waiting_status = ''
@@ -219,14 +223,13 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                             text_content = f'{cur_game.clear_notice}'
                             text_content += '\n'
                             text_content += f'您的通关密码是：{clear_code}'
-                            ret_dict['reply_obj'] = text_content
+                            ret_dict['notify_msg'] = text_content
                             ret_dict['clear_code'] = clear_code
                         else:
                             # 玩家还没通关
                             replyMsg = cur_quest.reply_msg(type='reward', toUser=open_id, fromUser=fromUser,
                                                            for_text=for_text)
                             ret_dict['reply_obj'] = replyMsg
-                        # 获取最新的游戏进度
                         # 重置游戏界面
                         ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
                     else:
@@ -236,7 +239,8 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                         cur_player.game_hist[cur_game_name] = cur_player_game_dict
                         cur_player.save()
                         my_error_auto_replys = list(ErrorAutoReply.objects.filter(is_active=True))
-                        ret_dict = set_quest(cur_game=cur_game, trigger=cur_player.waiting_status, ret_dict=ret_dict)
+                        ret_dict = set_quest(cur_game=cur_game, trigger=cur_player.waiting_status,
+                                             ret_dict=ret_dict, open_id=open_id)
                         if len(my_error_auto_replys) > 0:
                             choose_reply = sample(my_error_auto_replys, 1)[0]
                             ret_dict['error_msg'] = choose_reply.reply_msg(toUser=open_id, fromUser=fromUser,
@@ -324,8 +328,10 @@ def new_game(cur_game, reward_list, ret_dict):
     return ret_dict
 
 
-def set_quest(cur_game, trigger, ret_dict):
+def set_quest(cur_game, trigger, ret_dict, open_id):
     cur_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=trigger)
+    fromUser = ''
+    for_text = False
     ret_dict['reply_obj'] = cur_quest.reply_msg(type='question', toUser=open_id,
                                                 fromUser=fromUser, for_text=for_text)
     ret_dict['reply_options'] = cur_quest.get_content_list(type='option')

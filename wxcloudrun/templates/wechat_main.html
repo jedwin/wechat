@@ -34,8 +34,12 @@
                 {{ reply_obj }}
             </p>
         </article>
-        {% if error_msg|length > 0 %}
-            <div role="alert" class="weui-toptips weui-toptips_warn" id="topTips">{{error_msg}}</div>
+        {% if notify_msg|length > 0 %}
+            <div role="alert" class="weui-toptips weui-toptips_warn" id="notifyTips"
+                 style="display: block; opacity: 1;">{{notify_msg}}</div>
+        {% elif error_msg|length > 0 %}
+            <div role="alert" class="weui-toptips weui-toptips_warn" id="errorTips"
+                 style="display: block; opacity: 1;">{{error_msg}}</div>
         {% endif %}
         <div class="weui-form">
             <form class="weui-cells__group weui-cells__group_form" action="/profile/" >
@@ -62,7 +66,7 @@
                     {% endfor %}
                     {% else %}
                     <label for="js_input" class="weui-cell weui-cell_active">
-                        <div class="weui-cell__hd"><span class="weui-label">你的答案是</span></div>
+                        <div class="weui-cell__hd"><span class="weui-label">答案是</span></div>
                         <div class="weui-cell__bd">
                             <input id="js_input" class="weui-input" placeholder="请把你的答案写在这里哦"/>
                         </div>
