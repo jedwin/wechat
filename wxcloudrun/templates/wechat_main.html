@@ -18,7 +18,7 @@
 
 <div class="container" id="container"></div>
 <script type="text/html" id="tpl_home">
-    <div class="page">
+    <div class="page article">
         <div class="page__hd">
             <h1 class="page__title">
                 <img src="{{ player_info.head_image }}" alt="{{ player_info.nickname }}" height="132px"/>
@@ -40,17 +40,16 @@
                     <h2 class="weui-form__title">选择挑战</h2>
                 </div>
                 <br>
-                <div class="weui-cells weui-cells_radio">
-                    {% for trigger in quest_triggers %}
-                    <label class="weui-cell weui-cell_active weui-check__label">
-                        <div class="weui-cell__bd">
-                            <p>{{trigger}}</p>
-                        </div>
-                        <div class="weui-cell__hd">
-                            <input type="radio" class="weui-check" name="quest" id="quest" value="{{trigger}}"/>
-                            <span class="weui-icon-checked"></span>
-                        </div>
-                    </label>
+                <div class="weui-cells">
+                    {% for option in reply_options %}
+                    <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}" href="javascript:">
+                        <span class="weui-cell__bd" id="{{option.trigger}}">
+                            <span>{{option.trigger}}</span>
+                        </span>
+                        <span class="weui-cell__ft">
+                            {{ option.comment }}
+                        </span>
+                    </a>
                     {% endfor %}
                 </div>
                 <br>
