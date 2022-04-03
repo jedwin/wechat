@@ -21,13 +21,9 @@
     <div class="page article">
         <div class="page__hd">
             <h1 class="page__title">
-                <img src="{{ player_info.headimgurl }}" alt="{{ player_info.nickname }}" height="132px"/>
                 {{ title }}
             </h1>
-
         </div>
-
-
         <article class="weui-article">
             <h1>{{ cur_game_name }}</h1>
             <p>
@@ -35,7 +31,7 @@
             </p>
         </article>
         {% if notify_msg|length > 0 %}
-            <div role="alert" class="weui-toptips weui-toptips_nofity" id="notifyTips"
+            <div role="alert" class="weui-toptips weui-toptips_notify" id="notifyTips"
                  style="display: block; opacity: 1;">{{notify_msg}}</div>
         {% elif error_msg|length > 0 %}
             <div role="alert" class="weui-toptips weui-toptips_warn" id="errorTips"
@@ -46,7 +42,7 @@
                 <div class="weui-form__text-area">
                     <h2 class="weui-form__title">开始挑战</h2>
                 </div>
-                <br>
+
                 <div class="weui-cells">
                     {% if reply_options|length > 0 %}
                     {% for option in reply_options %}
@@ -79,7 +75,9 @@
                 </div>
                 <br>
                 <div class="page__bd page__bd_spacing">
+                    {% if hint_string|length > 0 %}
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showIOSDialog1">提示</a>
+                    {% endif %}
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showProgress">查看进度</a>
                     {% if clear_code|length > 0 %}
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showClearCode">查看通关码</a>
@@ -110,7 +108,7 @@
                     <div class="weui-mask_transparent"></div>
                     <div class="weui-toast weui-toast_text-more">
                         <i class="weui-icon-warn weui-icon_toast"></i>
-                        <p class="weui-toast__content">{{ClearCode}}</p>
+                        <p class="weui-toast__content">{{clear_code}}</p>
                     </div>
                 </div>
             </form>

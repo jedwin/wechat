@@ -281,7 +281,7 @@ class WechatApp(models.Model):
         count = 0
         for i in range(how_many):
             try:
-                new_passwd_str = gen_passwd(leng=5, use_number=True)
+                new_passwd_str = gen_passwd(leng=6, use_number=True, use_upper=False, use_lower=False)
                 new_passwd = WechatGamePasswd(app=self, password=new_passwd_str)
                 new_passwd.save()
                 count += 1
