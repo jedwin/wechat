@@ -583,6 +583,9 @@ def show_profile(request):
                                          cmd=cmd, for_text=False)
     else:
         print(f'errmsg= {errmsg}')
+    ret_dict['app_en_name'] = app_en_name
+    ret_dict['cur_game_name'] = cur_game_name
+    ret_dict['open_id'] = open_id
     print(ret_dict)
     return render(request, template, ret_dict)
 
