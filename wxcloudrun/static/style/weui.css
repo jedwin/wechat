@@ -4646,6 +4646,10 @@ a.weui-media-box:active {
   background-color: var(--weui-RED);
 }
 
+.weui-toptips_notify {
+  background-color: forestgreen;
+}
+
 .weui-list-tips {
   list-style: none;
   padding-top: 24px;
