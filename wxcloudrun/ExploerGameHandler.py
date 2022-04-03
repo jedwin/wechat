@@ -237,6 +237,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
     else:
         # user is not audit
         # 等待用户输入密码
+        content = cmd
         if cur_player.waiting_status == WAITING_FOR_PASSWORD:
             # 玩家正在输入密码
             result = auth_user(app=my_app, password=content, user_id=open_id)
