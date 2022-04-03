@@ -229,7 +229,6 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                         # 获取最新的游戏进度
                         # 重置游戏界面
                         ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
-
                     else:
                         # 输入了不相关的内容
                         cmd_list.append(content)
