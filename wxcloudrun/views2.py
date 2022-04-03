@@ -11,6 +11,7 @@ from wxcloudrun.common_functions import *
 import datetime
 from wxcloudrun.models import *
 from wxcloudrun.location_game import *
+from ExploerGameHandler import *
 
 WAITING_FOR_PASSWORD = 'w_password'             # 等待用户输入认证密码
 WAITING_FOR_POI_KEYWORD = 'w_keyword'           # 等待用户输入POI关键词
@@ -139,10 +140,10 @@ def handle_text_msg(request, app_en_name):
             cur_player.save()
             cur_game = None
 
-
         if cur_game:
             if cur_game.is_active:
-                # 如果当前游戏处于激活状态
+                # 如果当前游戏处于激活状态，初始化游戏对应的对象
+                # 触发词列表、当前玩家游戏存档、已获成就、历史命令列表、通关码、鉴权信息
                 trigger_list = [x.quest_trigger for x in ExploreGameQuest.objects.filter(game=cur_game)]
                 cur_player_game_dict = get_cur_player_game_dict(player=cur_player, game_name=cur_game_name)
                 reward_list = cur_player_game_dict.get(FIELD_REWARD_LIST, list())
@@ -555,83 +556,35 @@ def show_profile(request):
     从网页授权后，得到用户open id，会传过来
     如果openid为空，表示授权失败，要查看errmsg内容
     如果openid不为空，但errmsg也不为空，表示获取用户信息失败，同样要查看errmsg内容
+
     """
     template = 'wechat_main.html'
     app_en_name = request.GET.get('app_en_name', '')
     cur_game_name = request.GET.get('cur_game_name', '')
-    openid = request.GET.get('openid', '')
+    open_id = request.GET.get('openid', '')
     cmd = request.GET.get('cmd', '')
     errmsg = request.GET.get('errmsg', '')
     ret_dict = dict()
-    if len(app_en_name) > 0:
-        try:
-            my_app = WechatApp.objects.get(en_name=app_en_name)
-            ret_dict['app_en_name'] = app_en_name
-            ret_dict['openid'] = openid
-        except ObjectDoesNotExist:
-            ret_dict['title'] = 'app_en_name is not valid'
-            ret_dict['app_en_name'] = app_en_name
-            ret_dict['openid'] = openid
-        if len(openid) > 0:
-            if len(errmsg) == 0:
-                # 成功
-                try:
-                    my_user = WechatPlayer.objects.get(app=my_app, open_id=openid)
-                    if cur_game_name == '':
-                        cur_game_name = my_user.cur_game_name
-                    my_game = ExploreGame.objects.get(app=my_app, name=cur_game_name)
-                    game_quests = ExploreGameQuest.objects.filter(game=my_game)
-                    ret_dict['opening'] = my_game.opening
-                    ret_dict['quest_triggers'] = [x.quest_trigger for x in game_quests]
-                    ret_dict['app_en_name'] = app_en_name
-                    ret_dict['cur_game_name'] = cur_game_name
-                    ret_dict['head_image'] = str(my_user.head_image)
-                    ret_dict['nickname'] = my_user.nickname
-                    ret_dict['title'] = f'欢迎参加{cur_game_name}'
-                except ObjectDoesNotExist:
-                    ret_dict['title'] = 'player not found'
-
-            else:
-                ret_dict['app_en_name'] = app_en_name
-                ret_dict['title'] = errmsg
-
-        else:  # openid is blank
-            if len(errmsg) > 0:
-                ret_dict['title'] = errmsg
-                ret_dict['app_en_name'] = app_en_name
-                ret_dict['openid'] = openid
-            else:
-                ret_dict['title'] = 'openid is blank'
-                ret_dict['app_en_name'] = app_en_name
-    else: # app_en_name is blank
-        ret_dict['title'] = 'app_en_name is blank'
-        ret_dict['app_en_name'] = app_en_name
-        ret_dict['openid'] = openid
-
+    if len(open_id) > 0:
+        # 把上面的参数传递给handle_player_command()，将返回以下字典
+        # {'game_is_valid': true/false,
+        # 'game_is_active': true/false,
+        # 'player_is_audit': true/false,
+        # 'player_info': player_info_dict,        该玩家的基本信息，昵称、头像等
+        # 'player_game_info': player_game_info_dict, 该玩家在处理完这个指令后的存档
+        # 'reply_obj': object,        用于回复的主要内容, 如果for_text==True，就以旧版格式返回replyMsg，否则返回字符串
+        # 'reply_options': [reply_opt_dict1, reply_opt_dict2],  用于显示下一步的选项及额外内容
+        # 'hint_string': string,      当前任务的提示信息，放在前端随时显示
+        # 'clear_code': string,       通关密码，放在前端显示，未通关时为空
+        # 'progress': string,         当前进度，放在前端随时显示
+        # 'error_msg': string,
+        # }
+        ret_dict = handle_player_command(app_en_name=app_en_name, open_id=open_id, game_name=cur_game_name,
+                                         cmd=cmd, for_text=False)
+    else:
+        print(f'errmsg= {errmsg}')
     return render(request, template, ret_dict)
 
-def get_cur_player_game_dict(player, game_name):
-    player_game_dict = player.game_hist  # json object
-    # player_game_dict should be like this
-    # {'cur_game_name': {setting1: xxx, setting2: xxx}}
-    if len(game_name) > 0:
-        # 如果游戏名不为空
-        if not player_game_dict:
-            # 如果这个玩家还没有游戏存档，就用输入的游戏名初始化一个
-            cur_player_game_dict = {FIELD_IS_AUDIT: False,
-                                    FIELD_COMMAND_LIST: list(),
-                                    FIELD_CLEAR_CODE: '',
-                                    FIELD_REWARD_LIST: list()}
-            player_game_dict = {game_name: cur_player_game_dict}
-            player.game_hist = player_game_dict
-            player.save()
-        else:
-            # 如果玩家已经有游戏存档
-            cur_player_game_dict = player_game_dict.get(game_name, dict())
-    else:
-        # 如果输入的游戏名为空，返回空字典
-        cur_player_game_dict = dict()
-    return cur_player_game_dict
 
 def download(request, filename):
     if os.path.exists(f'/app/{filename}'):

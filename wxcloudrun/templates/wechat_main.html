@@ -21,7 +21,7 @@
     <div class="page">
         <div class="page__hd">
             <h1 class="page__title">
-                <img src="{{ head_image }}" alt="head image" height="21px"/>
+                <img src="{{ player_info.head_image }}" alt="{{ player_info.nickname }}" height="132px"/>
             </h1>
 
         </div>
@@ -30,7 +30,7 @@
         <article class="weui-article">
             <h1>{{ cur_game_name }}</h1>
             <p>
-                {{ opening }}
+                {{ reply_obj }}
             </p>
         </article>
 
