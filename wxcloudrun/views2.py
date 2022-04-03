@@ -11,7 +11,7 @@ from wxcloudrun.common_functions import *
 import datetime
 from wxcloudrun.models import *
 from wxcloudrun.location_game import *
-from ExploerGameHandler import *
+from wxcloudrun.ExploerGameHandler import *
 
 WAITING_FOR_PASSWORD = 'w_password'             # 等待用户输入认证密码
 WAITING_FOR_POI_KEYWORD = 'w_keyword'           # 等待用户输入POI关键词
