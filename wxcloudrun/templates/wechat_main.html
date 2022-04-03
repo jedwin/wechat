@@ -35,7 +35,7 @@
             </p>
         </article>
         {% if notify_msg|length > 0 %}
-            <div role="alert" class="weui-toptips weui-toptips_warn" id="notifyTips"
+            <div role="alert" class="weui-toptips weui-toptips_nofity" id="notifyTips"
                  style="display: block; opacity: 1;">{{notify_msg}}</div>
         {% elif error_msg|length > 0 %}
             <div role="alert" class="weui-toptips weui-toptips_warn" id="errorTips"
