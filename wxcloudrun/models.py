@@ -621,28 +621,39 @@ class ErrorAutoReply(models.Model):
     def __str__(self):
         return self.reply_content
 
-    def reply_msg(self, toUser, fromUser):
+    def reply_msg(self, toUser, fromUser='', for_text=True):
         content_type = self.reply_type
         content_data = self.reply_content
-        if content_type in ['文字', 'TEXT']:
+        if content_type == 'TEXT':
             text_content = content_data.replace('<br>', '\n').strip()
-            text_content = replace_content_with_hyperlink(text_content)
-            replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-        elif content_type in ['图片', 'PIC']:
+            if for_text:
+                text_content = replace_content_with_hyperlink(text_content)
+                replyMsg = reply.TextMsg(toUser, fromUser, text_content)
+            else:
+                ret_content = text_content
+        elif content_type == 'PIC':
             my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
             if len(my_media) > 0:
                 # 如果有重名的图片，就发第一张
                 mediaId = my_media[0].media_id
-                replyMsg = reply.ImageMsg(toUser, fromUser, mediaId)
+                if for_text:
+                    replyMsg = reply.ImageMsg(toUser, fromUser, mediaId)
+                else:
+                    # return the image url
+                    ret_content = my_media[0].info.get('url', '')
             else:
                 text_content = f'找不到对应的图片{content_data}，请联系管理员'
                 replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-
+                ret_content = text_content
         else:
             text_content = f'答错自动回复内容{content_type}错误，请联系管理员'
             replyMsg = reply.TextMsg(toUser, fromUser, text_content)
+            ret_content = text_content
 
-        return replyMsg
+        if for_text:
+            return replyMsg
+        else:
+            return ret_content
 
 
 class WechatMenu(models.Model):

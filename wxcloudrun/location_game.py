@@ -73,11 +73,15 @@ class ExploreGameQuest(models.Model):
     def __str__(self):
         return f'{self.game}_{self.quest_trigger}'
 
-    def reply_msg(self, type, toUser, fromUser):
-        if type == 'content':
+    def reply_msg(self, type, toUser, fromUser='', for_text=True):
+        """
+        新增for_text参数，默认情况下，返回的replyMsg对象可以直接送给玩家在微信文字版中使用
+        当for_text==False，返回的内容将作在网页版上
+        """
+        if type == 'question':
             # 发送关键词正文
-            content_type = self.content_type
-            content_data = self.content_data
+            content_type = self.question_type
+            content_data = self.question_data
         elif type == 'hint':
             # 发送提示内容
             content_type = self.hint_type
@@ -93,33 +97,48 @@ class ExploreGameQuest(models.Model):
 
         if content_type == 'TEXT':
             text_content = content_data.replace('<br>', '\n').strip()
-            text_content = replace_content_with_hyperlink(text_content)
-            replyMsg = reply.TextMsg(toUser, fromUser, text_content)
+            if for_text:
+                text_content = replace_content_with_hyperlink(text_content)
+                replyMsg = reply.TextMsg(toUser, fromUser, text_content)
+            else:
+                ret_content = text_content
         elif content_type == 'PIC':
             my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
             if len(my_media) > 0:
                 # 如果有重名的图片，就发第一张
                 mediaId = my_media[0].media_id
-                replyMsg = reply.ImageMsg(toUser, fromUser, mediaId)
+                if for_text:
+                    replyMsg = reply.ImageMsg(toUser, fromUser, mediaId)
+                else:
+                    # return the image url
+                    ret_content = my_media[0].info.get('url', '')
             else:
                 text_content = f'找不到对应的图片{content_data}，请联系管理员'
                 replyMsg = reply.TextMsg(toUser, fromUser, text_content)
+                ret_content = text_content
 
         elif content_type == 'VIDEO':
             my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
             if len(my_media) > 0:
                 # 如果有重名的视频，就发第一个
                 mediaId = my_media[0].media_id
-                replyMsg = reply.VideoMsg(toUser, fromUser, mediaId, content_data, self.video_desc)
+                if for_text:
+                    replyMsg = reply.VideoMsg(toUser, fromUser, mediaId, content_data, self.video_desc)
+                else:
+                    # return the video url
+                    ret_content = my_media[0].info.get('url', '')
             else:
                 text_content = f'找不到对应的视频{content_data}，请联系管理员'
                 replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-
+                ret_content = text_content
         else:
             text_content = f'关键词的内容类型{content_type}错误，请联系管理员'
             replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-
-        return replyMsg
+            ret_content = text_content
+        if for_text:
+            return replyMsg
+        else:
+            return ret_content
 
     def get_content_list(self, type):
         """
