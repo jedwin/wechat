@@ -10,9 +10,11 @@ errcode_file = 'errcode.csv'
 class MenuButtonInline(admin.TabularInline):
     model = MenuButton
 
+
 class SubButtonInline(admin.TabularInline):
     model = MenuSubButton
-    
+
+
 class MenuAdmin(admin.ModelAdmin):
     list_display = ('remark', 'app', 'menu_string')
     list_editable = ['app']
@@ -41,36 +43,10 @@ class ButtonAdmin(admin.ModelAdmin):
     inlines = [SubButtonInline, ]
     save_on_top = True
 
+
 class MediaAdmin(admin.ModelAdmin):
     list_display = ('name', 'media_id', 'update_time', 'tags')
     list_filter = ('app', 'media_type')
-
-
-class GameDataAdmin(admin.ModelAdmin):
-    list_display = ('player', 'game', 'cur_keyword', 'count_command', 'count_command_without_tip')
-    list_filter = ('player__app', 'game')
-
-
-class GameKeywordAdmin(admin.ModelAdmin):
-    list_display = ('keyword', 'content_type', 'content_data', 'cur_pic',
-                    'hint_type', 'hint_data', 'option_str', 'last_keyword')
-    list_filter = [('game__app', admin.RelatedOnlyFieldListFilter), ('game', admin.RelatedOnlyFieldListFilter)]
-    # list_editable = ('content_type', 'content_data', 'cur_pic',
-    #                 'hint_type', 'hint_data', 'option_str', 'last_keyword')
-    # list_display_links = ('keyword')
-    fieldsets = (('关键词配置', {'fields': ('game', 'scene', 'keyword')}),
-                 ('本关键词显示内容', {'fields': ('content_type', 'content_data', 'video_desc', 'cur_pic')}),
-                 ('提示内容', {'fields': ('hint_type', 'hint_data')}),
-                 ('下一步内容', {'fields': ['option_str']}),
-                 ('上一步关键词', {'fields': ['last_keyword']}))
-
-
-class GameDataInline(admin.TabularInline):
-    model = WechatGameData
-
-
-class GameInline(admin.TabularInline):
-    model = WechatGame
 
 
 class PlayerInline(admin.TabularInline):
@@ -79,10 +55,6 @@ class PlayerInline(admin.TabularInline):
 
 class MediaInline(admin.TabularInline):
     model = WechatMedia
-
-
-class GameKeywordInline(admin.TabularInline):
-    model = GameKeyword
 
 
 class ExploreGameQuestInline(admin.TabularInline):
@@ -111,47 +83,6 @@ class WechatPlayerAdmin(admin.ModelAdmin):
             ), messages.SUCCESS)
         else:
             self.message_user(request, f'No player data is created', messages.WARNING)
-
-
-class WechatGameAdmin(admin.ModelAdmin):
-    list_display = ('name', 'app', 'is_active', 'keyword_count')
-    save_as = True
-    save_on_top = True
-    actions = ['reload_settings', 'save_to_td_markdown_file']
-
-    # inlines = [GameKeywordInline, ]
-
-    @admin.action(description='重新加载关键词配置')
-    def reload_settings(self, request, queryset):
-        count = 0
-        for obj in queryset:
-            return_count = obj.load_settings()
-            count += return_count
-
-        if count > 0:
-            self.message_user(request, ngettext(
-                f'{count} keyword is loaded',
-                f'{count} keywords are loaded',
-                count
-            ), messages.SUCCESS)
-        else:
-            self.message_user(request, f'No keyword is loaded', messages.WARNING)
-
-    @admin.action(description='生成流程图文件')
-    def save_to_td_markdown_file(self, request, queryset):
-        count = 0
-        for obj in queryset:
-            return_count = obj.save_to_mermaid(graph_type='TD')
-            count += return_count
-
-        if count > 0:
-            self.message_user(request, ngettext(
-                f'{count} game is exported',
-                f'{count} games are exported',
-                count
-            ), messages.SUCCESS)
-        else:
-            self.message_user(request, f'No game is exported', messages.WARNING)
 
 
 class AppAdmin(admin.ModelAdmin):
@@ -268,10 +199,7 @@ admin.site.register(WechatMenu, MenuAdmin)
 admin.site.register(MenuButton, ButtonAdmin)
 admin.site.register(WechatApp, AppAdmin)
 admin.site.register(WechatMedia, MediaAdmin)
-admin.site.register(WechatGame, WechatGameAdmin)
-admin.site.register(GameKeyword, GameKeywordAdmin)
 admin.site.register(WechatPlayer, WechatPlayerAdmin)
-admin.site.register(WechatGameData, GameDataAdmin)
 admin.site.register(ErrorAutoReply, ErrorAutoReplyAdmin)
 admin.site.register(AppKeyword, AppKeywordAdmin)
 admin.site.register(QqMap)
