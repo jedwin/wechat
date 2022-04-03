@@ -34,7 +34,9 @@
                 {{ reply_obj }}
             </p>
         </article>
-
+        {% if error_msg|length > 0 %}
+            <div role="alert" class="weui-toptips weui-toptips_warn" id="topTips">{{error_msg}}</div>
+        {% endif %}
         <div class="weui-form">
             <form class="weui-cells__group weui-cells__group_form" action="/profile/" >
                 <div class="weui-form__text-area">
@@ -42,10 +44,14 @@
                 </div>
                 <br>
                 <div class="weui-cells">
-                    {% if reply_options.length > 0 %}
+                    {% if reply_options|length > 0 %}
                     {% for option in reply_options %}
                     <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}"
-                       href="/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd={{option.trigger}}">
+                       {% if option.enable %}
+                            href="/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd={{option.trigger}}">
+                        {% else %}
+                            href="javascript:">
+                        {% endif %}
                         <span class="weui-cell__bd" id="{{option.trigger}}">
                             <span>{{option.trigger}}</span>
                         </span>
@@ -168,7 +174,7 @@
         });
         $('#showTooltips').on('click', function(){
         if ($(this).hasClass('weui-btn_disabled')) return;
-        this.href='/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{openid}}&cmd='+$input.val();
+        window.location.href='/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{openid}}&cmd='+$input.val();
         });
     });
 

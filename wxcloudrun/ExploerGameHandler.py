@@ -158,18 +158,9 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                             done_q_name_list.append(q.quest_trigger)
                     text_content = f'要回答这个问题，需要先完成{len(prequire_list)}个任务，'
                     text_content += f'而{ret_dict["progress"]}。'
-                    ret_dict['reply_obj'] = text_content
-            elif content == CHECK_CLEAR_CODE:
-                # 玩家重新查看游戏通关密码
-                if len(clear_code) > 0:
-                    text_content = f'您的通关密码是：{clear_code}'
-                else:
-                    text_content = f'您还没通关，请继续努力！'
-                ret_dict['reply_obj'] = text_content
-            elif content == CHECK_PROGRESS:
-                ret_dict['reply_obj'] = check_progress(cur_game=cur_game, reward_list=reward_list)
-            # 如果用户是否处于等待输入状态
-            elif len(cur_player.waiting_status) > 0:
+                    ret_dict['error_msg'] = text_content
+
+            elif len(cur_player.waiting_status) > 0:  # 如果用户已经处于等待输入状态
                 # 等待用户输入密码
                 if cur_player.waiting_status == WAITING_FOR_PASSWORD:
                     # 玩家正在输入密码
@@ -182,9 +173,10 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                         cur_player.save()
                         ret_dict['player_is_audit'] = True
                         ret_dict['reply_obj'] = AUDIT_SUCCESS
+                        ret_dict['cmd'] = ''
                     else:
                         # 没有输对密码
-                        ret_dict['reply_obj'] = AUDIT_FAILED
+                        ret_dict['error_msg'] = AUDIT_FAILED
                 # 用户已处于某个Quest中，等待输入答案
                 elif cur_player.waiting_status in trigger_list:
                     # 如果用户已经处于某个quest的任务中
@@ -199,7 +191,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                         answer_list = list()
                         cur_quest = None
                         text_content = f'任务已取消，请重新开始另一个任务'
-                        ret_dict['reply_obj'] = text_content
+                        ret_dict['error_msg'] = text_content
                         return ret_dict
                     if content in answer_list:
                         # 答对了当前问题
@@ -226,7 +218,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                             cur_player.save()
                             text_content = f'{cur_game.clear_notice}'
                             text_content += '\n'
-                            text_content += f'您的通过密码是：{clear_code}'
+                            text_content += f'您的通关密码是：{clear_code}'
                             ret_dict['reply_obj'] = text_content
                             ret_dict['clear_code'] = clear_code
                         else:
@@ -235,14 +227,9 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                                                            for_text=for_text)
                             ret_dict['reply_obj'] = replyMsg
                         # 获取最新的游戏进度
-                        ret_dict['progress'] = check_progress(cur_game=cur_game, reward_list=reward_list)
-                    elif content == keyword_hint:
-                        # 输入了【提示】
-                        if cur_quest:
-                            ret_dict['reply_obj'] = cur_quest.reply_msg(type='hint', toUser=open_id,
-                                                                        fromUser=fromUser, for_text=for_text)
-                        else:
-                            ret_dict['reply_obj'] = '您正在进行的任务已经取消，请重新开始另一个吧：）'
+                        # 重置游戏界面
+                        ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
+
                     else:
                         # 输入了不相关的内容
                         cmd_list.append(content)
@@ -250,38 +237,17 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                         cur_player.game_hist[cur_game_name] = cur_player_game_dict
                         cur_player.save()
                         my_error_auto_replys = list(ErrorAutoReply.objects.filter(is_active=True))
+                        ret_dict = set_quest(trigger=cur_player.waiting_status, ret_dict=ret_dict)
                         if len(my_error_auto_replys) > 0:
                             choose_reply = sample(my_error_auto_replys, 1)[0]
-                            ret_dict['reply_obj'] = choose_reply.reply_msg(toUser=open_id, fromUser=fromUser,
+                            ret_dict['error_msg'] = choose_reply.reply_msg(toUser=open_id, fromUser=fromUser,
                                                                            for_text=for_text)
                         else:
-                            ret_dict['reply_obj'] = f'{error_reply_default}'
-        else:
-            # 如果cmd为空，就显示游戏的初始化内容
-            ret_dict['reply_obj'] = cur_game.opening
-            qeusts = ExploreGameQuest.objects.filter(game=cur_game)
-            for my_quest in qeusts:
-                # 将可以挑战的任务放在选项中
-                prequire_list = my_quest.get_content_list(type='prequire')
-                if my_quest.reward_id in reward_list:
-                    # 如果这个Quest已经通关
-                    ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
-                                                      'comment': '已通关',
-                                                      'style': 'weui-cell weui-cell_disable'})
-                elif set(prequire_list).issubset(set(reward_list)) or len(prequire_list) == 0:
-                    # 如果这个Quest没有前置要求，或前置要求都达到了
-                    ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
-                                                      'comment': '可挑战',
-                                                      'style': 'weui-cell weui-cell_access'})
-                else:
-                    # 其他情况，还不能挑战这个任务
-                    ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
-                                                      'comment': '未具备挑战条件',
-                                                      'style': 'weui-cell weui-cell_disable'})
-            return ret_dict
+                            ret_dict['error_msg'] = f'{error_reply_default}'
+        else:  # 如果cmd为空，就显示游戏的初始化内容
+            ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
     else:
         # user is not audit
-        ret_dict['reply_obj'] = ''
         ret_dict['error_msg'] = ASK_FOR_PASSWORD
 
     return ret_dict
@@ -329,3 +295,41 @@ def check_progress(cur_game, reward_list):
     else:
         text_content = f'您没有参与游戏。'
     return text_content
+
+
+def new_game(cur_game, reward_list, ret_dict):
+    ret_dict['reply_obj'] = cur_game.opening
+    qeusts = ExploreGameQuest.objects.filter(game=cur_game)
+    for my_quest in qeusts:
+        # 将可以挑战的任务放在选项中
+        prequire_list = my_quest.get_content_list(type='prequire')
+        if my_quest.reward_id in reward_list:
+            # 如果这个Quest已经通关
+            ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
+                                              'comment': '已通关',
+                                              'enable': False,
+                                              'style': 'weui-cell weui-cell_disable'})
+        elif set(prequire_list).issubset(set(reward_list)) or len(prequire_list) == 0:
+            # 如果这个Quest没有前置要求，或前置要求都达到了
+            ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
+                                              'comment': '可挑战',
+                                              'enable': True,
+                                              'style': 'weui-cell weui-cell_access'})
+        else:
+            # 其他情况，还不能挑战这个任务
+            ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
+                                              'comment': '未具备挑战条件',
+                                              'enable': False,
+                                              'style': 'weui-cell weui-cell_disable'})
+    ret_dict['progress'] = check_progress(cur_game=cur_game, reward_list=reward_list)
+    return ret_dict
+
+
+def set_quest(trigger, ret_dict):
+    cur_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=trigger)
+    ret_dict['reply_obj'] = cur_quest.reply_msg(type='question', toUser=open_id,
+                                                fromUser=fromUser, for_text=for_text)
+    ret_dict['reply_options'] = cur_quest.get_content_list(type='option')
+    ret_dict['hint_string'] = cur_quest.reply_msg(type='hint', toUser=open_id,
+                                                  fromUser=fromUser, for_text=for_text)
+    return ret_dict
