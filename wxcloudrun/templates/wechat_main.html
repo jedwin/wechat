@@ -42,7 +42,8 @@
                 <br>
                 <div class="weui-cells">
                     {% for option in reply_options %}
-                    <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}" href="javascript:">
+                    <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}"
+                       href="/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd={{option.trigger}}">
                         <span class="weui-cell__bd" id="{{option.trigger}}">
                             <span>{{option.trigger}}</span>
                         </span>
@@ -54,22 +55,35 @@
                 </div>
                 <br>
                 <div class="page__bd page__bd_spacing">
-                    <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showIOSDialog1">选择你的挑战</a>
+                    <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showIOSDialog1">提示</a>
+                    <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showProgress">查看进度</a>
+                    <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showClearCode">查看通关码</a>
                 </div>
                 <div id="dialogs">
                     <div class="js_dialog" role="dialog"  aria-hidden="true" aria-modal="true" aria-labelledby="js_title1" id="iosDialog1" style="display: none;">
                         <div class="weui-mask"></div>
                         <div class="weui-dialog">
-                            <div class="weui-dialog__hd"><strong class="weui-dialog__title" id="js_title1">确认挑战</strong></div>
-                            <div class="weui-dialog__bd" id="notice">你确认要选这个挑战吗？</div>
+                            <div class="weui-dialog__hd"><strong class="weui-dialog__title" id="js_title1">提示</strong></div>
+                            <div class="weui-dialog__bd" id="notice">{{hint_string}}</div>
                             <div class="weui-dialog__ft">
-                                <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_default" id="cancle">取消</a>
-                                <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_primary" id="confirm">确定</a>
+                                <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_default" id="confirm">确定</a>
                             </div>
                         </div>
                     </div>
-                    <input type="hidden" value="{{app_en_name}}" name="app_en_name" />
-                    <input type="hidden" value="{{openid}}" name="openid" />
+                </div>
+                <div role="alert" id="textProgress" style="display: none;">
+                    <div class="weui-mask_transparent"></div>
+                    <div class="weui-toast weui-toast_text-more">
+                        <i class="weui-icon-warn weui-icon_toast"></i>
+                        <p class="weui-toast__content">{{progress}}</p>
+                    </div>
+                </div>
+                <div role="alert" id="textClearCode" style="display: none;">
+                    <div class="weui-mask_transparent"></div>
+                    <div class="weui-toast weui-toast_text-more">
+                        <i class="weui-icon-warn weui-icon_toast"></i>
+                        <p class="weui-toast__content">{{ClearCode}}</p>
+                    </div>
                 </div>
             </form>
         </div>
@@ -98,17 +112,33 @@
         });
 
         $('#showIOSDialog1').on('click', function(){
-            my_trigger = $('input[name="quest"]:checked').val();
-		    $notice = $('#notice');
-		    if (my_trigger){
-		        notice.innerHTML = '你确定要挑战 '+my_trigger+' 吗？';
-		    }else{notice.innerHTML = '你还没做出选择'+my_trigger;}
+
             $iosDialog1.fadeIn(200);
             $iosDialog1.attr('aria-hidden','false');
             $iosDialog1.attr('tabindex','0');
             $iosDialog1.trigger('focus');
 
         });
+
+
+        var $textProgress = $('#textProgress');
+        $('#showProgress').on('click', function(){
+            if ($textProgress.css('display') != 'none') return;
+            $textProgress.fadeIn(100);
+            setTimeout(function () {
+                $textProgress.fadeOut(100);
+            }, 2000);
+        });
+
+        var $textClearCode = $('#textClearCode');
+        $('#showClearCode').on('click', function(){
+            if ($textClearCode.css('display') != 'none') return;
+            $textClearCode.fadeIn(100);
+            setTimeout(function () {
+                $textClearCode.fadeOut(100);
+            }, 2000);
+        });
+
     });
 
 </script>
