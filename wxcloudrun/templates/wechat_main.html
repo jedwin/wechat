@@ -22,6 +22,7 @@
         <div class="page__hd">
             <h1 class="page__title">
                 <img src="{{ player_info.headimgurl }}" alt="{{ player_info.nickname }}" height="132px"/>
+                {{ title }}
             </h1>
 
         </div>
@@ -37,10 +38,11 @@
         <div class="weui-form">
             <form class="weui-cells__group weui-cells__group_form" action="/profile/" >
                 <div class="weui-form__text-area">
-                    <h2 class="weui-form__title">选择挑战</h2>
+                    <h2 class="weui-form__title">开始挑战</h2>
                 </div>
                 <br>
                 <div class="weui-cells">
+                    {% if reply_options.length > 0 %}
                     {% for option in reply_options %}
                     <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}"
                        href="/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd={{option.trigger}}">
@@ -52,6 +54,18 @@
                         </span>
                     </a>
                     {% endfor %}
+                    {% else %}
+                    <label for="js_input" class="weui-cell weui-cell_active">
+                        <div class="weui-cell__hd"><span class="weui-label">你的答案是</span></div>
+                        <div class="weui-cell__bd">
+                            <input id="js_input" class="weui-input" placeholder="请把你的答案写在这里哦"/>
+                        </div>
+                    </label>
+                    <div class="weui-form__opr-area">
+                        <a role="button" disabled aria-disabled="true" href="javascript:" id="showTooltips"
+                           class="weui-btn weui-btn_primary weui-btn_disabled">确定</a>
+                    </div>
+                    {% endif %}
                 </div>
                 <br>
                 <div class="page__bd page__bd_spacing">
@@ -139,6 +153,23 @@
             }, 2000);
         });
 
+        var $input = $('#js_input');
+        $input.on('input', function(){
+        if ($input.val()){
+          $('#showTooltips').removeClass('weui-btn_disabled');
+          $('#showTooltips').attr('aria-disabled','false');
+          $('#showTooltips').removeAttr('disabled');
+        }else{
+          $('#showTooltips').addClass('weui-btn_disabled');
+          $('#showTooltips').addClass('weui-btn_disabled');
+          $('#showTooltips').attr('aria-disabled','true');
+          $('#showTooltips').addAttr('disabled');
+        }
+        });
+        $('#showTooltips').on('click', function(){
+        if ($(this).hasClass('weui-btn_disabled')) return;
+        this.href='/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{openid}}&cmd='+$input.val();
+        });
     });
 
 </script>
