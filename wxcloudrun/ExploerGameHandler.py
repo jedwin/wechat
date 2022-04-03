@@ -131,7 +131,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
         return ret_dict
 
     # 但需要检查用户是否鉴权
-    if cur_player.is_audit:
+    if player_is_audit:
         # 开始检查cmd指令
         if len(cmd) > 0:
             content = cmd
