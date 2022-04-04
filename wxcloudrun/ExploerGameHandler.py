@@ -22,6 +22,8 @@ FIELD_REWARD_LIST = 'reward_list'               # 存放已获取奖励的字典
 FIELD_COMMAND_LIST = 'cmd_list'                 # 存放已行动命令的字典key
 FIELD_IS_AUDIT = 'is_audit'                     # 存在当前用户在当前游戏是否已认证的key
 
+OPTION_ENABLE = 'weui-cell weui-cell_access'    # 提供可选选项的样式
+OPTION_DISABLE = 'weui-cell weui-cell_disable'  # 提供不可选选项的样式
 
 def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_text=True):
     """
@@ -147,7 +149,12 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                     cur_player.save()
                     ret_dict['reply_obj'] = cur_quest.reply_msg(type='question', toUser=open_id,
                                                                 fromUser=fromUser, for_text=for_text)
-                    ret_dict['reply_options'] = cur_quest.get_content_list(type='option')
+                    option_list = cur_quest.get_content_list(type='option')
+                    for option in option_list:
+                        ret_dict['reply_options'].append({'trigger': option,
+                                                          'comment': '',
+                                                          'enable': True,
+                                                          'style': OPTION_ENABLE})
                     ret_dict['hint_string'] = cur_quest.reply_msg(type='hint', toUser=open_id,
                                                                   fromUser=fromUser, for_text=for_text)
                 else:
@@ -317,19 +324,19 @@ def new_game(cur_game, reward_list, ret_dict):
             ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
                                               'comment': '已通关',
                                               'enable': False,
-                                              'style': 'weui-cell weui-cell_disable'})
+                                              'style': OPTION_ENABLE})
         elif set(prequire_list).issubset(set(reward_list)) or len(prequire_list) == 0:
             # 如果这个Quest没有前置要求，或前置要求都达到了
             ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
                                               'comment': '可挑战',
                                               'enable': True,
-                                              'style': 'weui-cell weui-cell_access'})
+                                              'style': OPTION_ENABLE})
         else:
             # 其他情况，还不能挑战这个任务
             ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
                                               'comment': '未具备挑战条件',
                                               'enable': False,
-                                              'style': 'weui-cell weui-cell_disable'})
+                                              'style': OPTION_DISABLE})
     ret_dict['progress'] = check_progress(cur_game=cur_game, reward_list=reward_list)
     return ret_dict
 
