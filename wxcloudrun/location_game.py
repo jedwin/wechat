@@ -24,10 +24,11 @@ def replace_content_with_html(in_content):
     2、将里面< >包含的图片名称，换成media url <img src="xxxx" alt="yyy">
     """
     def replace_media(matched):
+        image_name = matched.group('keyword')
         try:
-            my_media = WechatMedia.objects.get(name=matched)
+            my_media = WechatMedia.objects.get(name=image_name)
             img_url = my_media.info['url']
-            img_string = f'<img scr="{img_url}" alt="{matched}">'
+            img_string = f'<p><img src="{img_url}" alt="{image_name}"></p>'
             return img_string
         except ObjectDoesNotExist:
             return matched
@@ -38,7 +39,7 @@ def replace_content_with_html(in_content):
     re_pattern = '「(?P<keyword>[^」]+)」'
     matches = re.findall(pattern=re_pattern, string=ret_content)
     if len(matches) > 0:
-        ret_result = re.sub(pattern=re_pattern, repl=insert_hyperlink, string=ret_content)
+        ret_result = re.sub(pattern=re_pattern, repl=replace_media, string=ret_content)
         return ret_result
     else:
         # 如果文本中没有需要插入图片，就按原样返回
