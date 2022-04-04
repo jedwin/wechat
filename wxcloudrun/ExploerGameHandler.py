@@ -147,16 +147,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                     # 如果这个Quest没有前置要求，或前置要求都达到了
                     cur_player.waiting_status = content
                     cur_player.save()
-                    ret_dict['reply_obj'] = cur_quest.reply_msg(type='question', toUser=open_id,
-                                                                fromUser=fromUser, for_text=for_text)
-                    option_list = cur_quest.get_content_list(type='option')
-                    for option in option_list:
-                        ret_dict['reply_options'].append({'trigger': option,
-                                                          'comment': '',
-                                                          'enable': True,
-                                                          'style': OPTION_ENABLE})
-                    ret_dict['hint_string'] = cur_quest.reply_msg(type='hint', toUser=open_id,
-                                                                  fromUser=fromUser, for_text=for_text)
+                    ret_dict = set_quest(cur_game=cur_game, trigger=content, open_id=open_id, ret_dict=ret_dict)
                 else:
                     # 前置要求还没做全
                     done_id_list = set(reward_list).intersection(set(prequire_list))
@@ -314,7 +305,7 @@ def check_progress(cur_game, reward_list):
 
 
 def new_game(cur_game, reward_list, ret_dict):
-    ret_dict['reply_obj'] = cur_game.opening
+    ret_dict['reply_obj'] = replace_content_with_html(cur_game.opening)
     qeusts = ExploreGameQuest.objects.filter(game=cur_game)
     for my_quest in qeusts:
         # 将可以挑战的任务放在选项中
@@ -347,7 +338,12 @@ def set_quest(cur_game, trigger, ret_dict, open_id):
     for_text = False
     ret_dict['reply_obj'] = cur_quest.reply_msg(type='question', toUser=open_id,
                                                 fromUser=fromUser, for_text=for_text)
-    ret_dict['reply_options'] = cur_quest.get_content_list(type='option')
+    option_list = cur_quest.get_content_list(type='option')
+    for option in option_list:
+        ret_dict['reply_options'].append({'trigger': option,
+                                          'comment': '',
+                                          'enable': True,
+                                          'style': OPTION_ENABLE})
     ret_dict['hint_string'] = cur_quest.reply_msg(type='hint', toUser=open_id,
                                                   fromUser=fromUser, for_text=for_text)
     return ret_dict

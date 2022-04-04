@@ -17,6 +17,34 @@ sep = '|'           # 分隔符
 alt_sep = '｜'      # 在分隔前会将此字符替换成sep，因此两者等效
 
 
+def replace_content_with_html(in_content):
+    """
+    将内容换成适合html的图文格式
+    1、将换行\n替换为</p><p>，并在头尾分别加上<p>和</p>
+    2、将里面< >包含的图片名称，换成media url <img src="xxxx" alt="yyy">
+    """
+    def replace_media(matched):
+        try:
+            my_media = WechatMedia.objects.get(name=matched)
+            img_url = my_media.info['url']
+            img_string = f'<img scr="{img_url}" alt="{matched}">'
+            return img_string
+        except ObjectDoesNotExist:
+            return matched
+
+    ret_content = '<p>&nbsp&nbsp'
+    ret_content += in_content.replace('\n', '</p><p>&nbsp&nbsp')
+    ret_content += '</p>'
+    re_pattern = '「(?P<keyword>[^」]+)」'
+    matches = re.findall(pattern=re_pattern, string=ret_content)
+    if len(matches) > 0:
+        ret_result = re.sub(pattern=re_pattern, repl=insert_hyperlink, string=ret_content)
+        return ret_result
+    else:
+        # 如果文本中没有需要插入图片，就按原样返回
+        return ret_content
+
+
 class ExploreGame(models.Model):
     app = models.ForeignKey(WechatApp, on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=100)
@@ -101,7 +129,7 @@ class ExploreGameQuest(models.Model):
                 text_content = replace_content_with_hyperlink(text_content)
                 replyMsg = reply.TextMsg(toUser, fromUser, text_content)
             else:
-                ret_content = text_content
+                ret_content = replace_content_with_html(text_content)
         elif content_type == 'PIC':
             my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
             if len(my_media) > 0:
