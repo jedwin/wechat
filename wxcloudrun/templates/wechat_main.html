@@ -75,7 +75,7 @@
                     {% if hint_string|length > 0 %}
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showIOSDialog_hint">提示</a>
                     {% endif %}
-                    <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showProgress">查看进度</a>
+                    <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showIOSDialog_progress">查看进度</a>
                     {% if clear_code|length > 0 %}
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showClearCode">查看通关码</a>
                     {% endif %}
@@ -142,10 +142,10 @@
             $(this).parents('.js_dialog_progress').removeAttr('tabindex');
         });
         $('#showIOSDialog_progress').on('click', function(){
-            iosDialog_hint.fadeIn(200);
-            iosDialog_hint.attr('aria-hidden','false');
-            iosDialog_hint.attr('tabindex','0');
-            iosDialog_hint.trigger('focus');
+            iosDialog_progress.fadeIn(200);
+            iosDialog_progress.attr('aria-hidden','false');
+            iosDialog_progress.attr('tabindex','0');
+            iosDialog_progress.trigger('focus');
         });
 
         var $textProgress = $('#textProgress');

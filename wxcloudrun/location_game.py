@@ -130,7 +130,13 @@ class ExploreGameQuest(models.Model):
                 text_content = replace_content_with_hyperlink(text_content)
                 replyMsg = reply.TextMsg(toUser, fromUser, text_content)
             else:
-                ret_content = replace_content_with_html(text_content)
+                if type == 'question':
+                    # 只有"问题内容"需要进行html样式更新
+                    ret_content = replace_content_with_html(text_content)
+
+                else:
+                    # 其余类型无需转换
+                    ret_content = text_content
         elif content_type == 'PIC':
             my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
             if len(my_media) > 0:
