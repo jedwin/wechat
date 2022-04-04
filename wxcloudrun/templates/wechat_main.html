@@ -45,21 +45,21 @@
 
                 <div class="weui-cells">
                     {% if reply_options|length > 0 %}
-                    {% for option in reply_options %}
-                    <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}"
-                       {% if option.enable %}
-                            href="/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd={{option.trigger}}">
-                        {% else %}
-                            href="javascript:">
-                        {% endif %}
-                        <span class="weui-cell__bd" id="{{option.trigger}}">
-                            <span>{{option.trigger}}</span>
-                        </span>
-                        <span class="weui-cell__ft">
-                            {{ option.comment }}
-                        </span>
-                    </a>
-                    {% endfor %}
+                        {% for option in reply_options %}
+                        <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}"
+                           {% if option.enable %}
+                                href="/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd={{option.trigger}}">
+                            {% else %}
+                                href="javascript:">
+                            {% endif %}
+                            <span class="weui-cell__bd" id="{{option.trigger}}">
+                                <span>{{option.trigger}}</span>
+                            </span>
+                            <span class="weui-cell__ft">
+                                {{ option.comment }}
+                            </span>
+                        </a>
+                        {% endfor %}
                     {% else %}
                     <label for="js_input" class="weui-cell weui-cell_active">
                         <div class="weui-cell__hd"><span class="weui-label">答案是</span></div>
