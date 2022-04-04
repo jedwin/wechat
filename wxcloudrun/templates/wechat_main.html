@@ -21,14 +21,11 @@
     <div class="page article">
         <div class="page__hd">
             <h1 class="page__title">
-                {{ title }}
+                {{ cur_game_name }}
             </h1>
         </div>
         <article class="weui-article">
-            <h1>{{ cur_game_name }}</h1>
-            <p>
-                {{ reply_obj }}
-            </p>
+                {{ reply_obj|safe }}
         </article>
         {% if notify_msg|length > 0 %}
             <div role="alert" class="weui-toptips weui-toptips_notify" id="notifyTips"
