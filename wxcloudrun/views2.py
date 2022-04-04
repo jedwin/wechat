@@ -16,6 +16,8 @@ from wxcloudrun.ExploerGameHandler import *
 WAITING_FOR_PASSWORD = 'w_password'             # 等待用户输入认证密码
 WAITING_FOR_POI_KEYWORD = 'w_keyword'           # 等待用户输入POI关键词
 WAITING_FOR_POI_DISTANCE = 'w_dist'             # 等待用户输入POI搜索范围（米）
+KEYWORD_CONTACT_US = 'key_contact_us'           # 联系我们
+DEFAULT_APP_KEYWORD = '管家'                     # 默认app关键词
 ASK_FOR_PASSWORD = '请先输入从客服处获得的密码'
 GAME_IS_NOT_ACTIVE = '对不起，游戏未启动或时间已过'
 CHECK_CLEAR_CODE = '查看通关密码'
@@ -414,6 +416,13 @@ def handle_event_msg(request, app_en_name):
                 text_content = str(poi_list)
             replyMsg = reply.TextMsg(toUser, fromUser, text_content)
             return replyMsg.send()
+        elif event_key.lower() == KEYWORD_CONTACT_US:
+            try:
+                app_keyword = AppKeyword.objects.get(app=my_app, keyword=DEFAULT_APP_KEYWORD)
+                replyMsg = app_keyword.reply_msg(toUser=toUser, fromUser=fromUser)
+                return replyMsg.send()
+            except ObjectDoesNotExist:
+                text_content = f'APP关键词{DEFAULT_APP_KEYWORD}不存在，请联系管理员'
         elif event_key.lower() == 'key_game_1':
             # 开始老广新痕游戏
             cur_game_name = '老广新痕（4月版）'
