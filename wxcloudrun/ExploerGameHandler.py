@@ -314,7 +314,7 @@ def new_game(cur_game, reward_list, ret_dict):
             # 如果这个Quest已经通关
             ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
                                               'comment': '已通关',
-                                              'enable': False,
+                                              'enable': True,
                                               'style': OPTION_ENABLE})
         elif set(prequire_list).issubset(set(reward_list)) or len(prequire_list) == 0:
             # 如果这个Quest没有前置要求，或前置要求都达到了
