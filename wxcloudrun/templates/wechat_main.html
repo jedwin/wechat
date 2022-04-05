@@ -20,11 +20,13 @@
 <script type="text/html" id="tpl_home">
     <div class="page article">
         <article class="weui-article">
-            <h1>
-                {{ cur_game_name }}
-            </h1>
             <section>
+                <h1>
+                    {{ cur_game_name }}
+                </h1>
+                <section>
                 {{ reply_obj|safe }}
+                </section>
             </section>
         </article>
         {% if notify_msg|length > 0 %}
