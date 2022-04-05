@@ -58,6 +58,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
     ret_dict['progress'] = ''
     ret_dict['notify_msg'] = ''
     ret_dict['error_msg'] = ''
+    ret_dict['cur_game_name'] = ''
 
     # 为了和文字版统一处理，增加fromUser空变量
     fromUser = ''
@@ -104,6 +105,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
     try:
         cur_game = ExploreGame.objects.get(app=my_app, name=cur_game_name)
         ret_dict['game_is_valid'] = True
+        ret_dict['cur_game_name'] = cur_game_name
     except ObjectDoesNotExist:
         # 如果配置的游戏名称已经不存在，就清空已配置的名称
         # 触发词列表置空

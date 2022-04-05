@@ -1,5 +1,7 @@
 # views.py
 
+import io
+import sys
 from django.shortcuts import HttpResponse, render, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 import hashlib
@@ -567,6 +569,7 @@ def show_profile(request):
     如果openid不为空，但errmsg也不为空，表示获取用户信息失败，同样要查看errmsg内容
 
     """
+    # sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='utf-8') # 改变标准输出的默认编码
     template = 'wechat_main.html'
     app_en_name = request.GET.get('app_en_name', '')
     cur_game_name = request.GET.get('cur_game_name', '')
@@ -574,6 +577,7 @@ def show_profile(request):
     cmd = request.GET.get('cmd', '')
     errmsg = request.GET.get('errmsg', '')
     ret_dict = dict()
+
     if len(open_id) > 0:
         # 把上面的参数传递给handle_player_command()，将返回以下字典
         # {'game_is_valid': true/false,
@@ -591,11 +595,16 @@ def show_profile(request):
         ret_dict = handle_player_command(app_en_name=app_en_name, open_id=open_id, game_name=cur_game_name,
                                          cmd=cmd, for_text=False)
     else:
-        print(f'errmsg= {errmsg}')
+        if len(errmsg) > 0:
+            print(f'errmsg= {errmsg}')
+            ret_dict['error_msg'] = errmsg
+        else:
+            print(f'openid and errmsg are blank')
+            ret_dict['error_msg'] = '异常调用'
     ret_dict['app_en_name'] = app_en_name
-    ret_dict['cur_game_name'] = cur_game_name
+
     ret_dict['open_id'] = open_id
-    print(ret_dict)
+    # print(ret_dict)
     return render(request, template, ret_dict)
 
 
