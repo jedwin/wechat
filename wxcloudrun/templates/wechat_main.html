@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0,viewport-fit=cover">
     <meta name="wechat-enable-text-zoom-em" content="true">
-    <title>{{ title }}</title>
+    <title>{{ cur_game_name }}</title>
     <link rel="stylesheet" href="/static/style/weui.css"/>
     <link rel="stylesheet" href="/static/style/example.css"/>
+    <style>p {text-indent: 1em;}</style>
 </head>
 <body ontouchstart>
 <script type="text/javascript">
@@ -78,12 +79,16 @@
                     {% if hint_string|length > 0 %}
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showIOSDialog_hint">提示</a>
                     {% endif %}
+                    {% if reply_obj|length > 0 %}
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showIOSDialog_progress">查看进度</a>
+                    {% endif %}
                     {% if clear_code|length > 0 %}
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showClearCode">查看通关码</a>
                     {% endif %}
+                    {% if reply_obj|length > 0 %}
                     <a href="/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}"
                        role="button" class="weui-btn weui-btn_primary" id="back2index">返回</a>
+                    {% endif %}
                 </div>
                 <div id="dialog_hint">
                     <div class="js_dialog_hint" role="dialog"  aria-hidden="true" aria-modal="true"
@@ -91,7 +96,7 @@
                         <div class="weui-mask"></div>
                         <div class="weui-dialog">
                             <div class="weui-dialog__hd"><strong class="weui-dialog__title" id="js_title1">提示</strong></div>
-                            <div class="weui-dialog__bd" id="notice">{{hint_string}}</div>
+                            <div class="weui-dialog__bd" id="notice">{{hint_string|safe}}</div>
                             <div class="weui-dialog__ft">
                                 <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_default"
                                    id="confirm_hint">确定</a>

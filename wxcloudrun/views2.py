@@ -14,7 +14,9 @@ import datetime
 from wxcloudrun.models import *
 from wxcloudrun.location_game import *
 from wxcloudrun.ExploerGameHandler import *
+import logging
 
+logger = logging.getLogger('log')
 WAITING_FOR_PASSWORD = 'w_password'             # 等待用户输入认证密码
 WAITING_FOR_POI_KEYWORD = 'w_keyword'           # 等待用户输入POI关键词
 WAITING_FOR_POI_DISTANCE = 'w_dist'             # 等待用户输入POI搜索范围（米）
@@ -602,9 +604,8 @@ def show_profile(request):
             print(f'openid and errmsg are blank')
             ret_dict['error_msg'] = '异常调用'
     ret_dict['app_en_name'] = app_en_name
-
     ret_dict['open_id'] = open_id
-    # print(ret_dict)
+    logger.info(ret_dict)
     return render(request, template, ret_dict)
 
 
