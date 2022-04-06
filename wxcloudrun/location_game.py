@@ -1,20 +1,26 @@
-from django.db import models
-from django.core.exceptions import *
-from .coordinate_converter import *
-from django.db.models import F, Q, When, Count
-import urllib3
 import certifi
-import json
-import time
-import os
 import csv
+import io
+import json
+import os
 import re
+import sys
+import time
+import urllib3
+from django.core.exceptions import *
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.db import models
+from django.db.models import F, Q, When, Count
+import logging
 from wxcloudrun import reply
 from wxcloudrun.models import *
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from wxcloudrun.coordinate_converter import *
+
 
 sep = '|'           # 分隔符
 alt_sep = '｜'      # 在分隔前会将此字符替换成sep，因此两者等效
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='utf-8')  # 改变标准输出的默认编码
+logger = logging.getLogger('log')
 
 
 def replace_content_with_html(in_content):
@@ -33,8 +39,8 @@ def replace_content_with_html(in_content):
         except ObjectDoesNotExist:
             return matched
 
-    ret_content = '<p>&nbsp&nbsp'
-    ret_content += in_content.replace('\n', '</p><p>&nbsp&nbsp')
+    ret_content = '<p>'
+    ret_content += in_content.replace('\n', '</p><p>')
     ret_content += '</p>'
     re_pattern = '「(?P<keyword>[^」]+)」'
     matches = re.findall(pattern=re_pattern, string=ret_content)
@@ -76,7 +82,117 @@ class ExploreGame(models.Model):
             return content.replace(alt_sep, sep).split(sep)
         else:
             return list()
-        
+
+    def export_to_csv(self):
+        """
+        将本游戏下面所有quest保存为csv
+        返回json对象
+        {'result': True表示成功，False表示有异常
+        'errmsg': string, 异常时开查看这个信息
+        }
+        """
+        ret_dict = dict()
+        ret_dict['result'] = False
+        ret_dict['errmsg'] = 'Initial'
+        find_string = '\r\n'
+        replace_string = '</p><p>'
+        try:
+            f = open(self.settings_file, 'w', encoding='gbk')
+            f.writelines('任务, 前置条件, 地点要求, 用户位置搜索关键词, 谜面类型,谜面,')
+            f.writelines('提示类型,提示内容,答案列表,选项列表,奖励类型,奖励内容,奖励id\n')
+        except:
+            ret_dict['errmsg'] = f'setting file can not be created'
+            return ret_dict
+        all_quests = ExploreGameQuest.objects.filter(game=self)
+        count = 0
+        for quest in all_quests:
+            export_list = list()
+            export_list.append(quest.quest_trigger.replace(',', '，'))
+            export_list.append(quest.prequire_list.replace(',', '，'))
+            export_list.append(quest.location_list.replace(',', '，'))
+            export_list.append(quest.poi_keyword.replace(',', '，'))
+            export_list.append(quest.question_type)
+            export_list.append(quest.question_data.replace(find_string, replace_string).replace(',', '，'))   #
+            export_list.append(quest.hint_type)
+            export_list.append(quest.hint_data.replace(find_string, replace_string).replace(',', '，'))
+            export_list.append(quest.answer_list.replace(',', '，'))
+            export_list.append(quest.options_list.replace(',', '，'))
+            export_list.append(quest.reward_type)
+            export_list.append(quest.reward.replace(',', '，'))
+            export_list.append(str(quest.reward_id))
+            f.writelines(','.join(export_list))
+            f.writelines('\n')
+            count += 1
+            # logger.info(export_list)
+        ret_dict['result'] = True
+        ret_dict['errmsg'] = f'export {count} quests'
+        return ret_dict
+
+    def import_from_csv(self):
+        ret_dict = dict()
+        ret_dict['result'] = False
+        ret_dict['errmsg'] = 'Initial'
+        replace_string = '\r\n'
+        find_string = '</p><p>'
+        new_count = 0
+        update_count = 0
+        try:
+            f = open(self.settings_file, 'r', encoding='gbk')
+        except:
+            ret_dict['errmsg'] = f'can not open setting file: {self.settings_file}'
+            return ret_dict
+
+        all_rows = f.readlines()
+        for i in range(1, len(all_rows)):
+            quest = all_rows[i].split(',')
+            quest_trigger = quest[0]
+            prequire_list = quest[1]
+            location_list = quest[2]
+            poi_keyword = quest[3]
+            question_type = quest[4]
+            question_data = quest[5].replace(find_string, replace_string)
+            hint_type = quest[6]
+            hint_data = quest[7].replace(find_string, replace_string)
+            answer_list = quest[8]
+            options_list = quest[9]
+            reward_type = quest[10]
+            reward = quest[11]
+            reward_id = quest[12]
+            if len(reward_id) > 0:
+                reward_id = int(reward_id)
+            else:
+                reward_id = 0
+            if len(quest_trigger) > 0:
+                try:
+                    my_quest = ExploreGameQuest.objects.get(game=self, quest_trigger=quest_trigger)
+                    my_quest.quest_trigger = quest_trigger
+                    my_quest.prequire_list = prequire_list
+                    my_quest.location_list = location_list
+                    my_quest.poi_keyword = poi_keyword
+                    my_quest.question_type = question_type
+                    my_quest.question_data = question_data
+                    my_quest.hint_type = hint_type
+                    my_quest.hint_data = hint_data
+                    my_quest.answer_list = answer_list
+                    my_quest.options_list = options_list
+                    my_quest.reward = reward
+                    my_quest.reward_type = reward_type
+                    my_quest.reward_id = reward_id
+                    my_quest.save()
+                    update_count += 1
+                except ObjectDoesNotExist:
+                    my_quest = ExploreGameQuest(game=self, quest_trigger=quest_trigger, prequire_list=prequire_list,
+                                                location_list=location_list, poi_keyword=poi_keyword,
+                                                question_type=question_type, question_data=question_data,
+                                                hint_type=hint_type, hint_data=hint_data, answer_list=answer_list,
+                                                options_list=options_list, reward_type=reward_type, reward=reward,
+                                                reward_id=reward_id)
+                    new_count += 1
+                my_quest.save()
+        ret_dict['result'] = True
+        ret_dict['errmsg'] = f'update {update_count} quests, create {new_count} quests'
+        return ret_dict
+
 
 class ExploreGameQuest(models.Model):
     game = models.ForeignKey(ExploreGame, on_delete=models.CASCADE)
@@ -130,7 +246,7 @@ class ExploreGameQuest(models.Model):
                 text_content = replace_content_with_hyperlink(text_content)
                 replyMsg = reply.TextMsg(toUser, fromUser, text_content)
             else:
-                if type == 'question':
+                if type in ['question', 'hint']:
                     # 只有"问题内容"需要进行html样式更新
                     ret_content = replace_content_with_html(text_content)
 
