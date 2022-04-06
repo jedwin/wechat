@@ -179,10 +179,33 @@ class AppKeywordAdmin(admin.ModelAdmin):
 
 
 class ExploreGameAdmin(admin.ModelAdmin):
-    list_display = ['name', 'app', 'is_active']
-    list_editable = ['app', 'is_active']
+    list_display = ['name', 'app', 'settings_file', 'is_active']
+    list_editable = ['app', 'settings_file', 'is_active']
     list_filter = ['app']
-    inlines = [ExploreGameQuestInline]
+    # inlines = [ExploreGameQuestInline]
+    actions = ['export2csv', 'import_from_csv']
+
+    @admin.action(description='保存游戏配置')
+    def export2csv(self, request, queryset):
+        for obj in queryset:
+            result_dict = obj.export_to_csv()
+            result = result_dict['result']
+            errmsg = result_dict['errmsg']
+            if result:
+                self.message_user(request, f'{errmsg}', messages.SUCCESS)
+            else:
+                self.message_user(request, f'{errmsg}', messages.WARNING)
+
+    @admin.action(description='导入游戏配置')
+    def import_from_csv(self, request, queryset):
+        for obj in queryset:
+            result_dict = obj.import_from_csv()
+            result = result_dict['result']
+            errmsg = result_dict['errmsg']
+            if result:
+                self.message_user(request, f'{errmsg}', messages.SUCCESS)
+            else:
+                self.message_user(request, f'{errmsg}', messages.WARNING)
 
 
 class ExploreGameQuestAdmin(admin.ModelAdmin):

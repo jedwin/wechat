@@ -138,6 +138,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
 
     # 但需要检查用户是否鉴权
     if player_is_audit:
+
         # 开始检查cmd指令
         if len(cmd) > 0:
             content = cmd
@@ -232,6 +233,10 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                                                                            for_text=for_text)
                         else:
                             ret_dict['error_msg'] = f'{error_reply_default}'
+                elif cur_player.waiting_status == WAITING_FOR_PASSWORD:
+                    # 如果用户已经完成鉴权，但状态是等待输入密码，就可能人为修改了鉴权状态，先清空等待状态
+                    cur_player.waiting_status = ''
+                    ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
         else:  # 如果cmd为空，就显示游戏的初始化内容
             ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
     else:
@@ -240,20 +245,23 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
         content = cmd
         if cur_player.waiting_status == WAITING_FOR_PASSWORD:
             # 玩家正在输入密码
-            result = auth_user(app=my_app, password=content, user_id=open_id)
-            if result:
-                player_is_audit = True
-                cur_player.waiting_status = ''
-                cur_player_game_dict[FIELD_IS_AUDIT] = player_is_audit
-                cur_player.game_hist[cur_game_name] = cur_player_game_dict
-                cur_player.save()
-                ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
-                ret_dict['player_is_audit'] = True
-                ret_dict['notify_msg'] = AUDIT_SUCCESS
-                ret_dict['cmd'] = ''
-            else:
-                # 没有输对密码
-                ret_dict['error_msg'] = AUDIT_FAILED
+            if len(content) > 0:
+                result = auth_user(app=my_app, password=content, user_id=open_id)
+                if result:
+                    player_is_audit = True
+                    cur_player.waiting_status = ''
+                    cur_player_game_dict[FIELD_IS_AUDIT] = player_is_audit
+                    cur_player.game_hist[cur_game_name] = cur_player_game_dict
+                    cur_player.save()
+                    ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
+                    ret_dict['player_is_audit'] = True
+                    ret_dict['notify_msg'] = AUDIT_SUCCESS
+                    ret_dict['cmd'] = ''
+                else:
+                    # 没有输对密码
+                    ret_dict['error_msg'] = AUDIT_FAILED
+            else:  # cmd为空，再次显示请输入密码
+                ret_dict['error_msg'] = ASK_FOR_PASSWORD
         else:
             cur_player.waiting_status = WAITING_FOR_PASSWORD
             cur_player.save()

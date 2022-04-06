@@ -38,18 +38,21 @@ def replace_content_with_html(in_content):
             return img_string
         except ObjectDoesNotExist:
             return matched
-
-    ret_content = '<p>'
-    ret_content += in_content.replace('\n', '</p><p>')
-    ret_content += '</p>'
-    re_pattern = '「(?P<keyword>[^」]+)」'
-    matches = re.findall(pattern=re_pattern, string=ret_content)
-    if len(matches) > 0:
-        ret_result = re.sub(pattern=re_pattern, repl=replace_media, string=ret_content)
-        return ret_result
+    if len(in_content) > 0:
+        ret_content = '<p>'
+        ret_content += in_content.replace('\n', '</p><p>')
+        ret_content += '</p>'
+        re_pattern = '「(?P<keyword>[^」]+)」'
+        matches = re.findall(pattern=re_pattern, string=ret_content)
+        if len(matches) > 0:
+            ret_result = re.sub(pattern=re_pattern, repl=replace_media, string=ret_content)
+            return ret_result
+        else:
+            # 如果文本中没有需要插入图片，就按原样返回
+            return ret_content
     else:
-        # 如果文本中没有需要插入图片，就按原样返回
-        return ret_content
+        # 如果in_content为空，则原样返回
+        return in_content
 
 
 class ExploreGame(models.Model):

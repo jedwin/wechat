@@ -24,6 +24,6 @@ urlpatterns = (
     path('accounts/', include('django.contrib.auth.urls')),
     path('code/', mpv2.get_user_info_with_code),  # 用于微信网页授权获取用户信息
     path('profile/', mpv2.show_profile),  # 显示用户信息（微信风格页面）
-    path('<str:filename>', mpv2.download),         # 用于微信公众号域名验证下载文件
+    # path('<str:filename>', mpv2.download),         # 用于微信公众号域名验证下载文件
 
 )
