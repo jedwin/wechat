@@ -6,7 +6,7 @@ CUR_PATH = os.path.dirname(os.path.realpath(__file__))
 # LOG_PATH = os.path.join(os.path.dirname(CUR_PATH), 'logs') # LOG_PATH是存放日志的路径
 LOG_PATH = '/logs/django/'
 if not os.path.exists(LOG_PATH):
-    os.mkdirs(LOG_PATH)  # 如果不存在这个logs文件夹，就自动创建一个
+    os.makedirs(LOG_PATH)  # 如果不存在这个logs文件夹，就自动创建一个
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
