@@ -218,7 +218,7 @@ $(() => {
       imgUrl: 'https://mmbiz.qpic.cn/mmemoticon/ajNVdqHZLLA16apETUPXh9Q5GLpSic7lGuiaic0jqMt4UY8P4KHSBpEWgM7uMlbxxnVR7596b3NPjUfwg7cFbfCtA/0',
     };
 
-    $.getJSON(`https://weui.io/api/sign?url=${encodeURIComponent(location.href.split('#')[0])}`, (res) => {
+    $.getJSON(``, (res) => {
       wx.config({
         beta: true,
         debug: false,
