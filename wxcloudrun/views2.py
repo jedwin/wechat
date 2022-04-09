@@ -110,20 +110,17 @@ def handle_text_msg(request, app_en_name):
 
     """
     webData = request.body
-    my_app = WechatApp.objects.get(en_name=app_en_name)
+    try:
+        my_app = WechatApp.objects.get(en_name=app_en_name)
+    except ObjectDoesNotExist:
+        logger.error(f'can not find the app of {app_en_name}')
+        return None
     # 获取APP级关键词
     app_keyword_list = [x.keyword for x in AppKeyword.objects.filter(app=my_app)]
     recMsg = receive.parse_xml(webData)
     toUser = recMsg.FromUserName
     open_id = toUser
     fromUser = recMsg.ToUserName
-    # 将关键判断条件重置
-    trigger_list = list()
-    player_is_audit = False
-    cur_player_game_dict = dict()
-    reward_list = list()
-    cmd_list = list()
-    clear_code = ''
 
     #  检查这个openid对应的用户情况
     try:
@@ -132,239 +129,23 @@ def handle_text_msg(request, app_en_name):
         # 如果这个openid是第一次出现，就先创新对应用户
         cur_player = WechatPlayer(app=my_app, open_id=open_id)
         cur_player.save()
-
-    # 先检查用户的当前游戏名称，是否有配置
-    if len(cur_player.cur_game_name) > 0:
-        # 如果用户有当前游戏
-        cur_game_name = cur_player.cur_game_name
-        try:
-            cur_game = ExploreGame.objects.get(app=my_app, name=cur_game_name)
-        except ObjectDoesNotExist:
-            # 如果配置的游戏名称已经不存在，就清空已配置的名称
-            # 触发词列表置空
-            cur_player.cur_game_name = ''
-            cur_player.save()
-            cur_game = None
-
-        if cur_game:
-            if cur_game.is_active:
-                # 如果当前游戏处于激活状态，初始化游戏对应的对象
-                # 触发词列表、当前玩家游戏存档、已获成就、历史命令列表、通关码、鉴权信息
-                trigger_list = [x.quest_trigger for x in ExploreGameQuest.objects.filter(game=cur_game)]
-                cur_player_game_dict = get_cur_player_game_dict(player=cur_player, game_name=cur_game_name)
-                reward_list = cur_player_game_dict.get(FIELD_REWARD_LIST, list())
-                cmd_list = cur_player_game_dict.get(FIELD_COMMAND_LIST, list())
-                clear_code = cur_player_game_dict.get(FIELD_CLEAR_CODE, '')
-                player_is_audit = cur_player_game_dict.get(FIELD_IS_AUDIT, False)
-            else:
-                # 如果游戏不是激活状态，由后面的程序处理
-                pass
-        else:
-            # 用户有配置游戏名称，但没找到对应的游戏，可能是游戏已被删除，或改名
-            # 相当于一个新用户，由后面的流程来处理
-            pass
-
-    else:
-        # 没有配置游戏名称，可能是未参与游戏的用户，由后面的流程来处理
-        pass
-
     content = recMsg.Content.decode('utf-8')
-
     # 如果用户输入了APP级关键词
     if content in app_keyword_list:
         # cmd_list.append(content)
         try:
             my_app_keyword = AppKeyword.objects.get(app=my_app, keyword=content)
             replyMsg = my_app_keyword.reply_msg(toUser=toUser, fromUser=fromUser)
+            return replyMsg.send()
         except ObjectDoesNotExist:
             text_content = f'APP级关键词{content}出错，请联系管理员'
-            replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-    # 玩家打算触发某个Quest任务
-    elif content in trigger_list:
-        # 先检查用户是否有权限玩这个游戏
-        if player_is_audit:
-            if cur_game.is_active:
-                cur_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=content)
-                prequire_list = cur_quest.get_content_list(type='prequire')
-                if set(prequire_list).issubset(set(reward_list)) or len(prequire_list) == 0:
-                    # 如果这个Quest没有前置要求，或前置要求都达到了
-                    cur_player.waiting_status = content
-                    cur_player.save()
-                    text_content = cur_quest.question_data
-                    replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-                else:
-                    # 前置要求还没做全
-                    done_id_list = set(reward_list).intersection(set(prequire_list))
-                    all_quest = ExploreGameQuest.objects.filter(game=cur_game)
-                    done_q_name_list = list()
-                    for q in all_quest:
-                        if q.reward_id in done_id_list:
-                            done_q_name_list.append(q.quest_trigger)
-                    text_content = f'要回答这个问题，需要先完成{len(prequire_list)}个任务，'
-                    text_content += f'而您现在只完成了{str(done_q_name_list)[1:-1]} {len(set(reward_list).intersection(set(prequire_list)))}个。'
-                    replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-            else:
-                # 游戏已经去激活，可能是时间已到
-                cur_player.waiting_status = ''
-                cur_player.save()
-                text_content = f'{GAME_IS_NOT_ACTIVE}'
-                replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-        else:
-            # 还没有通过鉴权
-            cur_player.waiting_status = WAITING_FOR_PASSWORD
-            cur_player.save()
-            text_content = f'{ASK_FOR_PASSWORD}'
-            replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-    elif content == CHECK_CLEAR_CODE:
-        # 玩家重新查看游戏通关密码
-        if len(clear_code) > 0:
-            text_content = f'您的通关密码是：{clear_code}'
-        else:
-            text_content = f'您还没通关，请继续努力！'
-        replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-    elif content == CHECK_PROGRESS:
-        # 玩家查看游戏进度
-        if cur_game:
-            all_quest = ExploreGameQuest.objects.filter(game=cur_game)
-            done_q_name_list = list()
-            for q in all_quest:
-                if q.reward_id in reward_list:
-                    done_q_name_list.append(q.quest_trigger)
-            if len(done_q_name_list) > 0:
-                text_content = f'您现在完成了{str(done_q_name_list)[1:-1]} {len(done_q_name_list)}个任务。'
-            else:
-                text_content = f'您现在还没有完成任何任务。'
-        else:
-            text_content = f'您没有参与游戏。'
-        replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-    # 如果用户是否处于等待输入状态
-    elif len(cur_player.waiting_status) > 0:
-        # 等待用户输入POI搜索关键词
-        if cur_player.waiting_status == WAITING_FOR_POI_KEYWORD:
-            poi_keyword = content[:50]
-            cur_player.poi_keyword = poi_keyword
-            cur_player.waiting_status = ''
-            cur_player.save()
-            text_content = f'兴趣点关键词已设为：{poi_keyword}'
-            replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-        # 等待用户输入POI搜索范围
-        elif cur_player.waiting_status == WAITING_FOR_POI_DISTANCE:
-            try:
-                poi_dist = int(content)
-                if poi_dist < 10:
-                    poi_dist = 10
-                cur_player.poi_dist = poi_dist
-                cur_player.waiting_status = ''
-                cur_player.save()
-                text_content = f'搜查兴趣点范围已设为：{poi_dist}'
-                replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-            except:
-                text_content = f'你输入的距离不正确：{content}'
-                replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-        # 等待用户输入认证密码
-        elif cur_player.waiting_status == WAITING_FOR_PASSWORD:
-            # 玩家正在输入密码
-            result = auth_user(app=my_app, password=content, user_id=open_id)
-            if result:
-                # cur_player.name = user_id  # 鉴权后不再返回user id
-                player_is_audit = True
-                cur_player.waiting_status = ''
-                player_game_dict = cur_player.game_hist
-                cur_player_game_dict[FIELD_IS_AUDIT] = True
-                cur_player.game_hist[cur_game_name] = cur_player_game_dict
-                cur_player.save()
-                text_content = f'''验证成功，请重新点击菜单开始游戏'''
-                replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-            else:
-                # 没有输对密码
-                text_content = f'密码错误，请查证后再输入'
-                replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-        # 用户已处于某个Quest中，等待输入答案
-        elif cur_player.waiting_status in trigger_list:
-            # 如果用户已经处于某个quest的任务中
-            if cur_game.is_active:
-                try:
-                    cur_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=cur_player.waiting_status)
-                    answer_list = cur_quest.get_content_list(type='answer')
-                except ObjectDoesNotExist:
-                    # 玩家等待状态设置错误，可能是游戏配置已更改
-                    # 清空等待状态，将answer_list置为空列表
-                    cur_player.waiting_status = ''
-                    cur_player.save()
-                    answer_list = list()
-                    cur_quest = None
-                    text_content += f'任务已取消，请重新开始另一个任务'
-                    replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-                if content in answer_list:
-                    # 答对了当前问题
-                    reward_id = cur_quest.reward_id
-                    # 如果玩家是新获得的奖励，就增加1个步数，保存奖励记录
-                    # 如果玩家之前已经获得过奖励，就忽略
-                    if reward_id not in reward_list:
-                        cmd_list.append(content)
-                        reward_list.append(reward_id)
-                        cur_player_game_dict[FIELD_REWARD_LIST] = reward_list
-                        cur_player_game_dict[FIELD_COMMAND_LIST] = cmd_list
-                        cur_player.game_hist[cur_game_name] = cur_player_game_dict
-                    # 重置玩家当前等待状态，并保存
-                    cur_player.waiting_status = ''
-                    cur_player.save()
-                    # 确认玩家是否已通关
-                    clear_requirement_list = cur_game.get_content_list()
-                    if set(clear_requirement_list).issubset(set(reward_list)):
-                        # 玩家已达到通关要求
-                        clear_code = cur_player.hash_with_game()
-                        cur_player_game_dict[FIELD_CLEAR_CODE] = clear_code
-                        cur_player.game_hist[cur_game_name] = cur_player_game_dict
-                        cur_player.save()
-                        text_content = f'{cur_game.clear_notice}'
-                        text_content += '\n'
-                        text_content += f'您的通过密码是：{clear_code}'
-                        replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-                    else:
-                        # 玩家还没通关
-                        replyMsg = cur_quest.reply_msg(type='reward', toUser=toUser, fromUser=fromUser)
-                elif content == keyword_hint:
-                    # 输入了【提示】
-                    if cur_quest:
-                        replyMsg = cur_quest.reply_msg(type='hint', toUser=toUser, fromUser=fromUser)
-                    else:
-                        text_content = '您正在进行的任务已经取消，请重新开始另一个吧：）'
-                        replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-                else:
-                    # 输入了不相关的内容
-                    cmd_list.append(content)
-                    cur_player_game_dict[FIELD_COMMAND_LIST] = cmd_list
-                    cur_player.game_hist[cur_game_name] = cur_player_game_dict
-                    cur_player.save()
-                    my_error_auto_replys = list(ErrorAutoReply.objects.filter(is_active=True))
-                    if len(my_error_auto_replys) > 0:
-                        choose_reply = sample(my_error_auto_replys, 1)[0]
-                        replyMsg = choose_reply.reply_msg(toUser=toUser, fromUser=fromUser)
-                    else:
-                        text_content = f'{error_reply_default}'
-                        replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-                    # 注意：这里不能放最后的else部分
-                    # 如果存在else，则不会判断下面的其他elif部分
-            else:
-                # 游戏已经去激活，可能是时间已到
-                cur_player.waiting_status = ''
-                cur_player.save()
-                text_content = f'{GAME_IS_NOT_ACTIVE}'
-                replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-
-
-    # 用户未正式开始游戏，而且未输入正确的触发关键词，可能是新用户
-    # 可以返回联系管家之类的文字，或者做其他指引性应答
+            logger.error(text_content)
+            return None
+    # 其他情况，暂时不做回应
+    # 以后可以返回联系管家之类的文字，或者做其他指引性应答
     else:
-        try:
-            temp_keyword = '管家'
-            my_app_keyword = AppKeyword.objects.get(app=my_app, keyword=temp_keyword)
-            replyMsg = my_app_keyword.reply_msg(toUser=toUser, fromUser=fromUser)
-        except ObjectDoesNotExist:
-            text_content = f'APP级关键词{temp_keyword}出错，请联系管理员'
-            replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-    return replyMsg.send()
+        return None
+
 
 def handle_event_msg(request, app_en_name):
     """
