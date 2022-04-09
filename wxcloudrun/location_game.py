@@ -34,7 +34,7 @@ def replace_content_with_html(in_content):
         try:
             my_media = WechatMedia.objects.get(name=image_name)
             img_url = my_media.info['url']
-            img_string = f'<p><img src="{img_url}" alt="{image_name}"></p>'
+            img_string = f'<p style="text-align: center;"><img src="{img_url}" alt="{image_name}"></p>'
             return img_string
         except ObjectDoesNotExist:
             return matched
