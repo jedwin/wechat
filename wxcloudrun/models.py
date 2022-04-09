@@ -767,6 +767,12 @@ class MenuButton(models.Model):
                             return False, ret_obj
                     self.sub_button = ret_dict
                     self.save()
+            elif self.type in ['view']:
+                if len(self.url) == 0:
+                    return False, 'url is blank while type=view'
+                else:
+                    ret_dict['url'] = self.url
+                    ret_dict['type'] = self.type
             elif self.type in ['click', 'location_select']:
                 if len(self.key) == 0:
                     return False, f'key is blank in {self.name}'

@@ -603,8 +603,8 @@ def show_profile(request):
         else:
             print(f'openid and errmsg are blank')
             ret_dict['error_msg'] = '异常调用'
-    ret_dict['app_en_name'] = app_en_name
-    ret_dict['open_id'] = open_id
+    # ret_dict['app_en_name'] = app_en_name
+    # ret_dict['open_id'] = open_id
     logger.info(ret_dict)
     return render(request, template, ret_dict)
 
