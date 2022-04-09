@@ -28,20 +28,24 @@
                 </section>
             </section>
         </article>
-        {% if notify_msg|length > 0 %}
-            <div role="alert" class="weui-toptips weui-toptips_notify" id="notifyTips"
-                 style="display: block; opacity: 1;">{{notify_msg}}</div>
-        {% elif error_msg|length > 0 %}
-            <div role="alert" class="weui-toptips weui-toptips_warn" id="errorTips"
-                 style="display: block; opacity: 1;">{{error_msg}}</div>
+        {% if page_type == "quest" %}
+            {% if notify_msg|length > 0 %}
+                <div role="alert" class="weui-toptips weui-toptips_notify" id="notifyTips"
+                     style="display: block; opacity: 1;">{{notify_msg}}</div>
+            {% elif error_msg|length > 0 %}
+                <div role="alert" class="weui-toptips weui-toptips_warn" id="errorTips"
+                     style="display: block; opacity: 1;">{{error_msg}}</div>
+            {% endif %}
         {% endif %}
         <div class="weui-form">
             <form class="weui-cells__group weui-cells__group_form" action="/profile/" >
-                <div class="weui-form__text-area">
-                    <h2 class="weui-form__title">开始挑战</h2>
-                </div>
+                {% if page_type == "quest" or page_type == "main" %}
+                    <div class="weui-form__text-area">
+                        <h2 class="weui-form__title">开始挑战</h2>
+                    </div>
 
-                <div class="weui-cells">
+                    <div class="weui-cells">
+
                     {% if reply_options|length > 0 %}
                         {% for option in reply_options %}
                         <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}"
@@ -59,31 +63,34 @@
                         </a>
                         {% endfor %}
                     {% else %}
-                    <label for="js_input" class="weui-cell weui-cell_active">
-                        <div class="weui-cell__hd"><span class="weui-label">答案是</span></div>
-                        <div class="weui-cell__bd">
-                            <input id="js_input" class="weui-input" placeholder="请把你的答案写在这里哦"/>
+                        <label for="js_input" class="weui-cell weui-cell_active">
+                            <div class="weui-cell__hd"><span class="weui-label">答案是</span></div>
+                            <div class="weui-cell__bd">
+                                <input id="js_input" class="weui-input" placeholder="请把你的答案写在这里哦"/>
+                            </div>
+                        </label>
+                        <br>
+                        <div class="weui-form__opr-area">
+                            <a role="button" disabled aria-disabled="true" href="javascript:" id="showTooltips"
+                               class="weui-btn weui-btn_primary weui-btn_disabled">确定</a>
                         </div>
-                    </label>
-                    <br>
-                    <div class="weui-form__opr-area">
-                        <a role="button" disabled aria-disabled="true" href="javascript:" id="showTooltips"
-                           class="weui-btn weui-btn_primary weui-btn_disabled">确定</a>
-                    </div>
+
                     {% endif %}
-                </div>
-                <br>
+                    </div>
+                {% endif %}
+
+
                 <div class="page__bd page__bd_spacing">
-                    {% if hint_string|length > 0 %}
+                    {% if hint_string|length > 0 and page_type == "quest" %}
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showIOSDialog_hint">提示</a>
                     {% endif %}
-                    {% if reply_obj|length > 0 %}
+                    {% if page_type == "quest" or page_type == "main" %}
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showIOSDialog_progress">查看进度</a>
                     {% endif %}
-                    {% if clear_code|length > 0 %}
+                    {% if clear_code|length > 0 and page_type == "main" %}
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showClearCode">查看通关码</a>
                     {% endif %}
-                    {% if reply_obj|length > 0 %}
+                    {% if page_type == "quest" or page_type == "reward" %}
                     <a href="/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}"
                        role="button" class="weui-btn weui-btn_primary" id="back2index">返回</a>
                     {% endif %}

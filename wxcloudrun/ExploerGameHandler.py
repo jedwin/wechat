@@ -44,7 +44,8 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
     'error_msg': string,        红色的提醒
     'app_en_name': string,
     'open_id': string,
-    'quest_trigger': string,
+    'quest_trigger': string,    用来做页面的title
+    'page_type': string,             目前分为reward和quest两种，分别对应问题页面和成就页面
     }
     """
     # 初始化返回对象
@@ -156,9 +157,14 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                 prequire_list = cur_quest.get_content_list(type='prequire')
                 if set(prequire_list).issubset(set(reward_list)) or len(prequire_list) == 0:
                     # 如果这个Quest没有前置要求，或前置要求都达到了
-                    cur_player.waiting_status = content
-                    cur_player.save()
-                    ret_dict = set_quest(cur_game=cur_game, trigger=content, open_id=open_id, ret_dict=ret_dict)
+                    if cur_quest.reward_id in reward_list:
+                        # 如果玩家已经通关这个任务，就显示对应的成就页面
+                        ret_dict = set_reward(quest=cur_quest, ret_dict=ret_dict)
+                    else:
+                        # 如果玩家还没通过这个任务，就显示问题页面
+                        cur_player.waiting_status = content
+                        cur_player.save()
+                        ret_dict = set_quest(cur_game=cur_game, trigger=content, open_id=open_id, ret_dict=ret_dict)
                 else:
                     # 前置要求还没做全
                     done_id_list = set(reward_list).intersection(set(prequire_list))
@@ -225,7 +231,9 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                                                            for_text=for_text)
                             ret_dict['reply_obj'] = replyMsg
                         # 重置游戏界面
-                        ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
+                        # ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
+                        # 进入显示成就页面
+                        ret_dict = set_reward(quest=cur_quest, ret_dict=ret_dict)
                     else:
                         # 输入了不相关的内容
                         cmd_list.append(content)
@@ -348,6 +356,7 @@ def new_game(cur_game, reward_list, ret_dict):
                                               'style': OPTION_DISABLE})
     ret_dict['progress'] = check_progress(cur_game=cur_game, reward_list=reward_list)
     ret_dict['quest_trigger'] = cur_game.name
+    ret_dict['page_type'] = 'main'
     return ret_dict
 
 
@@ -366,4 +375,18 @@ def set_quest(cur_game, trigger, ret_dict, open_id):
     ret_dict['hint_string'] = cur_quest.reply_msg(type='hint', toUser=open_id,
                                                   fromUser=fromUser, for_text=for_text)
     ret_dict['quest_trigger'] = trigger
+    ret_dict['page_type'] = 'quest'
+    return ret_dict
+
+
+def set_reward(quest, ret_dict):
+    fromUser = ''
+    toUser = ''
+    for_text = False
+    ret_dict['reply_obj'] = quest.reply_msg(type='reward', toUser=toUser,
+                                                fromUser=fromUser, for_text=for_text)
+
+    ret_dict['quest_trigger'] = quest.quest_trigger
+    ret_dict['hint_string'] = ''
+    ret_dict['page_type'] = 'reward'
     return ret_dict
