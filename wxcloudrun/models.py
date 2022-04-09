@@ -737,7 +737,7 @@ class MenuButton(models.Model):
                    ('article_id', '发布后的图文消息'), ('article_view_limited', '发布后的图文消息（限制）')]
     type = models.CharField(max_length=100, default='click', choices=type_choice)
     key = models.CharField(max_length=100, default='', blank=True)
-    url = models.CharField(max_length=300, default='', blank=True)
+    url = models.TextField(max_length=1000, default='', blank=True)
     media_id = models.CharField(max_length=100, default='', blank=True)
     app_id = models.CharField('小程序id', max_length=300, default='', blank=True)
     pagepath = models.CharField('小程序页面路径', max_length=300, default='', blank=True)
@@ -794,7 +794,7 @@ class MenuSubButton(models.Model):
                    ('article_id', '发布后的图文消息'), ('article_view_limited', '发布后的图文消息（限制）')]
     type = models.CharField(max_length=100, default='click', choices=type_choice)
     key = models.CharField(max_length=100, default='', blank=True)
-    url = models.CharField(max_length=300, default='', blank=True)
+    url = models.TextField(max_length=1000, default='', blank=True)
     media_id = models.CharField(max_length=100, default='', blank=True)
     app_id = models.CharField('小程序id', max_length=300, default='', blank=True)
     pagepath = models.CharField('小程序页面路径', max_length=300, default='', blank=True)
