@@ -513,55 +513,67 @@ def get_user_info_with_code(request):
     try:
         my_app = WechatApp.objects.get(en_name=app_en_name)
         appid = my_app.appid
-        if len(code) > 0:
-            request_url = f'http://api.weixin.qq.com/sns/oauth2/access_token?appid={my_app.appid}'
-            request_url += f'&secret={my_app.secret}&code={code}&grant_type=authorization_code'
-            # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-            # a = http.request('GET', request_url).data.decode('utf-8')
-            a = requests.get(request_url)
-            a.encoding = 'utf-8'
-            b = a.json()
-            errcode = b.get('errcode', 0)
-            if errcode > 0:
-                errmsg = b.get('errmsg', '')
-                return HttpResponseRedirect()
-                # return HttpResponse(errmsg)
-            else:
-                temp_acc_token = b.get('access_token', '')
-                refresh_token = b.get('refresh_token', '')
-                openid = b.get('openid', '')
-                scope = b.get('scope', '')
-                request_url = 'http://api.weixin.qq.com/sns/userinfo'
-                request_url += f'?access_token={temp_acc_token}&openid={openid}&lang=zh_CN'
-                # c = http.request('GET', request_url).data.decode('utf-8')
-                c = requests.get(request_url)
-                c.encoding = 'utf-8'
-                d = c.json()
-                errcode = d.get('errcode', 0)
-                if errcode > 0:
-                    errmsg = d.get('errmsg', '')
-
-                else:
-                    my_user = WechatPlayer.objects.get(app=my_app, open_id=openid)
-                    nickname = d.get('nickname', '')
-                    sex = d.get('sex', '')
-                    headimgurl = d.get('headimgurl', '')
-                    privilege = d.get('privilege', '')
-                    my_user.nickname = nickname
-                    my_user.sex = sex
-                    my_user.user_info = d
-                    my_user.head_image = headimgurl
-                    my_user.save()
-
-        else:
-            errmsg = 'code为空'
     except ObjectDoesNotExist:
         # app_en_name参数传递错误
-        errmsg = f'app_en_name参数传递错误: {app_en_name}，或者没有找到对应的用户{openid}'
-    if len(game_name) > 0:
-        cur_game_name = game_name
-    redirect_url = f'/profile/?app_en_name={app_en_name}&cur_game_name={cur_game_name}&openid={openid}&errmsg={errmsg}#wechat_redirect'
-    return HttpResponseRedirect(redirect_url)
+        errmsg = f'app_en_name参数传递错误: {app_en_name}'
+        return HttpResponseRedirect()
+
+    if len(code) > 0:
+        request_url = f'http://api.weixin.qq.com/sns/oauth2/access_token?appid={my_app.appid}'
+        request_url += f'&secret={my_app.secret}&code={code}&grant_type=authorization_code'
+        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        # a = http.request('GET', request_url).data.decode('utf-8')
+        a = requests.get(request_url)
+        a.encoding = 'utf-8'
+        b = a.json()
+        errcode = b.get('errcode', 0)
+        if errcode > 0:
+            # 获取用户open id时出错
+            errmsg = b.get('errmsg', '')
+            return HttpResponse(errmsg)
+
+        else:
+            temp_acc_token = b.get('access_token', '')
+            refresh_token = b.get('refresh_token', '')
+            openid = b.get('openid', '')
+            scope = b.get('scope', '')
+            request_url = 'http://api.weixin.qq.com/sns/userinfo'
+            request_url += f'?access_token={temp_acc_token}&openid={openid}&lang=zh_CN'
+            # c = http.request('GET', request_url).data.decode('utf-8')
+            c = requests.get(request_url)
+            c.encoding = 'utf-8'
+            d = c.json()
+            errcode = d.get('errcode', 0)
+            if errcode > 0:
+                # 获取用户信息时出错
+                errmsg = d.get('errmsg', '')
+                return HttpResponse(errmsg)
+            else:
+                try:
+                    my_user = WechatPlayer.objects.get(app=my_app, open_id=openid)
+                except ObjectDoesNotExist:
+                    # 这是个新访问的用户
+                    my_user = WechatPlayer(app=my_app, open_id=openid)
+                nickname = d.get('nickname', '')
+                sex = d.get('sex', '')
+                headimgurl = d.get('headimgurl', '')
+                privilege = d.get('privilege', '')
+                my_user.nickname = nickname
+                my_user.sex = sex
+                my_user.user_info = d
+                my_user.head_image = headimgurl
+                my_user.save()
+                if len(game_name) > 0:
+                    cur_game_name = game_name
+                    redirect_url = f'/profile/?app_en_name={app_en_name}&cur_game_name={cur_game_name}&openid={openid}&errmsg={errmsg}#wechat_redirect'
+                    return HttpResponseRedirect(redirect_url)
+                else:
+                    errmsg = '重定向链接中的游戏名称为空，可能是菜单设置错误'
+                    return HttpResponse(errmsg)
+    else:
+        errmsg = 'code为空'
+        return HttpResponse(errmsg)
+
 
 def show_profile(request):
     """
@@ -582,16 +594,21 @@ def show_profile(request):
     if len(open_id) > 0:
         # 把上面的参数传递给handle_player_command()，将返回以下字典
         # {'game_is_valid': true/false,
-        # 'game_is_active': true/false,
-        # 'player_is_audit': true/false,
-        # 'player_info': player_info_dict,        该玩家的基本信息，昵称、头像等
+        #  'game_is_active': true/false,
+        #  'player_is_audit': true/false,
+        #  'player_info': player_info_dict,        该玩家的基本信息，昵称、头像等
         # 'player_game_info': player_game_info_dict, 该玩家在处理完这个指令后的存档
         # 'reply_obj': object,        用于回复的主要内容, 如果for_text==True，就以旧版格式返回replyMsg，否则返回字符串
         # 'reply_options': [reply_opt_dict1, reply_opt_dict2],  用于显示下一步的选项及额外内容
         # 'hint_string': string,      当前任务的提示信息，放在前端随时显示
         # 'clear_code': string,       通关密码，放在前端显示，未通关时为空
         # 'progress': string,         当前进度，放在前端随时显示
-        # 'error_msg': string,
+        # 'notify_msg': string,       绿色的提醒
+        # 'error_msg': string,        红色的提醒
+        # 'app_en_name': string,
+        # 'open_id': string,
+        # 'quest_trigger': string,    用来做页面的title
+        # 'page_type': string,        目前分为main, reward和quest三种，分别对应游戏首页，成就页面和问题页面
         # }
         ret_dict = handle_player_command(app_en_name=app_en_name, open_id=open_id, game_name=cur_game_name,
                                          cmd=cmd, for_text=False)
@@ -602,8 +619,7 @@ def show_profile(request):
         else:
             print(f'openid and errmsg are blank')
             ret_dict['error_msg'] = '异常调用'
-    # ret_dict['app_en_name'] = app_en_name
-    # ret_dict['open_id'] = open_id
+
     logger.info(ret_dict)
     return render(request, template, ret_dict)
 
