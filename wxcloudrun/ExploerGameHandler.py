@@ -207,7 +207,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                             cur_player_game_dict[FIELD_REWARD_LIST] = reward_list
                             cur_player_game_dict[FIELD_COMMAND_LIST] = cmd_list
                             cur_player.game_hist[cur_game_name] = cur_player_game_dict
-                            ret_dict['notify_msg'] = cur_quest.reward
+                            # ret_dict['notify_msg'] = cur_quest.reward
 
                         # 重置玩家当前等待状态，并保存
                         cur_player.waiting_status = ''

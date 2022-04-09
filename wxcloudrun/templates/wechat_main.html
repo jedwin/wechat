@@ -28,15 +28,14 @@
                 </section>
             </section>
         </article>
-        {% if page_type == "quest" %}
-            {% if notify_msg|length > 0 %}
-                <div role="alert" class="weui-toptips weui-toptips_notify" id="notifyTips"
-                     style="display: block; opacity: 1;">{{notify_msg}}</div>
-            {% elif error_msg|length > 0 %}
-                <div role="alert" class="weui-toptips weui-toptips_warn" id="errorTips"
-                     style="display: block; opacity: 1;">{{error_msg}}</div>
-            {% endif %}
+        {% if notify_msg|length > 0 %}
+            <div role="alert" class="weui-toptips weui-toptips_notify" id="notifyTips"
+                 style="display: block; opacity: 1;">{{notify_msg}}</div>
+        {% elif error_msg|length > 0 %}
+            <div role="alert" class="weui-toptips weui-toptips_warn" id="errorTips"
+                 style="display: block; opacity: 1;">{{error_msg}}</div>
         {% endif %}
+
         <div class="weui-form">
             <form class="weui-cells__group weui-cells__group_form" action="/profile/" >
                 {% if page_type == "quest" or page_type == "main" %}
