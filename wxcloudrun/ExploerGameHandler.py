@@ -42,6 +42,9 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
     'progress': string,         当前进度，放在前端随时显示
     'notify_msg': string,       绿色的提醒
     'error_msg': string,        红色的提醒
+    'app_en_name': string,
+    'open_id': string,
+    'quest_trigger': string,
     }
     """
     # 初始化返回对象
@@ -59,6 +62,9 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
     ret_dict['notify_msg'] = ''
     ret_dict['error_msg'] = ''
     ret_dict['cur_game_name'] = ''
+    ret_dict['app_en_name'] = ''
+    ret_dict['open_id'] = ''
+    ret_dict['quest_trigger'] = ''
 
     # 为了和文字版统一处理，增加fromUser空变量
     fromUser = ''
@@ -67,6 +73,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
         try:
             my_app = WechatApp.objects.get(en_name=app_en_name)
             app_keyword_list = [x.keyword for x in AppKeyword.objects.filter(app=my_app)]
+            ret_dict['app_en_name'] = app_en_name
         except ObjectDoesNotExist:
             # en_name not valid
             ret_dict['error_msg'] = f'app_en_name:{app_en_name} 不存在'
@@ -84,6 +91,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
             # 如果这个openid是第一次出现，就先创新对应用户
             cur_player = WechatPlayer(app=my_app, open_id=open_id)
             cur_player.save()
+        ret_dict['open_id'] = open_id
     else:
         # open_id not valid
         ret_dict['error_msg'] = f'open_id is blank'
@@ -316,7 +324,7 @@ def check_progress(cur_game, reward_list):
 
 def new_game(cur_game, reward_list, ret_dict):
     ret_dict['reply_obj'] = replace_content_with_html(cur_game.opening)
-    qeusts = ExploreGameQuest.objects.filter(game=cur_game)
+    qeusts = ExploreGameQuest.objects.filter(game=cur_game).order_by('reward_id')
     for my_quest in qeusts:
         # 将可以挑战的任务放在选项中
         prequire_list = my_quest.get_content_list(type='prequire')
@@ -339,6 +347,7 @@ def new_game(cur_game, reward_list, ret_dict):
                                               'enable': False,
                                               'style': OPTION_DISABLE})
     ret_dict['progress'] = check_progress(cur_game=cur_game, reward_list=reward_list)
+    ret_dict['quest_trigger'] = cur_game.name
     return ret_dict
 
 
@@ -356,4 +365,5 @@ def set_quest(cur_game, trigger, ret_dict, open_id):
                                           'style': OPTION_ENABLE})
     ret_dict['hint_string'] = cur_quest.reply_msg(type='hint', toUser=open_id,
                                                   fromUser=fromUser, for_text=for_text)
+    ret_dict['quest_trigger'] = trigger
     return ret_dict

@@ -3087,7 +3087,7 @@ page,body {
 .weui-article {
   padding: 48px 24px;
   padding: 48px calc(24px + constant(safe-area-inset-right)) calc(48px + constant(safe-area-inset-bottom)) calc(24px + constant(safe-area-inset-left));
-  padding: 48px calc(24px + env(safe-area-inset-right)) calc(0px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
+  padding: 0px calc(24px + env(safe-area-inset-right)) calc(0px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
   color: rgba(0,0,0,0.9);
   color: var(--weui-FG-0);
   font-size: 17px;

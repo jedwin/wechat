@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0,viewport-fit=cover">
     <meta name="wechat-enable-text-zoom-em" content="true">
-    <title>{{ cur_game_name }}</title>
+    <title>{{ quest_trigger }}</title>
     <link rel="stylesheet" href="/static/style/weui.css"/>
     <link rel="stylesheet" href="/static/style/example.css"/>
-    <style>p {text-indent: 1em;}</style>
+
 </head>
 <body ontouchstart>
 <script type="text/javascript">
@@ -22,9 +22,7 @@
     <div class="page article">
         <article class="weui-article">
             <section>
-                <h1>
-                    {{ cur_game_name }}
-                </h1>
+
                 <section>
                 {{ reply_obj|safe }}
                 </section>
