@@ -592,24 +592,6 @@ def show_profile(request):
     ret_dict = dict()
 
     if len(open_id) > 0:
-        # 把上面的参数传递给handle_player_command()，将返回以下字典
-        # {'game_is_valid': true/false,
-        #  'game_is_active': true/false,
-        #  'player_is_audit': true/false,
-        #  'player_info': player_info_dict,        该玩家的基本信息，昵称、头像等
-        # 'player_game_info': player_game_info_dict, 该玩家在处理完这个指令后的存档
-        # 'reply_obj': object,        用于回复的主要内容, 如果for_text==True，就以旧版格式返回replyMsg，否则返回字符串
-        # 'reply_options': [reply_opt_dict1, reply_opt_dict2],  用于显示下一步的选项及额外内容
-        # 'hint_string': string,      当前任务的提示信息，放在前端随时显示
-        # 'clear_code': string,       通关密码，放在前端显示，未通关时为空
-        # 'progress': string,         当前进度，放在前端随时显示
-        # 'notify_msg': string,       绿色的提醒
-        # 'error_msg': string,        红色的提醒
-        # 'app_en_name': string,
-        # 'open_id': string,
-        # 'quest_trigger': string,    用来做页面的title
-        # 'page_type': string,        目前分为main, reward和quest三种，分别对应游戏首页，成就页面和问题页面
-        # }
         ret_dict = handle_player_command(app_en_name=app_en_name, open_id=open_id, game_name=cur_game_name,
                                          cmd=cmd, for_text=False)
     else:

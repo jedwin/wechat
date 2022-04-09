@@ -66,6 +66,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
     ret_dict['app_en_name'] = ''
     ret_dict['open_id'] = ''
     ret_dict['quest_trigger'] = ''
+    ret_dict['page_type'] = ''
 
     # 为了和文字版统一处理，增加fromUser空变量
     fromUser = ''
@@ -271,17 +272,21 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                     cur_player.save()
                     ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
                     ret_dict['player_is_audit'] = True
-                    ret_dict['notify_msg'] = AUDIT_SUCCESS
+                    # ret_dict['notify_msg'] = AUDIT_SUCCESS
                     ret_dict['cmd'] = ''
+                    ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
                 else:
                     # 没有输对密码
                     ret_dict['error_msg'] = AUDIT_FAILED
+                    ret_dict['page_type'] = 'password'  # 因为需要输入密码
             else:  # cmd为空，再次显示请输入密码
                 ret_dict['error_msg'] = ASK_FOR_PASSWORD
+                ret_dict['page_type'] = 'password'  # 因为需要输入密码
         else:
             cur_player.waiting_status = WAITING_FOR_PASSWORD
             cur_player.save()
             ret_dict['error_msg'] = ASK_FOR_PASSWORD
+            ret_dict['page_type'] = 'password'  # 因为需要输入密码
 
     return ret_dict
 
