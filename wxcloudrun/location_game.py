@@ -243,48 +243,48 @@ class ExploreGameQuest(models.Model):
             content_type = '文字'
             content_data = f'关键词的内容类型{type}错误，请联系管理员'
 
-        if content_type == 'TEXT':
+        if content_type in ['TEXT', 'PIC', 'VIDEO']:  # 现在用html格式统一显示，所以不需要区分文字、图片或视频
             text_content = content_data.replace('<br>', '\n').strip()
             if for_text:
                 text_content = replace_content_with_hyperlink(text_content)
                 replyMsg = reply.TextMsg(toUser, fromUser, text_content)
             else:
-                if type in ['question', 'hint']:
+                if type in ['question', 'hint', 'reward']:
                     # 只有"问题内容"需要进行html样式更新
                     ret_content = replace_content_with_html(text_content)
 
                 else:
                     # 其余类型无需转换
                     ret_content = text_content
-        elif content_type == 'PIC':
-            my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
-            if len(my_media) > 0:
-                # 如果有重名的图片，就发第一张
-                mediaId = my_media[0].media_id
-                if for_text:
-                    replyMsg = reply.ImageMsg(toUser, fromUser, mediaId)
-                else:
-                    # return the image url
-                    ret_content = my_media[0].info.get('url', '')
-            else:
-                text_content = f'找不到对应的图片{content_data}，请联系管理员'
-                replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-                ret_content = text_content
-
-        elif content_type == 'VIDEO':
-            my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
-            if len(my_media) > 0:
-                # 如果有重名的视频，就发第一个
-                mediaId = my_media[0].media_id
-                if for_text:
-                    replyMsg = reply.VideoMsg(toUser, fromUser, mediaId, content_data, self.video_desc)
-                else:
-                    # return the video url
-                    ret_content = my_media[0].info.get('url', '')
-            else:
-                text_content = f'找不到对应的视频{content_data}，请联系管理员'
-                replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-                ret_content = text_content
+        # elif content_type == 'PIC':
+        #     my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
+        #     if len(my_media) > 0:
+        #         # 如果有重名的图片，就发第一张
+        #         mediaId = my_media[0].media_id
+        #         if for_text:
+        #             replyMsg = reply.ImageMsg(toUser, fromUser, mediaId)
+        #         else:
+        #             # return the image url
+        #             ret_content = my_media[0].info.get('url', '')
+        #     else:
+        #         text_content = f'找不到对应的图片{content_data}，请联系管理员'
+        #         replyMsg = reply.TextMsg(toUser, fromUser, text_content)
+        #         ret_content = text_content
+        #
+        # elif content_type == 'VIDEO':
+        #     my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
+        #     if len(my_media) > 0:
+        #         # 如果有重名的视频，就发第一个
+        #         mediaId = my_media[0].media_id
+        #         if for_text:
+        #             replyMsg = reply.VideoMsg(toUser, fromUser, mediaId, content_data, self.video_desc)
+        #         else:
+        #             # return the video url
+        #             ret_content = my_media[0].info.get('url', '')
+        #     else:
+        #         text_content = f'找不到对应的视频{content_data}，请联系管理员'
+        #         replyMsg = reply.TextMsg(toUser, fromUser, text_content)
+        #         ret_content = text_content
         else:
             text_content = f'关键词的内容类型{content_type}错误，请联系管理员'
             replyMsg = reply.TextMsg(toUser, fromUser, text_content)
