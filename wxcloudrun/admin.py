@@ -216,6 +216,7 @@ class ExploreGameQuestAdmin(admin.ModelAdmin):
 
 class PasswdAdmin(admin.ModelAdmin):
     list_display = ['password', 'app', 'assigned_player', 'is_assigned']
+    list_editable = ['app', 'is_assigned']
     list_filter = ['app', 'is_assigned']
 
 admin.site.register(WechatMenu, MenuAdmin)

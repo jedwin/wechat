@@ -272,9 +272,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                     cur_player.save()
                     ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
                     ret_dict['player_is_audit'] = True
-                    # ret_dict['notify_msg'] = AUDIT_SUCCESS
                     ret_dict['cmd'] = ''
-                    ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
                 else:
                     # 没有输对密码
                     ret_dict['error_msg'] = AUDIT_FAILED
@@ -338,6 +336,7 @@ def check_progress(cur_game, reward_list):
 def new_game(cur_game, reward_list, ret_dict):
     ret_dict['reply_obj'] = replace_content_with_html(cur_game.opening)
     qeusts = ExploreGameQuest.objects.filter(game=cur_game).order_by('reward_id')
+    ret_dict['reply_options'] = list()
     for my_quest in qeusts:
         # 将可以挑战的任务放在选项中
         prequire_list = my_quest.get_content_list(type='prequire')
