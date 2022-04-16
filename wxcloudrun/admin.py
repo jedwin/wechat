@@ -218,6 +218,7 @@ class PasswdAdmin(admin.ModelAdmin):
     list_display = ['password', 'game', 'assigned_player', 'is_assigned']
     list_editable = ['game', 'is_assigned']
     list_filter = ['game', 'is_assigned']
+    save_on_top = True
 
 
 admin.site.register(WechatMenu, MenuAdmin)

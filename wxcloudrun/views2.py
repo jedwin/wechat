@@ -288,7 +288,8 @@ def get_user_info_with_code(request):
     基于微信网页授权流程第二步，获取用户信息
     """
     code = request.GET.get('code', '')
-    app_en_name, game_name = request.GET.get('state', '').split('_')  # 微信会通过state参数携带自定义变量，我们在这里放入app_en_name
+    # 微信会通过state参数携带自定义变量，我们在这里放入app_en_name和游戏名
+    app_en_name, game_name = request.GET.get('state', '').split('_')
     openid = ''
     appid = ''
     errmsg = ''
@@ -373,18 +374,19 @@ def show_profile(request):
     errmsg = request.GET.get('errmsg', '')
     ret_dict = dict()
 
-    if len(open_id) > 0:
-        ret_dict = handle_player_command(app_en_name=app_en_name, open_id=open_id, game_name=cur_game_name,
-                                         cmd=cmd, for_text=False)
+    if len(errmsg) > 0:
+        print(f'errmsg= {errmsg}')
+        ret_dict['error_msg'] = errmsg
+        logger.error(f'error_msg={error_msg}')
     else:
-        if len(errmsg) > 0:
-            print(f'errmsg= {errmsg}')
-            ret_dict['error_msg'] = errmsg
+        if len(open_id) > 0:
+            ret_dict = handle_player_command(app_en_name=app_en_name, open_id=open_id, game_name=cur_game_name,
+                                             cmd=cmd, for_text=False)
+            logger.info(ret_dict)
         else:
-            print(f'openid and errmsg are blank')
+            print(f'openid is blank')
             ret_dict['error_msg'] = '异常调用'
-
-    logger.info(ret_dict)
+            logger.error(f'openid is blank')
     return render(request, template, ret_dict)
 
 
