@@ -3,6 +3,7 @@
 import io
 import sys
 from django.shortcuts import HttpResponse, render, HttpResponseRedirect
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import hashlib
 from . import receive
@@ -396,3 +397,17 @@ def download(request, filename):
         return response
     else:
         return None
+
+
+def check_answer(request):
+    app_en_name = request.GET.get('app_en_name', '')
+    cur_game_name = request.GET.get('cur_game_name', '')
+    open_id = request.GET.get('openid', '')
+    cmd = request.GET.get('cmd', '')
+    ret_dict = handle_player_command(app_en_name=app_en_name, open_id=open_id, game_name=cur_game_name,
+                                     cmd=cmd, for_text=False)
+    logger.info(ret_dict)
+    if ret_dict['answer_is_correct']:
+        return JsonResponse({'answer_is_correct': True, 'msg': ret_dict['notify_msg']})
+    else:
+        return JsonResponse({'answer_is_correct': False, 'msg': ret_dict['error_msg']})

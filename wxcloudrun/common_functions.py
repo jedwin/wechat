@@ -4,7 +4,9 @@ import os
 import json
 from random import sample
 from wxcloudrun.models import *
+from wxcloudrun.location_game import WechatGamePasswd
 from django.core.exceptions import *
+
 
 def load_auto_reply_settings(auto_reply_for_non_player_file):
     """
@@ -170,7 +172,7 @@ def get_summary(user_data_dict, max_length=500):
         return return_string[:max_length]
 
 
-def auth_user(app, password, user_id=''):
+def auth_user(game, password, user_id=''):
     """
     根据密码对用户进行鉴权
     :param add:         进行鉴权的app
@@ -179,12 +181,12 @@ def auth_user(app, password, user_id=''):
     :return: 鉴权通过则返回True，不通过则返回False
     """
     if len(password) > 0:
-        available_passwd = WechatGamePasswd.objects.filter(app=app, password=password, is_assigned=False)
+        available_passwd = WechatGamePasswd.objects.filter(game=game, password=password, is_assigned=False)
         if len(available_passwd) > 0:
             # password is valid
             my_passwd = available_passwd[0]
             try:
-                my_player = WechatPlayer.objects.get(app=app, open_id=user_id)
+                my_player = WechatPlayer.objects.get(app=game.app, open_id=user_id)
             except ObjectDoesNotExist:
                 # 没有找到user_id对应的用户
                 return False

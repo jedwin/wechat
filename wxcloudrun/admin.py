@@ -154,17 +154,6 @@ class AppAdmin(admin.ModelAdmin):
             err_string = get_error_string(count)
             self.message_user(request, f'{err_string}：{count}', messages.WARNING)
 
-    @admin.action(description='生成20个随机新密码')
-    def gen_new_passwd_obj(self, request, queryset):
-        for obj in queryset:
-            result = obj.gen_passwd(how_many=20)
-            if result > 0:
-                # 如果成功，return_string会返回拉取到的关注用户数，以及更新成功和失败的用户数
-                self.message_user(request, f'已生成{result}个新密码', messages.SUCCESS)
-            else:
-                # 生成失败，需要看docker的日志
-                self.message_user(request, f'生成失败，请查看docker的日志', messages.WARNING)
-
 
 class ErrorAutoReplyAdmin(admin.ModelAdmin):
     list_display = ('reply_content', 'reply_type', 'is_active')
@@ -183,7 +172,7 @@ class ExploreGameAdmin(admin.ModelAdmin):
     list_editable = ['app', 'settings_file', 'is_active']
     list_filter = ['app']
     # inlines = [ExploreGameQuestInline]
-    actions = ['export2csv', 'import_from_csv']
+    actions = ['export2csv', 'gen_new_passwd_obj']
 
     @admin.action(description='保存游戏配置')
     def export2csv(self, request, queryset):
@@ -196,16 +185,27 @@ class ExploreGameAdmin(admin.ModelAdmin):
             else:
                 self.message_user(request, f'{errmsg}', messages.WARNING)
 
-    @admin.action(description='导入游戏配置')
-    def import_from_csv(self, request, queryset):
+    # @admin.action(description='导入游戏配置')
+    # def import_from_csv(self, request, queryset):
+    #     for obj in queryset:
+    #         result_dict = obj.import_from_csv()
+    #         result = result_dict['result']
+    #         errmsg = result_dict['errmsg']
+    #         if result:
+    #             self.message_user(request, f'{errmsg}', messages.SUCCESS)
+    #         else:
+    #             self.message_user(request, f'{errmsg}', messages.WARNING)
+
+    @admin.action(description='生成20个随机新密码')
+    def gen_new_passwd_obj(self, request, queryset):
         for obj in queryset:
-            result_dict = obj.import_from_csv()
-            result = result_dict['result']
-            errmsg = result_dict['errmsg']
-            if result:
-                self.message_user(request, f'{errmsg}', messages.SUCCESS)
+            result = obj.gen_passwords(how_many=20)
+            if result > 0:
+                # 如果成功
+                self.message_user(request, f'已为{obj.name}生成{result}个新密码', messages.SUCCESS)
             else:
-                self.message_user(request, f'{errmsg}', messages.WARNING)
+                # 生成失败，需要看docker的日志
+                self.message_user(request, f'为{obj.name}生成密码失败，请查看docker的日志', messages.WARNING)
 
 
 class ExploreGameQuestAdmin(admin.ModelAdmin):
@@ -215,9 +215,10 @@ class ExploreGameQuestAdmin(admin.ModelAdmin):
 
 
 class PasswdAdmin(admin.ModelAdmin):
-    list_display = ['password', 'app', 'assigned_player', 'is_assigned']
-    list_editable = ['app', 'is_assigned']
-    list_filter = ['app', 'is_assigned']
+    list_display = ['password', 'game', 'assigned_player', 'is_assigned']
+    list_editable = ['game', 'is_assigned']
+    list_filter = ['game', 'is_assigned']
+
 
 admin.site.register(WechatMenu, MenuAdmin)
 admin.site.register(MenuButton, ButtonAdmin)
