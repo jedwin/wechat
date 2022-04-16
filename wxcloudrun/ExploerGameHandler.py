@@ -206,7 +206,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                         clear_requirement_list = cur_game.get_content_list()
                         if set(clear_requirement_list).issubset(set(reward_list)):
                             # 玩家已达到通关要求
-                            clear_code = cur_player.hash_with_game()
+                            clear_code = cur_player.hash_with_game(cur_game_name)
                             cur_player_game_dict[FIELD_CLEAR_CODE] = clear_code
                             cur_player.game_hist[cur_game_name] = cur_player_game_dict
                             cur_player.save()
