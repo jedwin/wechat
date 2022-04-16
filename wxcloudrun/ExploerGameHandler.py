@@ -46,6 +46,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
     'open_id': string,
     'quest_trigger': string,    用来做页面的title
     'page_type': string,             目前分为reward和quest两种，分别对应问题页面和成就页面
+    'answer_is_correct': bool   如果用户提交的是答案，而且答对了，就返回True，否则一律返回False
     }
     """
     # 初始化返回对象
@@ -67,6 +68,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
     ret_dict['open_id'] = ''
     ret_dict['quest_trigger'] = ''
     ret_dict['page_type'] = ''
+    ret_dict['answer_is_correct'] = False
 
     # 为了和文字版统一处理，增加fromUser空变量
     fromUser = ''
@@ -200,6 +202,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                     if content in answer_list:
                         # 答对了当前问题
                         reward_id = cur_quest.reward_id
+                        ret_dict['answer_is_correct'] = True
                         # 如果玩家是新获得的奖励，就增加1个步数，保存奖励记录
                         # 如果玩家之前已经获得过奖励，就忽略
                         if reward_id not in reward_list:
@@ -263,7 +266,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
         if cur_player.waiting_status == WAITING_FOR_PASSWORD:
             # 玩家正在输入密码
             if len(content) > 0:
-                result = auth_user(app=my_app, password=content, user_id=open_id)
+                result = auth_user(game=cur_game, password=content, user_id=open_id)
                 if result:
                     player_is_audit = True
                     cur_player.waiting_status = ''
@@ -272,6 +275,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                     cur_player.save()
                     ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
                     ret_dict['player_is_audit'] = True
+                    ret_dict['answer_is_correct'] = True
                     ret_dict['cmd'] = ''
                 else:
                     # 没有输对密码

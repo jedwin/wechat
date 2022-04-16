@@ -2,17 +2,15 @@ from random import sample
 import csv
 
 
-allowed_usesr_list_file = f'../data/user_list.csv'
-
-
-def gen_passwd(leng=7, use_symbol=False, use_lower=True, use_number=False, use_upper=True):
+def gen_passwd(initial='0', length=7, use_symbol=False, use_lower=True, use_number=False, use_upper=True):
     """
     密码生成器
-    :param leng:
+    :param initial: 以什么字符开头，方便区分不同用途的密码
+    :param length:
     :param use_symbol:
-    :param use_cap:
+    :param use_lower:
     :param use_number:
-    :param use_uncap:
+    :param use_upper:
     :return:
     """
     password_list = list()
@@ -30,8 +28,9 @@ def gen_passwd(leng=7, use_symbol=False, use_lower=True, use_number=False, use_u
         password_list.extend(number_list)
     if use_symbol:
         password_list.extend(symbol_list)
-    if len(password_list) > 0 and leng > 0:
-        password = ''.join(sample(password_list, leng)).replace(' ', '')
+    if len(password_list) > 0 and length > 0:
+        password = initial
+        password += ''.join(sample(password_list, length)).replace(' ', '')
         return password
     else:
         return False

@@ -1,7 +1,6 @@
 from django.db import models
 from django.core.exceptions import *
 from hashlib import sha1
-from wxcloudrun.user_manage import gen_passwd
 from wxcloudrun.coordinate_converter import *
 from django.db.models import F, Q, When, Count
 import urllib3
@@ -274,21 +273,6 @@ class WechatApp(models.Model):
         my_menu = WechatMenu(app=self, remark=remark, menu_string=menu_string)
         my_menu.save()
 
-    def gen_passwd(self, how_many=20):
-        if how_many > 100:
-            # 因为托管的mysql按业务次数收费，所以每次不能生成太多
-            how_many = 100
-        count = 0
-        for i in range(how_many):
-            try:
-                new_passwd_str = gen_passwd(leng=6, use_number=True, use_upper=False, use_lower=False)
-                new_passwd = WechatGamePasswd(app=self, password=new_passwd_str)
-                new_passwd.save()
-                count += 1
-            except:
-                # 如果新建失败，例如密码重复了，就什么都不做，只是不新增count
-                pass
-        return how_many
 
 class WechatMedia(models.Model):
     """
@@ -530,46 +514,6 @@ class WechatPlayer(models.Model):
     def hash_with_game(self, len=8):
         temp_string = (self.open_id + self.cur_game_name).encode('utf-8')
         return sha1(temp_string).hexdigest()[0-len:]
-
-
-class WechatGamePasswd(models.Model):
-    app = models.ForeignKey(WechatApp, default=None, on_delete=models.CASCADE)
-    password = models.CharField(max_length=50, primary_key=True)
-    assigned_player = models.ForeignKey(WechatPlayer, default=None, on_delete=models.CASCADE, blank=True, null=True)
-    is_assigned = models.BooleanField(default=False, verbose_name='是否已分配')
-
-    def __str__(self):
-        return self.password
-
-    def assign_to_player(self, open_id, force=False):
-        try:
-            my_player = WechatPlayer.objects.get(app=self.app, open_id=open_id)
-            if not self.is_assigned or force:
-                self.assigned_player = my_player
-                self.is_assigned = True
-                self.save()
-                return True
-            else:
-                print(f'this passwd is already assigned to player')
-                return False
-        except ObjectDoesNotExist:
-            # can't find the open_id player
-            print(f'can not find the player with open_id {open_id}')
-            return False
-
-        except MultipleObjectsReturned:
-            # multiple player with same open_id were found
-            print(f'multiple player with open_id {open_id} were found')
-            return False
-
-    def export_to_csv(self):
-        return f'{self.app.name},{self.password},{self.assigned_player.name}'
-
-    def clear_player(self):
-        self.assigned_player = None
-        self.is_assigned = False
-        self.save()
-        return True
 
 
 class AppKeyword(models.Model):
