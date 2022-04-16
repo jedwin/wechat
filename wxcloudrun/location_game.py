@@ -17,7 +17,23 @@ from wxcloudrun.models import *
 from wxcloudrun.coordinate_converter import *
 from wxcloudrun.user_manage import gen_passwd
 
+WAITING_FOR_PASSWORD = 'w_password'             # 等待用户输入认证密码
+WAITING_FOR_POI_KEYWORD = 'w_keyword'           # 等待用户输入POI关键词
+WAITING_FOR_POI_DISTANCE = 'w_dist'             # 等待用户输入POI搜索范围（米）
+ASK_FOR_PASSWORD = '请先输入从客服处获得的密码'
+AUDIT_SUCCESS = '验证成功，请重新点击菜单开始游戏'
+AUDIT_FAILED = '密码错误，请查证后再输入'
+GAME_IS_NOT_ACTIVE = '对不起，游戏未启动或时间已过'
 
+CHECK_CLEAR_CODE = '查看通关密码'
+CHECK_PROGRESS = '查看当前进度'
+FIELD_CLEAR_CODE = 'clear_code'                 # 存放通过码的字典key
+FIELD_REWARD_LIST = 'reward_list'               # 存放已获取奖励的字典key
+FIELD_COMMAND_DICT = 'cmd_dict'                 # 存放已行动命令的字典key
+FIELD_IS_AUDIT = 'is_audit'                     # 存在当前用户在当前游戏是否已认证的key
+
+OPTION_ENABLE = 'weui-cell weui-cell_access'    # 提供可选选项的样式
+OPTION_DISABLE = 'weui-cell weui-cell_disable'  # 提供不可选选项的样式
 sep = '|'           # 分隔符
 alt_sep = '｜'      # 在分隔前会将此字符替换成sep，因此两者等效
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='utf-8')  # 改变标准输出的默认编码
@@ -33,10 +49,14 @@ def replace_content_with_html(in_content):
     def replace_media(matched):
         image_name = matched.group('keyword')
         try:
-            my_media = WechatMedia.objects.get(name=image_name)
-            img_url = my_media.info['url']
-            img_string = f'<p style="text-align: center;"><img src="{img_url}" alt="{image_name}"></p>'
-            return img_string
+            my_medias = WechatMedia.objects.filter(name=image_name)
+            if len(my_medias) > 0:
+                my_media = my_medias[0]
+                img_url = my_media.info['url']
+                img_string = f'<p style="text-align: center;"><img src="{img_url}" alt="{image_name}"></p>'
+                return img_string
+            else:
+                return matched
         except ObjectDoesNotExist:
             return matched
     if len(in_content) > 0:
@@ -207,7 +227,7 @@ class ExploreGame(models.Model):
             try:
                 new_passwd_str = gen_passwd(initial=self.passwd_init, length=6, use_number=True,
                                             use_upper=False, use_lower=False)
-                new_passwd = WechatGamePasswd(app=self.app, game=self, password=new_passwd_str)
+                new_passwd = WechatGamePasswd(game=self, password=new_passwd_str)
                 new_passwd.save()
                 logger.info(f'new_passwd_str={new_passwd_str}')
                 count += 1
@@ -215,6 +235,25 @@ class ExploreGame(models.Model):
                 # 如果新建失败，例如密码重复了，log下来
                 logger.error(f'{e}')
         return count
+
+    def check_progress(self, reward_list):
+        # 为某个玩家总结进度描述文字
+        done_q_name_list = list()
+        all_quest = ExploreGameQuest.objects.filter(game=self)
+        total_reward = 0
+        for q in all_quest:
+            if q.reward_id > 0:
+                total_reward += 1
+            if q.reward_id in reward_list:
+                done_q_name_list.append(q.quest_trigger)
+        total_done = len(done_q_name_list)
+        if total_done == total_reward:
+            text_content = f'您已经完成全部{total_reward}个任务！'
+        elif total_done > 0:
+            text_content = f'您现在完成了{total_reward}个任务中的{total_done}个：{str(done_q_name_list)[1:-1]}。'
+        else:
+            text_content = f'您一共需要完成{total_reward}个任务，但一个都还没有完成。'
+        return text_content
 
 
 class ExploreGameQuest(models.Model):
@@ -340,7 +379,7 @@ class ExploreGameQuest(models.Model):
 
 
 class WechatGamePasswd(models.Model):
-    app = models.ForeignKey(WechatApp, on_delete=models.CASCADE, null=True)
+    # app = models.ForeignKey(WechatApp, on_delete=models.CASCADE, null=True)
     game = models.ForeignKey(ExploreGame, default=None, on_delete=models.CASCADE, blank=True, null=True)
     password = models.CharField(max_length=50, primary_key=True)
     assigned_player = models.ForeignKey(WechatPlayer, default=None, on_delete=models.CASCADE, blank=True, null=True)

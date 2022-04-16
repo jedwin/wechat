@@ -7,23 +7,6 @@ import datetime
 from wxcloudrun.models import *
 from wxcloudrun.location_game import *
 
-WAITING_FOR_PASSWORD = 'w_password'             # 等待用户输入认证密码
-WAITING_FOR_POI_KEYWORD = 'w_keyword'           # 等待用户输入POI关键词
-WAITING_FOR_POI_DISTANCE = 'w_dist'             # 等待用户输入POI搜索范围（米）
-ASK_FOR_PASSWORD = '请先输入从客服处获得的密码'
-AUDIT_SUCCESS = '验证成功，请重新点击菜单开始游戏'
-AUDIT_FAILED = '密码错误，请查证后再输入'
-GAME_IS_NOT_ACTIVE = '对不起，游戏未启动或时间已过'
-
-CHECK_CLEAR_CODE = '查看通关密码'
-CHECK_PROGRESS = '查看当前进度'
-FIELD_CLEAR_CODE = 'clear_code'                 # 存放通过码的字典key
-FIELD_REWARD_LIST = 'reward_list'               # 存放已获取奖励的字典key
-FIELD_COMMAND_LIST = 'cmd_list'                 # 存放已行动命令的字典key
-FIELD_IS_AUDIT = 'is_audit'                     # 存在当前用户在当前游戏是否已认证的key
-
-OPTION_ENABLE = 'weui-cell weui-cell_access'    # 提供可选选项的样式
-OPTION_DISABLE = 'weui-cell weui-cell_disable'  # 提供不可选选项的样式
 
 def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_text=True):
     """
@@ -92,9 +75,9 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
         try:
             cur_player = WechatPlayer.objects.get(app=my_app, open_id=open_id)
         except ObjectDoesNotExist:
-            # 如果这个openid是第一次出现，就先创新对应用户
-            cur_player = WechatPlayer(app=my_app, open_id=open_id)
-            cur_player.save()
+            # 如果这个openid没有在数据库中，则表明不是从微信进入，需要返回错误信息
+            ret_dict['error_msg'] = '用户id异常，请从公众号进入游戏'
+            return ret_dict
         ret_dict['open_id'] = open_id
     else:
         # open_id not valid
@@ -135,14 +118,15 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
         trigger_list = [x.quest_trigger for x in ExploreGameQuest.objects.filter(game=cur_game)]
         cur_player_game_dict = get_cur_player_game_dict(player=cur_player, game_name=cur_game_name)
         reward_list = cur_player_game_dict.get(FIELD_REWARD_LIST, list())
-        cmd_list = cur_player_game_dict.get(FIELD_COMMAND_LIST, list())
+        cmd_dict = cur_player_game_dict.get(FIELD_COMMAND_DICT, dict())
         clear_code = cur_player_game_dict.get(FIELD_CLEAR_CODE, '')
         player_is_audit = cur_player_game_dict.get(FIELD_IS_AUDIT, False)
         ret_dict['player_is_audit'] = player_is_audit
         ret_dict['player_game_info'] = cur_player_game_dict
         ret_dict['player_info'] = cur_player.user_info
         ret_dict['clear_code'] = clear_code
-        ret_dict['progress'] = check_progress(cur_game=cur_game, reward_list=reward_list)
+        # ret_dict['progress'] = check_progress(cur_game=cur_game, reward_list=reward_list)
+        ret_dict['progress'] = cur_game.check_progress(reward_list=reward_list)
     else:
         # 如果游戏不是激活状态
         ret_dict['error_msg'] = f'游戏{cur_game_name}未启动或已过活动时间'
@@ -188,6 +172,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                     try:
                         cur_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=cur_player.waiting_status)
                         answer_list = cur_quest.get_content_list(type='answer')
+                        cmd_list = cmd_dict.get(cur_player.waiting_status, list())
                     except ObjectDoesNotExist:
                         # 玩家等待状态设置错误，可能是游戏配置已更改
                         # 清空等待状态，将answer_list置为空列表
@@ -207,9 +192,10 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                         # 如果玩家之前已经获得过奖励，就忽略
                         if reward_id not in reward_list:
                             cmd_list.append(content)
+                            cmd_dict[cur_player.waiting_status] = cmd_list
                             reward_list.append(reward_id)
                             cur_player_game_dict[FIELD_REWARD_LIST] = reward_list
-                            cur_player_game_dict[FIELD_COMMAND_LIST] = cmd_list
+                            cur_player_game_dict[FIELD_COMMAND_DICT] = cmd_dict
                             cur_player.game_hist[cur_game_name] = cur_player_game_dict
                             # ret_dict['notify_msg'] = cur_quest.reward
 
@@ -241,7 +227,8 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                     else:
                         # 输入了不相关的内容
                         cmd_list.append(content)
-                        cur_player_game_dict[FIELD_COMMAND_LIST] = cmd_list
+                        cmd_dict[cur_player.waiting_status] = cmd_list
+                        cur_player_game_dict[FIELD_COMMAND_DICT] = cmd_dict
                         cur_player.game_hist[cur_game_name] = cur_player_game_dict
                         cur_player.save()
                         my_error_auto_replys = list(ErrorAutoReply.objects.filter(is_active=True))
@@ -305,7 +292,7 @@ def get_cur_player_game_dict(player, game_name):
         if not player_game_dict:
             # 如果这个玩家还没有游戏存档，就用输入的游戏名初始化一个
             cur_player_game_dict = {FIELD_IS_AUDIT: False,
-                                    FIELD_COMMAND_LIST: list(),
+                                    FIELD_COMMAND_DICT: dict(),
                                     FIELD_CLEAR_CODE: '',
                                     FIELD_REWARD_LIST: list()}
             player_game_dict = {game_name: cur_player_game_dict}
@@ -320,21 +307,21 @@ def get_cur_player_game_dict(player, game_name):
     return cur_player_game_dict
 
 
-def check_progress(cur_game, reward_list):
-    # 按玩家当前成就生成游戏进度描述语句
-    if cur_game:
-        all_quest = ExploreGameQuest.objects.filter(game=cur_game)
-        done_q_name_list = list()
-        for q in all_quest:
-            if q.reward_id in reward_list:
-                done_q_name_list.append(q.quest_trigger)
-        if len(done_q_name_list) > 0:
-            text_content = f'您现在完成了{str(done_q_name_list)[1:-1]} {len(done_q_name_list)}个任务。'
-        else:
-            text_content = f'您现在还没有完成任何任务。'
-    else:
-        text_content = f'您没有参与游戏。'
-    return text_content
+# def check_progress(cur_game, reward_list):
+#     # 按玩家当前成就生成游戏进度描述语句
+#     if cur_game:
+#         all_quest = ExploreGameQuest.objects.filter(game=cur_game)
+#         done_q_name_list = list()
+#         for q in all_quest:
+#             if q.reward_id in reward_list:
+#                 done_q_name_list.append(q.quest_trigger)
+#         if len(done_q_name_list) > 0:
+#             text_content = f'您现在完成了{str(done_q_name_list)[1:-1]} {len(done_q_name_list)}个任务。'
+#         else:
+#             text_content = f'您现在还没有完成任何任务。'
+#     else:
+#         text_content = f'您没有参与游戏。'
+#     return text_content
 
 
 def new_game(cur_game, reward_list, ret_dict):
@@ -362,7 +349,7 @@ def new_game(cur_game, reward_list, ret_dict):
                                               'comment': '未具备挑战条件',
                                               'enable': False,
                                               'style': OPTION_DISABLE})
-    ret_dict['progress'] = check_progress(cur_game=cur_game, reward_list=reward_list)
+    ret_dict['progress'] = cur_game.check_progress(reward_list=reward_list)
     ret_dict['quest_trigger'] = cur_game.name
     ret_dict['page_type'] = 'main'
     return ret_dict
