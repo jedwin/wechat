@@ -511,8 +511,8 @@ class WechatPlayer(models.Model):
             errmsg = ret_obj
             return result, errmsg
 
-    def hash_with_game(self, len=8):
-        temp_string = (self.open_id + self.cur_game_name).encode('utf-8')
+    def hash_with_game(self, cur_game_name, len=8):
+        temp_string = (self.open_id + cur_game_name).encode('utf-8')
         return sha1(temp_string).hexdigest()[0-len:]
 
 
