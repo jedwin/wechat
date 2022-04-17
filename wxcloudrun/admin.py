@@ -172,7 +172,7 @@ class ExploreGameAdmin(admin.ModelAdmin):
     list_editable = ['app', 'settings_file', 'is_active']
     list_filter = ['app']
     # inlines = [ExploreGameQuestInline]
-    actions = ['export2csv', 'gen_new_passwd_obj']
+    actions = ['export2csv', 'gen_new_passwd_obj', 'import_from_csv']
 
     @admin.action(description='保存游戏配置')
     def export2csv(self, request, queryset):
@@ -185,16 +185,16 @@ class ExploreGameAdmin(admin.ModelAdmin):
             else:
                 self.message_user(request, f'{errmsg}', messages.WARNING)
 
-    # @admin.action(description='导入游戏配置')
-    # def import_from_csv(self, request, queryset):
-    #     for obj in queryset:
-    #         result_dict = obj.import_from_csv()
-    #         result = result_dict['result']
-    #         errmsg = result_dict['errmsg']
-    #         if result:
-    #             self.message_user(request, f'{errmsg}', messages.SUCCESS)
-    #         else:
-    #             self.message_user(request, f'{errmsg}', messages.WARNING)
+    @admin.action(description='导入游戏配置')
+    def import_from_csv(self, request, queryset):
+        for obj in queryset:
+            result_dict = obj.import_from_csv()
+            result = result_dict['result']
+            errmsg = result_dict['errmsg']
+            if result:
+                self.message_user(request, f'{errmsg}', messages.SUCCESS)
+            else:
+                self.message_user(request, f'{errmsg}', messages.WARNING)
 
     @admin.action(description='生成20个随机新密码')
     def gen_new_passwd_obj(self, request, queryset):
@@ -209,8 +209,10 @@ class ExploreGameAdmin(admin.ModelAdmin):
 
 
 class ExploreGameQuestAdmin(admin.ModelAdmin):
-    list_display = ['quest_trigger', 'prequire_list', 'reward_id']
-    list_editable = ['prequire_list', 'reward_id']
+    list_display = ['quest_trigger', 'prequire_list', 'next_list', 'show_next', 'reward_id', 'show_if_unavailable',
+                    'comment_when_clear', 'comment_when_unavailable', 'comment_when_available']
+    list_editable = ['prequire_list', 'reward_id', 'next_list', 'show_next', 'show_if_unavailable',
+                     'comment_when_unavailable', 'comment_when_available', 'comment_when_clear']
     list_filter = ['game']
 
 

@@ -115,17 +115,31 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
     # 触发词列表、当前玩家游戏存档、已获成就、历史命令列表、通关码、鉴权信息
     if cur_game.is_active:
         ret_dict['game_is_active'] = True
-        trigger_list = [x.quest_trigger for x in ExploreGameQuest.objects.filter(game=cur_game)]
         cur_player_game_dict = get_cur_player_game_dict(player=cur_player, game_name=cur_game_name)
         reward_list = cur_player_game_dict.get(FIELD_REWARD_LIST, list())
         cmd_dict = cur_player_game_dict.get(FIELD_COMMAND_DICT, dict())
         clear_code = cur_player_game_dict.get(FIELD_CLEAR_CODE, '')
         player_is_audit = cur_player_game_dict.get(FIELD_IS_AUDIT, False)
+        wait_status = cur_player_game_dict.get(FIELD_WAIT_STATUS, '')
+        if len(wait_status) > 0:
+            try:
+                cur_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=wait_status)
+                next_list = cur_quest.get_content_list(type='next')
+                if len(next_list) > 0:
+                    trigger_list = next_list
+                    trigger_list.append(wait_status)
+                    if len(cur_quest.back_quest) > 0:
+                        trigger_list.append(cur_quest.back_quest)
+            except ObjectDoesNotExist:
+                next_list = list()
+        else:
+            next_list = list()
+        if len(next_list) == 0:
+            trigger_list = [x.quest_trigger for x in ExploreGameQuest.objects.filter(game=cur_game)]
         ret_dict['player_is_audit'] = player_is_audit
         ret_dict['player_game_info'] = cur_player_game_dict
         ret_dict['player_info'] = cur_player.user_info
         ret_dict['clear_code'] = clear_code
-        # ret_dict['progress'] = check_progress(cur_game=cur_game, reward_list=reward_list)
         ret_dict['progress'] = cur_game.check_progress(reward_list=reward_list)
     else:
         # 如果游戏不是激活状态
@@ -140,6 +154,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
             content = cmd
             if content in trigger_list:
                 # 如果用户尝试触发新任务
+                ret_dict['answer_is_correct'] = True
                 cur_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=content)
                 prequire_list = cur_quest.get_content_list(type='prequire')
                 if set(prequire_list).issubset(set(reward_list)) or len(prequire_list) == 0:
@@ -149,9 +164,12 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                         ret_dict = set_reward(quest=cur_quest, ret_dict=ret_dict)
                     else:
                         # 如果玩家还没通过这个任务，就显示问题页面
-                        cur_player.waiting_status = content
+                        wait_status = content
+                        cur_player_game_dict[FIELD_WAIT_STATUS] = wait_status
+                        cur_player.game_hist[cur_game_name] = cur_player_game_dict
                         cur_player.save()
-                        ret_dict = set_quest(cur_game=cur_game, trigger=content, open_id=open_id, ret_dict=ret_dict)
+                        ret_dict = set_quest(cur_game=cur_game, trigger=content, open_id=open_id,
+                                             ret_dict=ret_dict, reward_list=reward_list)
                 else:
                     # 前置要求还没做全
                     done_id_list = set(reward_list).intersection(set(prequire_list))
@@ -164,19 +182,22 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                     text_content += f'而{ret_dict["progress"]}。'
                     ret_dict['error_msg'] = text_content
 
-            elif len(cur_player.waiting_status) > 0:  # 如果用户已经处于等待输入状态
+            elif len(wait_status) > 0:  # 如果用户已经处于等待输入状态
 
                 # 用户已处于某个Quest中，等待输入答案
-                if cur_player.waiting_status in trigger_list:
+                if wait_status in trigger_list:
                     # 如果用户已经处于某个quest的任务中
                     try:
-                        cur_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=cur_player.waiting_status)
+                        cur_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=wait_status)
                         answer_list = cur_quest.get_content_list(type='answer')
-                        cmd_list = cmd_dict.get(cur_player.waiting_status, list())
+                        next_list = cur_quest.get_content_list(type='next')
+                        cmd_list = cmd_dict.get(wait_status, list())
                     except ObjectDoesNotExist:
                         # 玩家等待状态设置错误，可能是游戏配置已更改
                         # 清空等待状态，将answer_list置为空列表
-                        cur_player.waiting_status = ''
+                        wait_status = ''
+                        cur_player_game_dict[FIELD_WAIT_STATUS] = wait_status
+                        cur_player.game_hist[cur_game_name] = cur_player_game_dict
                         cur_player.save()
                         answer_list = list()
                         cur_quest = None
@@ -190,73 +211,92 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                         ret_dict['answer_is_correct'] = True
                         # 如果玩家是新获得的奖励，就增加1个步数，保存奖励记录
                         # 如果玩家之前已经获得过奖励，就忽略
-                        if reward_id not in reward_list:
+                        if reward_id > 0 and reward_id not in reward_list:
                             cmd_list.append(content)
-                            cmd_dict[cur_player.waiting_status] = cmd_list
+                            cmd_dict[wait_status] = cmd_list
                             reward_list.append(reward_id)
                             cur_player_game_dict[FIELD_REWARD_LIST] = reward_list
                             cur_player_game_dict[FIELD_COMMAND_DICT] = cmd_dict
                             cur_player.game_hist[cur_game_name] = cur_player_game_dict
                             # ret_dict['notify_msg'] = cur_quest.reward
 
-                        # 重置玩家当前等待状态，并保存
-                        cur_player.waiting_status = ''
-                        cur_player.save()
-                        # 确认玩家是否已通关
-                        clear_requirement_list = cur_game.get_content_list()
-                        if set(clear_requirement_list).issubset(set(reward_list)):
-                            # 玩家已达到通关要求
-                            clear_code = cur_player.hash_with_game(cur_game_name)
-                            cur_player_game_dict[FIELD_CLEAR_CODE] = clear_code
+                        if len(next_list) == 0:  # 没有下一步，即简单的游戏模式
+                            # 重置玩家当前等待状态，并保存
+                            wait_status = ''
+                            cur_player_game_dict[FIELD_WAIT_STATUS] = wait_status
                             cur_player.game_hist[cur_game_name] = cur_player_game_dict
                             cur_player.save()
-                            text_content = f'{cur_game.clear_notice}'
-                            text_content += '\n'
-                            text_content += f'您的通关密码是：{clear_code}'
-                            ret_dict['notify_msg'] = text_content
-                            ret_dict['clear_code'] = clear_code
-                        else:
-                            # 玩家还没通关
-                            replyMsg = cur_quest.reply_msg(type='reward', toUser=open_id, fromUser=fromUser,
-                                                           for_text=for_text)
-                            ret_dict['reply_obj'] = replyMsg
-                        # 重置游戏界面
-                        # ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
-                        # 进入显示成就页面
-                        ret_dict = set_reward(quest=cur_quest, ret_dict=ret_dict)
+                            # 确认玩家是否已通关
+                            clear_requirement_list = cur_game.get_content_list()
+                            if set(clear_requirement_list).issubset(set(reward_list)):
+                                # 玩家已达到通关要求
+                                clear_code = cur_player.hash_with_game(cur_game_name)
+                                cur_player_game_dict[FIELD_CLEAR_CODE] = clear_code
+                                cur_player.game_hist[cur_game_name] = cur_player_game_dict
+                                cur_player.save()
+                                text_content = f'{cur_game.clear_notice}'
+                                text_content += '\n'
+                                text_content += f'您的通关密码是：{clear_code}'
+                                ret_dict['notify_msg'] = text_content
+                                ret_dict['clear_code'] = clear_code
+                            else:
+                                # 玩家还没通关
+                                replyMsg = cur_quest.reply_msg(type='reward', toUser=open_id, fromUser=fromUser,
+                                                               for_text=for_text)
+                                ret_dict['reply_obj'] = replyMsg
+                            # 重置游戏界面
+                            # ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
+                            # 进入显示成就页面
+                            ret_dict = set_reward(quest=cur_quest, ret_dict=ret_dict)
+                        else: # 有next_list，就生成下一步的页面
+                            ret_dict['answer_is_correct'] = True
+                            wait_status = next_list[0]
+                            cur_player_game_dict[FIELD_WAIT_STATUS] = wait_status
+                            cur_player.game_hist[cur_game_name] = cur_player_game_dict
+                            cur_player.save()
+                            ret_dict = set_quest(cur_game=cur_game, open_id=open_id, ret_dict=ret_dict,
+                                                 reward_list=reward_list)
                     else:
                         # 输入了不相关的内容
                         cmd_list.append(content)
-                        cmd_dict[cur_player.waiting_status] = cmd_list
+                        cmd_dict[wait_status] = cmd_list
                         cur_player_game_dict[FIELD_COMMAND_DICT] = cmd_dict
                         cur_player.game_hist[cur_game_name] = cur_player_game_dict
                         cur_player.save()
                         my_error_auto_replys = list(ErrorAutoReply.objects.filter(is_active=True))
-                        ret_dict = set_quest(cur_game=cur_game, trigger=cur_player.waiting_status,
-                                             ret_dict=ret_dict, open_id=open_id)
+                        ret_dict = set_quest(cur_game=cur_game, trigger=wait_status,
+                                             ret_dict=ret_dict, open_id=open_id, reward_list=reward_list)
                         if len(my_error_auto_replys) > 0:
                             choose_reply = sample(my_error_auto_replys, 1)[0]
                             ret_dict['error_msg'] = choose_reply.reply_msg(toUser=open_id, fromUser=fromUser,
                                                                            for_text=for_text)
                         else:
                             ret_dict['error_msg'] = f'{error_reply_default}'
-                elif cur_player.waiting_status == WAITING_FOR_PASSWORD:
+                elif wait_status == WAITING_FOR_PASSWORD:
                     # 如果用户已经完成鉴权，但状态是等待输入密码，就可能人为修改了鉴权状态，先清空等待状态
-                    cur_player.waiting_status = ''
+                    wait_status = ''
+                    cur_player_game_dict[FIELD_WAIT_STATUS] = wait_status
+                    cur_player.game_hist[cur_game_name] = cur_player_game_dict
+                    cur_player.save()
                     ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
         else:  # 如果cmd为空，就显示游戏的初始化内容
+            wait_status = ''
+            cur_player_game_dict[FIELD_WAIT_STATUS] = wait_status
+            cur_player.game_hist[cur_game_name] = cur_player_game_dict
+            cur_player.save()
             ret_dict = new_game(cur_game=cur_game, reward_list=reward_list, ret_dict=ret_dict)
     else:
         # user is not audit
         # 等待用户输入密码
         content = cmd
-        if cur_player.waiting_status == WAITING_FOR_PASSWORD:
+        if wait_status == WAITING_FOR_PASSWORD:
             # 玩家正在输入密码
             if len(content) > 0:
                 result = auth_user(game=cur_game, password=content, user_id=open_id)
                 if result:
                     player_is_audit = True
-                    cur_player.waiting_status = ''
+                    wait_status = ''
+                    cur_player_game_dict[FIELD_WAIT_STATUS] = wait_status
                     cur_player_game_dict[FIELD_IS_AUDIT] = player_is_audit
                     cur_player.game_hist[cur_game_name] = cur_player_game_dict
                     cur_player.save()
@@ -272,7 +312,9 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
                 ret_dict['error_msg'] = ASK_FOR_PASSWORD
                 ret_dict['page_type'] = 'password'  # 因为需要输入密码
         else:
-            cur_player.waiting_status = WAITING_FOR_PASSWORD
+            wait_status = WAITING_FOR_PASSWORD
+            cur_player_game_dict[FIELD_WAIT_STATUS] = wait_status
+            cur_player.game_hist[cur_game_name] = cur_player_game_dict
             cur_player.save()
             ret_dict['error_msg'] = ASK_FOR_PASSWORD
             ret_dict['page_type'] = 'password'  # 因为需要输入密码
@@ -307,66 +349,79 @@ def get_cur_player_game_dict(player, game_name):
     return cur_player_game_dict
 
 
-# def check_progress(cur_game, reward_list):
-#     # 按玩家当前成就生成游戏进度描述语句
-#     if cur_game:
-#         all_quest = ExploreGameQuest.objects.filter(game=cur_game)
-#         done_q_name_list = list()
-#         for q in all_quest:
-#             if q.reward_id in reward_list:
-#                 done_q_name_list.append(q.quest_trigger)
-#         if len(done_q_name_list) > 0:
-#             text_content = f'您现在完成了{str(done_q_name_list)[1:-1]} {len(done_q_name_list)}个任务。'
-#         else:
-#             text_content = f'您现在还没有完成任何任务。'
-#     else:
-#         text_content = f'您没有参与游戏。'
-#     return text_content
+def set_quest_option(my_quest, reward_list):
+    # 判断某个任务的状态（已完成、可挑战或不能挑战），返回显示选项
+    # 如果判断为不显示，则返回None
+    prequire_list = my_quest.get_content_list(type='prequire')
+    if my_quest.reward_id in reward_list:
+        # 如果这个Quest已经通关
+        return {'trigger': my_quest.quest_trigger, 'comment': my_quest.comment_when_clear,
+                'enable': True, 'style': OPTION_ENABLE}
+    elif set(prequire_list).issubset(set(reward_list)) or len(prequire_list) == 0:
+        # 如果这个Quest没有前置要求，或前置要求都达到了
+        return {'trigger': my_quest.quest_trigger, 'comment': my_quest.comment_when_available,
+                'enable': True, 'style': OPTION_ENABLE}
+    else:
+        # 其他情况，还不能挑战这个任务，判断是否要显示
+        if my_quest.show_if_unavailable:
+            return {'trigger': my_quest.quest_trigger, 'comment': my_quest.comment_when_unavailable,
+                    'enable': False, 'style': OPTION_DISABLE}
+        else:
+            return None
 
 
 def new_game(cur_game, reward_list, ret_dict):
-    ret_dict['reply_obj'] = replace_content_with_html(cur_game.opening)
-    qeusts = ExploreGameQuest.objects.filter(game=cur_game).order_by('reward_id')
+
+    ret_dict['reply_obj'] = cur_game.show_opening()
     ret_dict['reply_options'] = list()
-    for my_quest in qeusts:
-        # 将可以挑战的任务放在选项中
-        prequire_list = my_quest.get_content_list(type='prequire')
-        if my_quest.reward_id in reward_list:
-            # 如果这个Quest已经通关
-            ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
-                                              'comment': '已通关',
-                                              'enable': True,
-                                              'style': OPTION_ENABLE})
-        elif set(prequire_list).issubset(set(reward_list)) or len(prequire_list) == 0:
-            # 如果这个Quest没有前置要求，或前置要求都达到了
-            ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
-                                              'comment': '可挑战',
-                                              'enable': True,
-                                              'style': OPTION_ENABLE})
-        else:
-            # 其他情况，还不能挑战这个任务
-            ret_dict['reply_options'].append({'trigger': my_quest.quest_trigger,
-                                              'comment': '未具备挑战条件',
-                                              'enable': False,
-                                              'style': OPTION_DISABLE})
+    entry_quest = None
+    if len(cur_game.entry) > 0:
+        try:
+            entry_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=cur_game.entry)
+        except ObjectDoesNotExist:
+            # 游戏入口任务不存在，回退到显示所有可选任务
+            pass
+    if entry_quest:
+        quest_option = set_quest_option(my_quest=entry_quest, reward_list=reward_list)
+        if quest_option:
+            ret_dict['reply_options'].append(quest_option)
+    else:
+        qeusts = ExploreGameQuest.objects.filter(game=cur_game).order_by('reward_id')
+        for cur_quest in qeusts:
+            # 将可以挑战的任务放在选项中
+            quest_option = set_quest_option(my_quest=cur_quest, reward_list=reward_list)
+            if quest_option:
+                ret_dict['reply_options'].append(quest_option)
     ret_dict['progress'] = cur_game.check_progress(reward_list=reward_list)
     ret_dict['quest_trigger'] = cur_game.name
     ret_dict['page_type'] = 'main'
     return ret_dict
 
 
-def set_quest(cur_game, trigger, ret_dict, open_id):
+def set_quest(cur_game, trigger, ret_dict, open_id, reward_list=list()):
     cur_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=trigger)
     fromUser = ''
     for_text = False
     ret_dict['reply_obj'] = cur_quest.reply_msg(type='question', toUser=open_id,
                                                 fromUser=fromUser, for_text=for_text)
     option_list = cur_quest.get_content_list(type='option')
-    for option in option_list:
-        ret_dict['reply_options'].append({'trigger': option,
-                                          'comment': '',
-                                          'enable': True,
-                                          'style': OPTION_ENABLE})
+    next_list = cur_quest.get_content_list(type='next')
+    if len(next_list) > 0 and cur_quest.show_next:
+        for next_trigger in next_list:
+            try:
+                next_quest = ExploreGameQuest.objects.get(game=cur_game, quest_trigger=next_trigger)
+                quest_option = set_quest_option(my_quest=next_quest, reward_list=reward_list)
+                if quest_option:
+                    ret_dict['reply_options'].append(quest_option)
+            except ObjectDoesNotExist:
+                logger.error(f'{next_trigger} is not exists')
+
+    else:
+        for option in option_list:
+            ret_dict['reply_options'].append({'trigger': option,
+                                              'comment': '',
+                                              'enable': True,
+                                              'style': OPTION_ENABLE})
     ret_dict['hint_string'] = cur_quest.reply_msg(type='hint', toUser=open_id,
                                                   fromUser=fromUser, for_text=for_text)
     ret_dict['quest_trigger'] = trigger

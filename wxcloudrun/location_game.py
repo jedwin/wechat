@@ -31,7 +31,7 @@ FIELD_CLEAR_CODE = 'clear_code'                 # 存放通过码的字典key
 FIELD_REWARD_LIST = 'reward_list'               # 存放已获取奖励的字典key
 FIELD_COMMAND_DICT = 'cmd_dict'                 # 存放已行动命令的字典key
 FIELD_IS_AUDIT = 'is_audit'                     # 存在当前用户在当前游戏是否已认证的key
-
+FIELD_WAIT_STATUS = 'wait_status'               # 保存当前游戏的当前任务
 OPTION_ENABLE = 'weui-cell weui-cell_access'    # 提供可选选项的样式
 OPTION_DISABLE = 'weui-cell weui-cell_disable'  # 提供不可选选项的样式
 sep = '|'           # 分隔符
@@ -56,7 +56,7 @@ def replace_content_with_html(in_content):
                 img_string = f'<p style="text-align: center;"><img src="{img_url}" alt="{image_name}"></p>'
                 return img_string
             else:
-                return matched
+                return image_name
         except ObjectDoesNotExist:
             return matched
     if len(in_content) > 0:
@@ -64,13 +64,14 @@ def replace_content_with_html(in_content):
         ret_content += in_content.replace('\n', '</p><p>')
         ret_content += '</p>'
         re_pattern = '「(?P<keyword>[^」]+)」'
-        matches = re.findall(pattern=re_pattern, string=ret_content)
-        if len(matches) > 0:
-            ret_result = re.sub(pattern=re_pattern, repl=replace_media, string=ret_content)
-            return ret_result
-        else:
-            # 如果文本中没有需要插入图片，就按原样返回
-            return ret_content
+        return re.sub(pattern=re_pattern, repl=replace_media, string=ret_content)
+        # matches = re.findall(pattern=re_pattern, string=ret_content)
+        # if len(matches) > 0:
+        #     ret_result = re.sub(pattern=re_pattern, repl=replace_media, string=ret_content)
+        #     return ret_result
+        # else:
+        #     # 如果文本中没有需要插入图片，就按原样返回
+        #     return ret_content
     else:
         # 如果in_content为空，则原样返回
         return in_content
@@ -80,15 +81,19 @@ class ExploreGame(models.Model):
     app = models.ForeignKey(WechatApp, on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=100)
     opening = models.TextField(max_length=1000, default='', verbose_name='游戏启动内容', blank=True)
-    settings_file = models.CharField(max_length=300)
+    settings_file = models.CharField(max_length=300, blank=True)
     is_active = models.BooleanField(default=False)
     clear_requirement = models.CharField(max_length=100, default='', blank=True, 
                                          verbose_name='本游戏通关条件，以｜分隔')
     clear_notice = models.TextField(max_length=1000, default='', verbose_name='本游戏通关提示内容', blank=True)
-    passwd_init = models.CharField(max_length=5, default='0', verbose_name='本游戏密码的开头字符')
+    passwd_init = models.CharField(max_length=5, default='0', verbose_name='本游戏密码的开头字符', blank=True)
+    entry = models.CharField(max_length=100, default='', verbose_name='游戏入口任务，留空表示直接显示所有可以挑战任务', blank=True)
     
     def __str__(self):
         return f'{self.app}_{self.name}'
+
+    def show_opening(self):
+        return replace_content_with_html(self.opening)
 
     def get_content_list(self, type='clear_requirement'):
         """
@@ -122,9 +127,11 @@ class ExploreGame(models.Model):
         find_string = '\r\n'
         replace_string = '</p><p>'
         try:
-            f = open(self.settings_file, 'w', encoding='gbk')
+            f = open(self.settings_file, 'w', encoding='utf-8')
             f.writelines('任务, 前置条件, 地点要求, 用户位置搜索关键词, 谜面类型,谜面,')
-            f.writelines('提示类型,提示内容,答案列表,选项列表,奖励类型,奖励内容,奖励id\n')
+            f.writelines('提示类型,提示内容,答案列表,选项列表,奖励类型,奖励内容,奖励id,')
+            f.writelines('下一步选项列表,是否显示下一步,返回任务名称,未满足条件时是否显示,')
+            f.writelines('未满足条件时显示的提示,满足条件时显示的提示,已完成时显示的提示\n')
         except:
             ret_dict['errmsg'] = f'setting file can not be created'
             return ret_dict
@@ -145,6 +152,13 @@ class ExploreGame(models.Model):
             export_list.append(quest.reward_type)
             export_list.append(quest.reward.replace(',', '，'))
             export_list.append(str(quest.reward_id))
+            export_list.append(quest.next_list.replace(',', '，'))
+            export_list.append(str(quest.show_next))
+            export_list.append(quest.back_quest.replace(',', '，'))
+            export_list.append(str(quest.show_if_unavailable))
+            export_list.append(quest.comment_when_unavailable.replace(',', '，'))
+            export_list.append(quest.comment_when_available.replace(',', '，'))
+            export_list.append(quest.comment_when_clear.replace(',', '，'))
             f.writelines(','.join(export_list))
             f.writelines('\n')
             count += 1
@@ -162,7 +176,7 @@ class ExploreGame(models.Model):
         new_count = 0
         update_count = 0
         try:
-            f = open(self.settings_file, 'r', encoding='gbk')
+            f = open(self.settings_file, 'r', encoding='utf-8')
         except:
             ret_dict['errmsg'] = f'can not open setting file: {self.settings_file}'
             return ret_dict
@@ -187,6 +201,13 @@ class ExploreGame(models.Model):
                 reward_id = int(reward_id)
             else:
                 reward_id = 0
+            next_list = quest[13]
+            show_next = quest[14].upper()
+            back_quest = quest[15]
+            show_if_unavailable = quest[16].upper()
+            comment_when_unavailable = quest[17]
+            comment_when_available = quest[18]
+            comment_when_clear = quest[19]
             if len(quest_trigger) > 0:
                 try:
                     my_quest = ExploreGameQuest.objects.get(game=self, quest_trigger=quest_trigger)
@@ -203,6 +224,19 @@ class ExploreGame(models.Model):
                     my_quest.reward = reward
                     my_quest.reward_type = reward_type
                     my_quest.reward_id = reward_id
+                    my_quest.next_list = next_list
+                    if show_next == 'TRUE':
+                        my_quest.show_next = True
+                    else:
+                        my_quest.show_next = False
+                    my_quest.back_quest = back_quest
+                    if show_if_unavailable == 'TRUE':
+                        my_quest.show_if_unavailable = True
+                    else:
+                        my_quest.show_if_unavailable = False
+                    my_quest.comment_when_unavailable = comment_when_unavailable
+                    my_quest.comment_when_available = comment_when_available
+                    my_quest.comment_when_clear = comment_when_clear
                     my_quest.save()
                     update_count += 1
                 except ObjectDoesNotExist:
@@ -211,7 +245,11 @@ class ExploreGame(models.Model):
                                                 question_type=question_type, question_data=question_data,
                                                 hint_type=hint_type, hint_data=hint_data, answer_list=answer_list,
                                                 options_list=options_list, reward_type=reward_type, reward=reward,
-                                                reward_id=reward_id)
+                                                reward_id=reward_id, next_list=next_list, show_next=show_next,
+                                                back_quest=back_quest, show_if_unavailable=show_if_unavailable,
+                                                comment_when_unavailable=comment_when_unavailable,
+                                                comment_when_available=comment_when_available,
+                                                comment_when_clear=comment_when_clear)
                     new_count += 1
                 my_quest.save()
         ret_dict['result'] = True
@@ -267,15 +305,23 @@ class ExploreGameQuest(models.Model):
                                    verbose_name='地点POI关键词，用于搜索用户周边')
     question_type_choice = [('TEXT', '文字'), ('VIDEO', '视频'), ('PIC', '图片')]
     question_type = models.CharField(max_length=10, choices=question_type_choice, default='TEXT', verbose_name='谜面类型')
-    question_data = models.TextField(max_length=1000, default='', verbose_name='谜面')
+    question_data = models.TextField(max_length=1000, default='', verbose_name='谜面', blank=True)
     hint_type = models.CharField(max_length=10, choices=question_type_choice, default='TEXT', verbose_name='提示类型')
     hint_data = models.TextField(max_length=1000, default='', verbose_name='提示内容', blank=True)
-    answer_list = models.CharField(max_length=100, default='', verbose_name='谜底列表，以｜分隔')
+    answer_list = models.CharField(max_length=100, default='', verbose_name='谜底列表，以｜分隔', blank=True)
     options_list = models.CharField(max_length=1000, default='', blank=True,
                                     verbose_name='谜底选项列表，以｜分隔，留空表示填空题')
     reward_type = models.CharField(max_length=10, choices=question_type_choice, default='TEXT', verbose_name='奖励类型')
-    reward = models.TextField(max_length=1000, default='', verbose_name='本题奖励内容')
+    reward = models.TextField(max_length=1000, default='', verbose_name='本题奖励内容', blank=True)
     reward_id = models.IntegerField(default=0, verbose_name='本题奖励id')
+    next_list = models.CharField(max_length=1000, default='', blank=True,
+                                 verbose_name='下一步任务分支选项，以｜分隔，只有在这个列表中的任务才来作为下一步')
+    show_next = models.BooleanField(default=True, verbose_name='是否显示下一步分支选项，如果不显示，则以answer_list的答案来跳转下一步')
+    back_quest = models.CharField(max_length=100, default='', verbose_name='返回到某个任务的名称，留空表示返回到开始', blank=True)
+    show_if_unavailable = models.BooleanField(default=False, verbose_name='未满足挑战条件时是否显示')
+    comment_when_unavailable = models.CharField(max_length=100, default='还不能选择', verbose_name='未满足挑战条件时显示的提示')
+    comment_when_available = models.CharField(max_length=100, default='可选择', verbose_name='满足挑战条件时显示的提示')
+    comment_when_clear = models.CharField(max_length=100, default='已完成', verbose_name='已完成任务时显示的提示')
 
     def __str__(self):
         return f'{self.game}_{self.quest_trigger}'
@@ -368,7 +414,14 @@ class ExploreGameQuest(models.Model):
         elif type == 'option':
             content = self.options_list
         elif type == 'answer':
-            content = self.answer_list
+            if len(self.answer_list) > 0:
+                content = self.answer_list
+            elif len(self.next_list) > 0:
+                content = self.next_list
+            else:
+                content = ''
+        elif type == 'next':
+            content = self.next_list
         else:
             # 类型错误
             content = ''

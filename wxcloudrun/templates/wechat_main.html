@@ -107,8 +107,8 @@
                     <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showClearCode">查看通关码</a>
                     {% endif %}
                     {% if page_type == "quest" or page_type == "reward" %}
-                    <a href="/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}"
-                       role="button" class="weui-btn weui-btn_primary" id="back2index">返回</a>
+                    <a href="javascript:" role="button" class="weui-btn weui-btn_primary" id="showGoBack">返回</a>
+
                     {% endif %}
                 </div>
                 <div id="dialog_hint">
@@ -139,16 +139,19 @@
                         </div>
                     </div>
                 </div>
-                <div id="dialog_wrong_answer">
-                    <div class="js_dialog_wrong_answer" role="dialog"  aria-hidden="true" aria-modal="true"
-                         aria-labelledby="js_title1" id="iosDialog_wrong_answer" style="display: none;">
+                <div id="dialog_go_back">
+                    <div class="js_dialog_go_back" role="dialog"  aria-hidden="true" aria-modal="true"
+                         aria-labelledby="js_title1" id="iosDialog_go_back" style="display: none;">
                         <div class="weui-mask"></div>
                         <div class="weui-dialog">
-                            <div class="weui-dialog__hd"><strong class="weui-dialog__title" id="js_wrong_answer">答案错误</strong></div>
-                            <div class="weui-dialog__bd" id="notice_wrong_answer">对不起，你的答案不对哦，请再想想</div>
+                            <div class="weui-dialog__hd"><strong class="weui-dialog__title" id="js_go_back">确认</strong></div>
+                            <div class="weui-dialog__bd" id="notice_wrong_answer">确认返回到游戏起点吗？</div>
                             <div class="weui-dialog__ft">
+
                                 <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_default"
-                                   id="confirm_wrong_answer">确定</a>
+                                   id="confirm_go_back">取消</a>
+                                <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_primary"
+                                   id="cancle">确认</a>
                             </div>
                         </div>
                     </div>
@@ -191,15 +194,6 @@
             iosDialog_progress.trigger('focus');
         });
 
-        var $textProgress = $('#textProgress');
-        $('#showProgress').on('click', function(){
-            if ($textProgress.css('display') != 'none') return;
-            $textProgress.fadeIn(100);
-            setTimeout(function () {
-                $textProgress.fadeOut(100);
-            }, 2000);
-        });
-
         var $textClearCode = $('#textClearCode');
         $('#showClearCode').on('click', function(){
             if ($textClearCode.css('display') != 'none') return;
@@ -207,6 +201,22 @@
             setTimeout(function () {
                 $textClearCode.fadeOut(100);
             }, 2000);
+        });
+
+        let iosDialog_go_back = $('#iosDialog_go_back');
+        $('#dialog_go_back').on('click', '.weui-dialog__btn_default', function(){
+            $(this).parents('.js_dialog_go_back').fadeOut(200);
+            $(this).parents('.js_dialog_go_back').attr('aria-hidden','true');
+            $(this).parents('.js_dialog_go_back').removeAttr('tabindex');
+        });
+        $('#dialog_go_back').on('click', '.weui-dialog__btn_primary', function(){
+            globalThis.location='/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}';
+        });
+        $('#showGoBack').on('click', function(){
+            iosDialog_go_back.fadeIn(200);
+            iosDialog_go_back.attr('aria-hidden','false');
+            iosDialog_go_back.attr('tabindex','0');
+            iosDialog_go_back.trigger('focus');
         });
 
         var $input = $('#js_input');
@@ -230,7 +240,7 @@
         });
         $('#showTooltips').on('click', function(){
             if ($(this).hasClass('weui-btn_disabled')) return;
-            let u='/check_answer/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd='+$input.val();
+            globalThis.location='/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd='+$input.val();
             const xhttp = new XMLHttpRequest();
             xhttp.open("GET", u);
             xhttp.send();
