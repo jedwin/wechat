@@ -426,6 +426,7 @@ def set_quest(cur_game, trigger, ret_dict, open_id, reward_list=list()):
                                                   fromUser=fromUser, for_text=for_text)
     ret_dict['quest_trigger'] = trigger
     ret_dict['page_type'] = 'quest'
+    ret_dict['audio_link'] = cur_quest.audio_link
     return ret_dict
 
 
