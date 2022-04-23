@@ -8,9 +8,9 @@ import sys
 import time
 import urllib3
 from django.core.exceptions import *
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
 from django.db.models import F, Q, When, Count
+from django.http import HttpResponse
 import logging
 from wxcloudrun import reply
 from wxcloudrun.models import *
@@ -81,7 +81,7 @@ class ExploreGame(models.Model):
     app = models.ForeignKey(WechatApp, on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=100)
     opening = models.TextField(max_length=1000, default='', verbose_name='游戏启动内容', blank=True)
-    settings_file = models.CharField(max_length=300, blank=True)
+    settings_file = models.CharField(max_length=300, blank=True, verbose_name='游戏配置文件')
     is_active = models.BooleanField(default=False)
     clear_requirement = models.CharField(max_length=100, default='', blank=True, 
                                          verbose_name='本游戏通关条件，以｜分隔')
@@ -131,7 +131,7 @@ class ExploreGame(models.Model):
             f.writelines('任务, 前置条件, 地点要求, 用户位置搜索关键词, 谜面类型,谜面,')
             f.writelines('提示类型,提示内容,答案列表,选项列表,奖励类型,奖励内容,奖励id,')
             f.writelines('下一步选项列表,是否显示下一步,返回任务名称,未满足条件时是否显示,')
-            f.writelines('未满足条件时显示的提示,满足条件时显示的提示,已完成时显示的提示\n')
+            f.writelines('未满足条件时显示的提示,满足条件时显示的提示,已完成时显示的提示,音频文件链接\n')
         except:
             ret_dict['errmsg'] = f'setting file can not be created'
             return ret_dict
@@ -158,11 +158,12 @@ class ExploreGame(models.Model):
             export_list.append(str(quest.show_if_unavailable))
             export_list.append(quest.comment_when_unavailable.replace(',', '，'))
             export_list.append(quest.comment_when_available.replace(',', '，'))
-            export_list.append(quest.comment_when_clear.replace(',', '，'))
+            export_list.append(quest.comment_when_clear.replace('\n', ''))
+            export_list.append(str(quest.audio_link))
             f.writelines(','.join(export_list))
             f.writelines('\n')
             count += 1
-            # logger.info(export_list)
+
         ret_dict['result'] = True
         ret_dict['errmsg'] = f'export {count} quests'
         return ret_dict
@@ -183,7 +184,7 @@ class ExploreGame(models.Model):
 
         all_rows = f.readlines()
         for i in range(1, len(all_rows)):
-            quest = all_rows[i].split(',')
+            quest = all_rows[i].replace('\n','').split(',')
             quest_trigger = quest[0]
             prequire_list = quest[1]
             location_list = quest[2]
@@ -208,6 +209,7 @@ class ExploreGame(models.Model):
             comment_when_unavailable = quest[17]
             comment_when_available = quest[18]
             comment_when_clear = quest[19]
+            audio_link = quest[20]
             if len(quest_trigger) > 0:
                 try:
                     my_quest = ExploreGameQuest.objects.get(game=self, quest_trigger=quest_trigger)
@@ -237,6 +239,7 @@ class ExploreGame(models.Model):
                     my_quest.comment_when_unavailable = comment_when_unavailable
                     my_quest.comment_when_available = comment_when_available
                     my_quest.comment_when_clear = comment_when_clear
+                    my_quest.audio_link = audio_link
                     my_quest.save()
                     update_count += 1
                 except ObjectDoesNotExist:
@@ -249,7 +252,7 @@ class ExploreGame(models.Model):
                                                 back_quest=back_quest, show_if_unavailable=show_if_unavailable,
                                                 comment_when_unavailable=comment_when_unavailable,
                                                 comment_when_available=comment_when_available,
-                                                comment_when_clear=comment_when_clear)
+                                                comment_when_clear=comment_when_clear, audio_link=audio_link)
                     new_count += 1
                 my_quest.save()
         ret_dict['result'] = True
@@ -293,6 +296,23 @@ class ExploreGame(models.Model):
             text_content = f'您一共需要完成{total_reward}个任务，但一个都还没有完成。'
         return text_content
 
+    def export_password(self, available_only=True):
+        cur_datetime = time.strftime('%Y%m%d%H%M%S',time.localtime())
+        # file_name = f'{self.name}可用密码列表{cur_datetime}.csv'
+        file_name = 'passwords.csv'
+        response = HttpResponse(
+            content_type='text/csv; charset=gbk',
+        )
+        response.headers['Content-Disposition']= f'attachment; filename="{file_name}"'
+        logger.info(f'export game password: {response.headers}')
+        passwd_list = list(WechatGamePasswd.objects.filter(game=self, is_assigned=not available_only))
+        writer = csv.writer(response)
+        writer.writerow(['game name', 'password'])
+        for passwd in passwd_list:
+            writer.writerow([self.name, passwd.password])
+
+        return response
+
 
 class ExploreGameQuest(models.Model):
     game = models.ForeignKey(ExploreGame, on_delete=models.CASCADE)
@@ -322,6 +342,7 @@ class ExploreGameQuest(models.Model):
     comment_when_unavailable = models.CharField(max_length=100, default='还不能选择', verbose_name='未满足挑战条件时显示的提示')
     comment_when_available = models.CharField(max_length=100, default='可选择', verbose_name='满足挑战条件时显示的提示')
     comment_when_clear = models.CharField(max_length=100, default='已完成', verbose_name='已完成任务时显示的提示')
+    audio_link = models.URLField(max_length=1000, default='',  blank=True, verbose_name='音频文件链接')
 
     def __str__(self):
         return f'{self.game}_{self.quest_trigger}'
@@ -361,35 +382,7 @@ class ExploreGameQuest(models.Model):
                 else:
                     # 其余类型无需转换
                     ret_content = text_content
-        # elif content_type == 'PIC':
-        #     my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
-        #     if len(my_media) > 0:
-        #         # 如果有重名的图片，就发第一张
-        #         mediaId = my_media[0].media_id
-        #         if for_text:
-        #             replyMsg = reply.ImageMsg(toUser, fromUser, mediaId)
-        #         else:
-        #             # return the image url
-        #             ret_content = my_media[0].info.get('url', '')
-        #     else:
-        #         text_content = f'找不到对应的图片{content_data}，请联系管理员'
-        #         replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-        #         ret_content = text_content
-        #
-        # elif content_type == 'VIDEO':
-        #     my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
-        #     if len(my_media) > 0:
-        #         # 如果有重名的视频，就发第一个
-        #         mediaId = my_media[0].media_id
-        #         if for_text:
-        #             replyMsg = reply.VideoMsg(toUser, fromUser, mediaId, content_data, self.video_desc)
-        #         else:
-        #             # return the video url
-        #             ret_content = my_media[0].info.get('url', '')
-        #     else:
-        #         text_content = f'找不到对应的视频{content_data}，请联系管理员'
-        #         replyMsg = reply.TextMsg(toUser, fromUser, text_content)
-        #         ret_content = text_content
+
         else:
             text_content = f'关键词的内容类型{content_type}错误，请联系管理员'
             replyMsg = reply.TextMsg(toUser, fromUser, text_content)

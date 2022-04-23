@@ -26,6 +26,13 @@
                 <section>
                 {{ reply_obj|safe }}
                 </section>
+                <section>
+                    {% if audio_link|length > 0 %}
+                    <audio autoplay="true" controls>
+                        <source src="{{ audio_link }}" type="audio/mpeg">
+                    </audio>
+                    {% endif %}
+                </section>
             </section>
         </article>
         {% if notify_msg|length > 0 %}

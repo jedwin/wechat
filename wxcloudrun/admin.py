@@ -172,7 +172,7 @@ class ExploreGameAdmin(admin.ModelAdmin):
     list_editable = ['app', 'settings_file', 'is_active']
     list_filter = ['app']
     # inlines = [ExploreGameQuestInline]
-    actions = ['export2csv', 'gen_new_passwd_obj', 'import_from_csv']
+    actions = ['export2csv', 'import_from_csv', 'gen_new_passwd_obj', 'export_passwd_csv']
 
     @admin.action(description='保存游戏配置')
     def export2csv(self, request, queryset):
@@ -207,6 +207,14 @@ class ExploreGameAdmin(admin.ModelAdmin):
                 # 生成失败，需要看docker的日志
                 self.message_user(request, f'为{obj.name}生成密码失败，请查看docker的日志', messages.WARNING)
 
+    @admin.action(description='导出可用密码列表')
+    def export_passwd_csv(self, request, queryset):
+        for obj in queryset:
+            ret_csv = obj.export_password()
+            if ret_csv:
+                return ret_csv
+            else:
+                return None
 
 class ExploreGameQuestAdmin(admin.ModelAdmin):
     list_display = ['quest_trigger', 'prequire_list', 'next_list', 'show_next', 'reward_id', 'show_if_unavailable',
