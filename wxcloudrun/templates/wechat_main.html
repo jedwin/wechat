@@ -10,13 +10,20 @@
 
 </head>
 <body ontouchstart>
-<script type="text/javascript">
+    <script type="text/javascript">
       if(window.__wxWebEnv){
         document.body.style.webkitTextSizeAdjust = JSON.parse(window.__wxWebEnv.getEnv()).fontScale + '%';
       }
 
     </script>
-
+    <script type="text/javascript">
+        function next_page(trigger){
+            let $loadingToast = document.getElementById('loadingToast');
+            if ($loadingToast.style['display'] != 'none') return;
+            $loadingToast.style['display'] = 'block';
+            globalThis.location='/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd='+trigger;
+        }
+    </script>
 <div class="container" id="container"></div>
 <script type="text/html" id="tpl_home">
     <div class="page article">
@@ -28,7 +35,7 @@
                 </section>
                 <section>
                     {% if audio_link|length > 0 %}
-                    <audio autoplay="true" controls>
+                    <audio autoplay controls>
                         <source src="{{ audio_link }}" type="audio/mpeg">
                     </audio>
                     {% endif %}
@@ -62,7 +69,7 @@
                         {% for option in reply_options %}
                         <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}"
                            {% if option.enable %}
-                                href="/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd={{option.trigger}}">
+                                href="javascript:next_page('{{option.trigger}}');">
                             {% else %}
                                 href="javascript:">
                             {% endif %}
@@ -118,6 +125,7 @@
 
                     {% endif %}
                 </div>
+                <!-- 游戏提示对话框 -->
                 <div id="dialog_hint">
                     <div class="js_dialog_hint" role="dialog"  aria-hidden="true" aria-modal="true"
                          aria-labelledby="js_title1" id="iosDialog_hint" style="display: none;">
@@ -132,6 +140,7 @@
                         </div>
                     </div>
                 </div>
+                <!-- 游戏进度对话框 -->
                 <div id="dialog_progress">
                     <div class="js_dialog_progress" role="dialog"  aria-hidden="true" aria-modal="true"
                          aria-labelledby="js_title1" id="iosDialog_progress" style="display: none;">
@@ -146,6 +155,7 @@
                         </div>
                     </div>
                 </div>
+                <!-- 返回对话框 -->
                 <div id="dialog_go_back">
                     <div class="js_dialog_go_back" role="dialog"  aria-hidden="true" aria-modal="true"
                          aria-labelledby="js_title1" id="iosDialog_go_back" style="display: none;">
@@ -163,11 +173,22 @@
                         </div>
                     </div>
                 </div>
+                <!-- 通关码 -->
                 <div role="alert" id="textClearCode" style="display: none;">
                     <div class="weui-mask_transparent"></div>
                     <div class="weui-toast weui-toast_text-more">
                         <i class="weui-icon-warn weui-icon_toast"></i>
                         <p class="weui-toast__content">{{clear_code}}</p>
+                    </div>
+                </div>
+                <!-- 加载中 -->
+                <div role="alert" id="loadingToast" style="display: none;">
+                    <div class="weui-mask_transparent"></div>
+                    <div class="weui-toast">
+                        <span class="weui-primary-loading weui-icon_toast">
+                          <span class="weui-primary-loading__dot"></span>
+                        </span>
+                        <p class="weui-toast__content">载入中</p>
                     </div>
                 </div>
             </form>
@@ -247,28 +268,14 @@
         });
         $('#showTooltips').on('click', function(){
             if ($(this).hasClass('weui-btn_disabled')) return;
+            var $loadingToast = $('#loadingToast');
+            if ($loadingToast.css('display') != 'none') return;
+            $loadingToast.fadeIn(100);
+            setTimeout(function () {
+                $loadingToast.fadeOut(100);
+            }, 30000);
             globalThis.location='/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd='+$input.val();
-            const xhttp = new XMLHttpRequest();
-            xhttp.open("GET", u);
-            xhttp.send();
-            xhttp.onload = function() {
-                if (xhttp.status === 200) {
-                    let a=JSON.parse(xhttp.responseText);
-                    let c=a['answer_is_correct'];
-                    let m=a['msg'];
-                    if (c) {
-                        globalThis.location='/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd={{ quest_trigger }}';
-                    }else{
-                        let iosDialog_wrong_answer = $('#iosDialog_wrong_answer');
-                        let n = document.getElementById('notice_wrong_answer');
-                        n.innerText = m;
-                        iosDialog_wrong_answer.fadeIn(200);
-                        iosDialog_wrong_answer.attr('aria-hidden','false');
-                        iosDialog_wrong_answer.attr('tabindex','0');
-                        iosDialog_wrong_answer.trigger('focus');
-                    }
-                }
-            };
+
         });
     });
 
