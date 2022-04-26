@@ -16,14 +16,7 @@
       }
 
     </script>
-    <script type="text/javascript">
-        function next_page(trigger){
-            let $loadingToast = document.getElementById('loadingToast');
-            if ($loadingToast.style['display'] != 'none') return;
-            $loadingToast.style['display'] = 'block';
-            globalThis.location='/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd='+trigger;
-        }
-    </script>
+
 <div class="container" id="container"></div>
 <script type="text/html" id="tpl_home">
     <div class="page article">
@@ -69,7 +62,7 @@
                         {% for option in reply_options %}
                         <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}"
                            {% if option.enable %}
-                                href="javascript:next_page('{{option.trigger}}');">
+                                href="/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd={{option.trigger}}">
                             {% else %}
                                 href="javascript:">
                             {% endif %}
@@ -273,7 +266,7 @@
             $loadingToast.fadeIn(100);
             setTimeout(function () {
                 $loadingToast.fadeOut(100);
-            }, 30000);
+            }, 2000);
             globalThis.location='/profile/?app_en_name={{app_en_name}}&cur_game_name={{cur_game_name}}&openid={{open_id}}&cmd='+$input.val();
 
         });
