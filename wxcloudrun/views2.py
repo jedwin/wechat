@@ -306,6 +306,7 @@ def get_user_info_with_code(request):
         request_url += f'&secret={my_app.secret}&code={code}&grant_type=authorization_code'
         # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
         # a = http.request('GET', request_url).data.decode('utf-8')
+        logger.info(f'code={code}')
         a = requests.get(request_url)
         a.encoding = 'utf-8'
         b = a.json()
@@ -323,6 +324,7 @@ def get_user_info_with_code(request):
             request_url = 'http://api.weixin.qq.com/sns/userinfo'
             request_url += f'?access_token={temp_acc_token}&openid={openid}&lang=zh_CN'
             # c = http.request('GET', request_url).data.decode('utf-8')
+            logger.info(f'acc_token={temp_acc_token}, open_id={openid}')
             c = requests.get(request_url)
             c.encoding = 'utf-8'
             d = c.json()
@@ -338,6 +340,7 @@ def get_user_info_with_code(request):
                     # 这是个新访问的用户
                     my_user = WechatPlayer(app=my_app, open_id=openid)
                 nickname = d.get('nickname', '')
+                logger.info(f'user nickname: {nickname}')
                 sex = d.get('sex', '')
                 headimgurl = d.get('headimgurl', '')
                 privilege = d.get('privilege', '')
