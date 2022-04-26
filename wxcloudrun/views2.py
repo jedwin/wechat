@@ -306,11 +306,11 @@ def get_user_info_with_code(request):
         request_url += f'&secret={my_app.secret}&code={code}&grant_type=authorization_code'
         # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
         # a = http.request('GET', request_url).data.decode('utf-8')
-        logger.info(f'code={code}')
         a = requests.get(request_url)
         a.encoding = 'utf-8'
         b = a.json()
-        errcode = b.get('errcode', 0)
+        logger.info(f'b={b}')
+        errcode = b.get('error_code', 0)
         if errcode > 0:
             # 获取用户open id时出错
             errmsg = b.get('errmsg', '')
@@ -324,11 +324,12 @@ def get_user_info_with_code(request):
             request_url = 'http://api.weixin.qq.com/sns/userinfo'
             request_url += f'?access_token={temp_acc_token}&openid={openid}&lang=zh_CN'
             # c = http.request('GET', request_url).data.decode('utf-8')
-            logger.info(f'acc_token={temp_acc_token}, open_id={openid}')
+
             c = requests.get(request_url)
             c.encoding = 'utf-8'
             d = c.json()
-            errcode = d.get('errcode', 0)
+            logger.info(f'd={d}')
+            errcode = d.get('error_code', 0)
             if errcode > 0:
                 # 获取用户信息时出错
                 errmsg = d.get('errmsg', '')
@@ -340,7 +341,6 @@ def get_user_info_with_code(request):
                     # 这是个新访问的用户
                     my_user = WechatPlayer(app=my_app, open_id=openid)
                 nickname = d.get('nickname', '')
-                logger.info(f'user nickname: {nickname}')
                 sex = d.get('sex', '')
                 headimgurl = d.get('headimgurl', '')
                 privilege = d.get('privilege', '')
@@ -385,7 +385,7 @@ def show_profile(request):
         if len(open_id) > 0:
             ret_dict = handle_player_command(app_en_name=app_en_name, open_id=open_id, game_name=cur_game_name,
                                              cmd=cmd, for_text=False)
-            logger.info(ret_dict)
+            # logger.info(ret_dict)
         else:
             print(f'openid is blank')
             ret_dict['error_msg'] = '异常调用'
@@ -411,7 +411,7 @@ def check_answer(request):
     cmd = request.GET.get('cmd', '')
     ret_dict = handle_player_command(app_en_name=app_en_name, open_id=open_id, game_name=cur_game_name,
                                      cmd=cmd, for_text=False)
-    logger.info(ret_dict)
+    # logger.info(ret_dict)
     if ret_dict['answer_is_correct']:
         return JsonResponse({'answer_is_correct': True, 'msg': ret_dict['notify_msg']})
     else:
