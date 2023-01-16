@@ -7,4 +7,5 @@ sqlparse
 urllib3
 certifi
 requests
+tzdata
 psycopg2-binary==2.9.1
