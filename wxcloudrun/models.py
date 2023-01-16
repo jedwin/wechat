@@ -15,13 +15,13 @@ from wxcloudrun import reply
 # from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
 
-errcode_access_token_expired = 42001
-errcode_access_token_missing = 41001
+error_code_access_token_expired = 42001
+error_code_access_token_missing = 41001
 errstring_access_token_expired = 'acc token refreshed, please re-run'
 errstring_access_token_refresh_failed = 'acc token refresh failed'
-errcode_access_token_refresh_failed = -2
-errcode_media_type_incorrect = -3
-errcode_unkown_error = -9
+error_code_access_token_refresh_failed = -2
+error_code_media_type_incorrect = -3
+error_code_unkown_error = -9
 SEP_SYM = '|'  # 用于分隔多个内容的符号，后面会被用在split()函数中
 keyword_hint = '提示'
 keyword_card = '卡'
@@ -32,12 +32,12 @@ keyword_control = '特殊指令'
 keyword_invite = '邀请加入'
 keyword_change_process = '改变进度'
 error_reply_default = '你输入的答案不对，请再想想'
-errcode_file = 'errcode.csv'
+error_code_file = 'error_code.csv'
 default_error_string = 'Unknow error'
 
-def get_error_string(in_code, in_file=errcode_file, default_string=default_error_string):
+def get_error_string(in_code, in_file=error_code_file, default_string=default_error_string):
     """
-    从腾讯的errcode文档中，找到对应的错误解释
+    从腾讯的error_code文档中，找到对应的错误解释
     :param in_code: 腾讯中为正数，为了区分admin.py里面的返回值count，特意将错误码同一换成相反数
     :param in_file: 存储腾讯错误码的csv文件
     :param default_string: 无法找到对应错误码时返回的默认字符串
@@ -115,8 +115,8 @@ class WechatApp(models.Model):
             a = requests.get(request_url)
             a.encoding = 'utf-8'
             b = a.json()
-            errcode = b.get('errcode', 0)
-            if errcode == 0:
+            error_code = b.get('error_code', 0)
+            if error_code == 0:
                 total_count = int(b['total'])
                 got_count += int(b['count'])
                 next_openid = b['next_openid']
@@ -129,19 +129,19 @@ class WechatApp(models.Model):
                         my_player = WechatPlayer.objects.get(app=self, open_id=openid)  # 应该最多只有1个
                     except ObjectDoesNotExist:
                         my_player = WechatPlayer(app=self, open_id=openid)
-                    result, errcode = my_player.get_user_info()
+                    result, error_code = my_player.get_user_info()
                     if result:
                         succ_count += 1
                     else:
                         fail_count += 1
-            elif errcode == errcode_access_token_expired:
+            elif error_code == error_code_access_token_expired:
                 if self.refresh_access_token():
                     return False, errstring_access_token_expired
                 else:
                     return False, errstring_access_token_refresh_failed
             else:
-                errcode = 0 - int(b['errcode'])
-                error_string = get_error_string(errcode)
+                error_code = 0 - int(b['error_code'])
+                error_string = get_error_string(error_code)
                 return False, error_string
         # 如果成功，返回获取到的关注用户数量
         return True, f'共有{got_count}个关注用户，成功更新{succ_count}个，失败{fail_count}个'
@@ -184,8 +184,8 @@ class WechatApp(models.Model):
                         a.encoding = 'utf-8'
                         b = a.json()
                         # print(f'a.encoding={a.encoding}')
-                        errcode = b.get('errcode', 0)
-                        if errcode == 0:
+                        error_code = b.get('error_code', 0)
+                        if error_code == 0:
                             items = b['item']
                             item_count = b['item_count']
                             if item_count == 0:
@@ -206,8 +206,8 @@ class WechatApp(models.Model):
                                                        name=media_name, info=item_dict)
                                 my_media.save()
                         else:
-                            errcode = 0 - errcode
-                            error_string = get_error_string(errcode)
+                            error_code = 0 - error_code
+                            error_string = get_error_string(error_code)
                             return False
                         time.sleep(0.1)
 
@@ -225,10 +225,10 @@ class WechatApp(models.Model):
                     # else some other error occured, return total_count directly
                     return total_count
             except:
-                return errcode_unkown_error
+                return error_code_unkown_error
         else:
             # failed to refresh access_token
-            return errcode_access_token_refresh_failed
+            return error_code_access_token_refresh_failed
 
     def get_resource_count(self, media_type="image_count"):
         """
@@ -246,11 +246,11 @@ class WechatApp(models.Model):
         a.encoding = 'utf-8'
         b = a.json()
         print(f'b={b}')
-        errcode = b.get('errcode', 0)
-        if errcode > 0:
+        error_code = b.get('error_code', 0)
+        if error_code > 0:
             # print(b)
             # returning the negative value for error indicator
-            return 0 - errcode
+            return 0 - error_code
         else:
             if media_type in b.keys():
                 total_count = b[media_type]
@@ -258,7 +258,7 @@ class WechatApp(models.Model):
                 return total_count
             else:
                 print(f'media_type incorrect: {media_type}')
-                return errcode_media_type_incorrect
+                return error_code_media_type_incorrect
 
     def image_count(self):
         return WechatMedia.objects.filter(app=self, media_type='image').count()
@@ -321,11 +321,11 @@ class WechatMedia(models.Model):
                         }}'''
             a = http.request('POST', request_url, body=form_data, encode_multipart=False).data.decode('utf-8')
             b = json.loads(a)
-            errcode = b.get('errcode', 0)
+            error_code = b.get('error_code', 0)
 
-            if errcode > 0:
-                errcode = 0 - int(b['errcode'])
-                error_string = get_error_string(errcode)
+            if error_code > 0:
+                error_code = 0 - int(b['error_code'])
+                error_string = get_error_string(error_code)
                 return False
             else:
                 self.delete()
@@ -429,15 +429,15 @@ class WechatPlayer(models.Model):
         a = http.request('POST', request_url, body=form_data.encode('utf-8'),
                          encode_multipart=False).data.decode('utf-8')
         b = json.loads(a)
-        errcode = b.get('errcode', 0)
-        if errcode == errcode_access_token_expired:
+        error_code = b.get('error_code', 0)
+        if error_code == error_code_access_token_expired:
             if self.app.refresh_access_token():
                 return False, errstring_access_token_expired
             else:
                 return False, errstring_access_token_refresh_failed
-        elif errcode > 0:
-            errcode = 0 - int(b['errcode'])
-            error_string = get_error_string(errcode)
+        elif error_code > 0:
+            error_code = 0 - int(b['error_code'])
+            error_string = get_error_string(error_code)
             return False, error_string
         else:
             # 如果成功获取信息，就直接返回json文件
@@ -459,8 +459,8 @@ class WechatPlayer(models.Model):
         a.encoding = 'utf-8'
         b = a.json()
         print(b)
-        errcode = b.get('errcode', 0)
-        if errcode == 0:
+        error_code = b.get('error_code', 0)
+        if error_code == 0:
             self.nickname = b['nickname']
             self.remark = b['remark']
             self.subscribe_scene = b['subscribe_scene']
@@ -469,15 +469,15 @@ class WechatPlayer(models.Model):
             self.subscribe = b['subscribe']
             self.user_info = b
             self.save()
-            return True, errcode
-        elif errcode == errcode_access_token_expired:
+            return True, error_code
+        elif error_code == error_code_access_token_expired:
             if self.app.refresh_access_token():
                 return False, errstring_access_token_expired
             else:
                 return False, errstring_access_token_refresh_failed
         else:
-            errcode = 0 - int(b['errcode'])
-            return False, errcode
+            error_code = 0 - int(b['error_code'])
+            return False, error_code
 
     def get_nearby_poi(self):
         if self.cur_longitude is None or self.cur_latitude is None:
@@ -656,11 +656,11 @@ class WechatMenu(models.Model):
             a = requests.post(request_url, data=json.dumps(self.menu_string, ensure_ascii=False).encode('utf-8'))
             a.encoding = 'utf-8'
             b = a.json()
-            errcode = b.get('errcode', 0)
+            error_code = b.get('error_code', 0)
             errmsg = b.get('errmsg', 'OK')
-            if errcode == 0:
+            if error_code == 0:
                 return True, errmsg
-            elif errcode == errcode_access_token_expired:
+            elif error_code == error_code_access_token_expired:
                 if self.app.refresh_access_token():
                     return False, errstring_access_token_expired
                 else:
