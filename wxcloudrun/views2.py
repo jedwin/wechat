@@ -310,8 +310,8 @@ def get_user_info_with_code(request):
         a.encoding = 'utf-8'
         b = a.json()
         logger.info(f'b={b}')
-        errcode = b.get('error_code', 0)
-        if errcode > 0:
+        error_code = b.get('error_code', 0)
+        if error_code > 0:
             # 获取用户open id时出错
             errmsg = b.get('errmsg', '')
             return HttpResponse(errmsg)
@@ -329,8 +329,8 @@ def get_user_info_with_code(request):
             c.encoding = 'utf-8'
             d = c.json()
             logger.info(f'd={d}')
-            errcode = d.get('error_code', 0)
-            if errcode > 0:
+            error_code = d.get('error_code', 0)
+            if error_code > 0:
                 # 获取用户信息时出错
                 errmsg = d.get('errmsg', '')
                 return HttpResponse(errmsg)

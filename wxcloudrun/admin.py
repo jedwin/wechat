@@ -4,7 +4,7 @@ from wxcloudrun.models import *
 from wxcloudrun.location_game import *
 import os
 
-errcode_file = 'errcode.csv'
+error_code_file = 'error_code.csv'
 
 # Register your models here.
 class MenuButtonInline(admin.TabularInline):
@@ -121,11 +121,11 @@ class AppAdmin(admin.ModelAdmin):
                 f'{count} images updated',
                 count
             ), messages.SUCCESS)
-        elif count == errcode_unkown_error:
+        elif count == error_code_unkown_error:
             self.message_user(request, f'发生未知错误', messages.WARNING)
-        elif count == errcode_access_token_refresh_failed:
+        elif count == error_code_access_token_refresh_failed:
             self.message_user(request, f'failed to refresh token', messages.WARNING)
-        elif count == errcode_media_type_incorrect:
+        elif count == error_code_media_type_incorrect:
             self.message_user(request, f'media_type_incorrect', messages.WARNING)
         elif count == 0:
             self.message_user(request, f'No image in server', messages.WARNING)
@@ -142,11 +142,11 @@ class AppAdmin(admin.ModelAdmin):
                 f'{count} videos updated',
                 count
             ), messages.SUCCESS)
-        elif count == errcode_unkown_error:
+        elif count == error_code_unkown_error:
             self.message_user(request, f'发生未知错误', messages.WARNING)
-        elif count == errcode_access_token_refresh_failed:
+        elif count == error_code_access_token_refresh_failed:
             self.message_user(request, f'failed to refresh access token', messages.WARNING)
-        elif count == errcode_media_type_incorrect:
+        elif count == error_code_media_type_incorrect:
             self.message_user(request, f'media_type_incorrect', messages.WARNING)
         elif count == 0:
             self.message_user(request, f'No video resource in server', messages.WARNING)
