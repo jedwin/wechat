@@ -14,6 +14,7 @@ import re
 from wxcloudrun import reply
 # from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
+from logging import getLogger
 
 error_code_access_token_expired = 42001
 error_code_access_token_missing = 41001
@@ -34,6 +35,7 @@ keyword_change_process = '改变进度'
 error_reply_default = '你输入的答案不对，请再想想'
 error_code_file = 'error_code.csv'
 default_error_string = 'Unknow error'
+logger = getLogger('django')
 
 def get_error_string(in_code, in_file=error_code_file, default_string=default_error_string):
     """
@@ -88,6 +90,7 @@ class WechatApp(models.Model):
         with open(acc_token_file, 'r') as f:
             self.acc_token = f.readline()
             self.save()
+            logger.info(f'access token refreshed: {self.acc_token}')
         return True
 
     def get_subscr_players(self, next_openid=None):
@@ -163,10 +166,11 @@ class WechatApp(models.Model):
             try:
                 total_count = self.get_resource_count(media_type=f'{media_type}_count')
                 if total_count > 0:
+                    logger.info(f'开始更新{media_type}素材，共{total_count}个')
                     # 从数据库中取出现有素材
                     images_in_db = WechatMedia.objects.filter(app=self, media_type=media_type)
                     media_id_in_db_list = [x.media_id for x in images_in_db]
-                    print(f'media_id_in_db_list: {media_id_in_db_list}')
+                    # print(f'media_id_in_db_list: {media_id_in_db_list}')
                     # 获得图片总数后，进行全量抓取
                     media_id_in_server_list = list()
                     while offset <= total_count:
@@ -206,6 +210,7 @@ class WechatApp(models.Model):
                                                        name=media_name, info=item_dict)
                                 my_media.save()
                         else:
+                            logger.error(f'获取{media_type}素材时出错，错误代码：{error_code}')
                             error_code = 0 - error_code
                             error_string = get_error_string(error_code)
                             return False
@@ -245,8 +250,9 @@ class WechatApp(models.Model):
         a = requests.get(request_count_url)
         a.encoding = 'utf-8'
         b = a.json()
-        print(f'b={b}')
+        # print(f'b={b}')
         error_code = b.get('error_code', 0)
+        logger.console(f'error_code={error_code}')
         if error_code > 0:
             # print(b)
             # returning the negative value for error indicator
