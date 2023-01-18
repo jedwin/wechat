@@ -35,6 +35,7 @@ keyword_change_process = '改变进度'
 error_reply_default = '你输入的答案不对，请再想想'
 error_code_file = 'error_code.csv'
 default_error_string = 'Unknow error'
+
 logger = getLogger('django')
 
 def get_error_string(in_code, in_file=error_code_file, default_string=default_error_string):
@@ -71,6 +72,7 @@ class WechatApp(models.Model):
     en_name = models.CharField(max_length=100, default='')
     cur_game_name = models.CharField(max_length=100, default='')
     super_user = models.CharField(max_length=200, null=True)
+    in_docker = models.BooleanField(default=False, verbose_name='是否在docker中运行') # 是否在docker中运行，会影响api调用的方式
 
     def __str__(self):
         return self.name
@@ -83,15 +85,33 @@ class WechatApp(models.Model):
 
     def refresh_access_token(self):
         """
-        从docker本地读取access_token
+        从腾讯服务器或docker本地更新access_token
+        :param in_docker: 是否在docker中运行
         :return: access_token
         """
-        acc_token_file = '/.tencentcloudbase/wx/cloudbase_access_token'
-        with open(acc_token_file, 'r') as f:
-            self.acc_token = f.readline()
-            self.save()
-            logger.info(f'access token refreshed: {self.acc_token}')
-        return True
+        if self.in_docker:
+            # 如果在docker中运行，就从docker本地获取access_token
+            acc_token_file = '/.tencentcloudbase/wx/cloudbase_access_token'
+            with open(acc_token_file, 'r') as f:
+                self.acc_token = f.readline()
+                self.save()
+                logger.info(f'access token refreshed: {self.acc_token}')
+            return True
+        else:
+            # 如果不在docker中运行，就从腾讯服务器获取access_token
+            http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+            request_url = f'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={self.appid}&secret={self.secret}'
+            a = http.request('GET', request_url).data.decode('utf-8')
+            b = json.loads(a)
+            if 'errcode' in b.keys():
+                errcode = 0 - int(b['errcode'])
+                default_error_string = get_error_string(errcode)
+                return False
+            else:
+                self.acc_token = b['access_token']
+                self.save()
+                print(f'access_token is refreshed: {self.acc_token}')
+                return True
 
     def get_subscr_players(self, next_openid=None):
         """
@@ -101,17 +121,20 @@ class WechatApp(models.Model):
         :return: True/False
         """
 
-        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
         total_count = 1  # 所有关注用户数量，预设为1，为了发起第一次拉取
         got_count = 0  # 已获取的用户数量
         succ_count = 0  # 更新用户信息成功个数
         fail_count = 0  # 更新用户信息失败个数
         while got_count < total_count:
-            # request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={self.acc_token}'
-            request_url = f'http://api.weixin.qq.com/cgi-bin/user/get'
-            if next_openid:
-                # request_url += f'&next_openid={next_openid}'
-                request_url += f'?next_openid={next_openid}'
+            if self.in_docker:
+                request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={self.acc_token}'
+                if next_openid:
+                    request_url += f'&next_openid={next_openid}'
+            else:
+                request_url = f'http://api.weixin.qq.com/cgi-bin/user/get'
+                if next_openid:
+                    request_url += f'?next_openid={next_openid}'
 
             # a = http.request('GET', request_url).data.decode('utf-8')
             # b = json.loads(a)
@@ -161,8 +184,10 @@ class WechatApp(models.Model):
         resource_dict = dict()
         offset = 0
         if self.refresh_access_token():
-            # request_url = f'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={self.acc_token}'
-            request_url = f'http://api.weixin.qq.com/cgi-bin/material/batchget_material'
+            if self.in_docker:
+                request_url = f'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={self.acc_token}'
+            else:
+                request_url = f'http://api.weixin.qq.com/cgi-bin/material/batchget_material'
             try:
                 total_count = self.get_resource_count(media_type=f'{media_type}_count')
                 if total_count > 0:
@@ -241,9 +266,11 @@ class WechatApp(models.Model):
         :param media_type: "voice_count", "video_count","image_count", "news_count"
         :return:
         """
-        http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
-        # request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
-        request_count_url = f'http://api.weixin.qq.com/cgi-bin/material/get_materialcount'
+        if self.in_docker:
+            # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+            request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
+        else:
+            request_count_url = f'http://api.weixin.qq.com/cgi-bin/material/get_materialcount'
         # 获取图片总数
         # a = http.request('GET', request_count_url).data.decode('utf-8')
         # b = json.loads(a)
