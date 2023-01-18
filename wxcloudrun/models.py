@@ -121,13 +121,13 @@ class WechatApp(models.Model):
         :return: True/False
         """
 
-        http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
+        # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
         total_count = 1  # 所有关注用户数量，预设为1，为了发起第一次拉取
         got_count = 0  # 已获取的用户数量
         succ_count = 0  # 更新用户信息成功个数
         fail_count = 0  # 更新用户信息失败个数
         while got_count < total_count:
-            if self.in_docker:
+            if not self.in_docker:
                 request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={self.acc_token}'
                 if next_openid:
                     request_url += f'&next_openid={next_openid}'
@@ -184,7 +184,7 @@ class WechatApp(models.Model):
         resource_dict = dict()
         offset = 0
         if self.refresh_access_token():
-            if self.in_docker:
+            if not self.in_docker:
                 request_url = f'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={self.acc_token}'
             else:
                 request_url = f'http://api.weixin.qq.com/cgi-bin/material/batchget_material'
@@ -266,7 +266,7 @@ class WechatApp(models.Model):
         :param media_type: "voice_count", "video_count","image_count", "news_count"
         :return:
         """
-        if self.in_docker:
+        if not self.in_docker:
             # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
             request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
         else:
