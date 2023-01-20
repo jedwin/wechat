@@ -1,46 +1,60 @@
 <!DOCTYPE html>
 {% load static %}
-<html lang="en">
+<html lang="zh-cmn-Hans" xmlns="http://www.w3.org/1999/html">
 <head>
- <!-- Bootstrap core CSS -->
-  <link href="{% static '/lib/bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-  <!--external css-->
-  <link href="{% static '/lib/font-awesome/css/font-awesome.css' %}" rel="stylesheet" />
-  <link rel="stylesheet" type="text/css" href="{% static '/lib/gritter/css/jquery.gritter.css' %}" />
-  <!-- Custom styles for this template -->
-  <link href="{% static '/css/style.css' %}" rel="stylesheet">
-  <link href="{% static '/css/style-responsive.css' %}" rel="stylesheet">
-  <title>Log In</title>
-  <!-- =======================================================
-    Template Name: Dashio
-    Template URL: https://templatemag.com/dashio-bootstrap-admin-template/
-    Author: TemplateMag.com
-    License: https://templatemag.com/license/
-  ======================================================= -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0,viewport-fit=cover">
+    <meta name="wechat-enable-text-zoom-em" content="true">
+    <link rel="stylesheet" href="/static/style/weui.css"/>
+    <link rel="stylesheet" href="/static/style/example.css"/>
+  <title>欢迎进入淼赞文化</title>
+
 </head>
-<body>
-    <div id="login-page">
-        <div class="container">
-            <form method="post" class="form-login" >
-                <h2 class="form-login-heading">欢迎登录微信游戏管理平台</h2>
+<body ontouchstart>
+    <script type="text/javascript">
+      if(window.__wxWebEnv){
+        document.body.style.webkitTextSizeAdjust = JSON.parse(window.__wxWebEnv.getEnv()).fontScale + '%';
+      }
 
-                {% csrf_token %}
-                <div class="login-wrap">
-                    <input type="text" class="form-control" name="username" autofocus="" autocapitalize="none"
-                           autocomplete="off" maxlength="150" required="" id="id_username"
-                           class="form-control" placeholder="用户名">
-                    <br>
-                    <input type="password" class="form-control" placeholder="密码" name="password"
-                           autocomplete="off" required="" id="id_password">
-                    <hr>
-                    <div class="login-social-link centered">
-                        <p>联系开发者：<a href="/cdn-cgi/l/email-protection#730b1a1609145d141733101b1a1d1207161f16101c1e5d101d"><span class="__cf_email__" data-cfemail="8cf4e5e9f6e4f9e3ebede2ebccebe1ede5e0a2efe3e1">[email&#160;protected]</span></a> </p>
+    </script>
+
+    <div class="container" id="container"></div>
+    <script type="text/html" id="tpl_home">
+        <div class="page article">
+            <article class="weui-article">
+                 <section>
+                     <h2 class="form-login-heading">欢迎进入淼赞文化游戏世界</h2>
+                 </section>
+            </article>
+            <div class="weui-form">
+                <form method="post" class="weui-cells__group weui-cells__group_form">
+                    <div class="weui-form__text-area">
+                        <h2 class="weui-form__title">
+                        请先用收到的账号和密码登录
+                        </h2>
                     </div>
-                </div>
-                <button class="btn btn-theme btn-block" type="submit"><i class="fa fa-lock"></i>登录</button>
-            </form>
-
+                    <div class="weui-cells">
+                        <div class="weui-cell__bd">
+                            {% csrf_token %}
+                            <input type="text" class="weui-input"  name="username" autofocus="" autocapitalize="none"
+                                   autocomplete="off" maxlength="150" required="" id="id_username"
+                                   class="form-control" placeholder="用户名">
+                            <br>
+                            <input type="password" class="weui-input" placeholder="密码" name="password"
+                                   autocomplete="off" required="" id="id_password">
+                            <hr>
+                        </div>
+                        <button class="btn btn-theme btn-block" type="submit">登录</button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+    </script>
+
+    <script src="/static/js/zepto.min.js"></script>
+    <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+    <script src="https://res.wx.qq.com/t/wx_fed/cdn_libs/res/weui/1.2.8/weui.min.js"></script>
+    <script src="/static/js/example.js"></script>
+    <script src="/static/js/wah.js"></script>
+</body>
 </html>

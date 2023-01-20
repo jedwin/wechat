@@ -8,7 +8,7 @@ from wxcloudrun.models import *
 from wxcloudrun.location_game import *
 
 
-def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_text=True):
+def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', user_name='', for_text=True):
     """
     用于处理某个玩家对某个游戏发出了某个指令
     所有参数都是字符串
@@ -71,9 +71,10 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', for_
         return ret_dict
 
     #  检查这个openid对应的用户对象，cur_player
-    if len(open_id) > 0:
+    if len(open_id) > 0 or len(user_name) > 0:
         try:
-            cur_player = WechatPlayer.objects.get(app=my_app, open_id=open_id)
+            # cur_player = WechatPlayer.objects.get(app=my_app, open_id=open_id)
+            cur_player = WechatPlayer.objects.get(app=my_app, name=user_name)
         except ObjectDoesNotExist:
             # 如果这个openid没有在数据库中，则表明不是从微信进入，需要返回错误信息
             ret_dict['error_msg'] = '用户id异常，请从公众号进入游戏'

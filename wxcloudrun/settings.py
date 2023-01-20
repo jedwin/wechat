@@ -4,7 +4,7 @@ import time
 
 CUR_PATH = os.path.dirname(os.path.realpath(__file__))  
 # LOG_PATH = os.path.join(os.path.dirname(CUR_PATH), 'logs') # LOG_PATH是存放日志的路径
-LOG_PATH = '/logs/django/'
+LOG_PATH = '/logs/'
 if not os.path.exists(LOG_PATH):
     os.makedirs(LOG_PATH)  # 如果不存在这个logs文件夹，就自动创建一个
 
@@ -161,7 +161,7 @@ LOGGING = {
     'loggers': {
         # 类型 为 django 处理所有类型的日志， 默认调用
         'django': {
-            'handlers': ['default', 'console'],
+            'handlers': ['default', 'console', 'info', 'error'],
             'level': 'INFO',
             'propagate': False
         },
@@ -197,4 +197,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGS_DIR = '/logs/django/'
+LOGS_DIR = '/logs/'
+
+LOGIN_REDIRECT_URL = "/game/"

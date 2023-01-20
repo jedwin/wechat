@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.exceptions import *
 from hashlib import sha1
+from urllib3 import ProxyManager
 from wxcloudrun.coordinate_converter import *
 from django.db.models import F, Q, When, Count
 import urllib3
@@ -72,7 +73,7 @@ class WechatApp(models.Model):
     en_name = models.CharField(max_length=100, default='')
     cur_game_name = models.CharField(max_length=100, default='')
     super_user = models.CharField(max_length=200, null=True)
-    in_docker = models.BooleanField(default=False, verbose_name='是否在docker中运行') # 是否在docker中运行，会影响api调用的方式
+    in_tx_cloud = models.BooleanField(default=False, verbose_name='是否在腾讯云中运行') # 是否在docker中运行，会影响api调用的方式
 
     def __str__(self):
         return self.name
@@ -86,10 +87,10 @@ class WechatApp(models.Model):
     def refresh_access_token(self):
         """
         从腾讯服务器或docker本地更新access_token
-        :param in_docker: 是否在docker中运行
+        :param in_tx_cloud: 是否在docker中运行
         :return: access_token
         """
-        if self.in_docker:
+        if self.in_tx_cloud:
             # 如果在docker中运行，就从docker本地获取access_token
             acc_token_file = '/.tencentcloudbase/wx/cloudbase_access_token'
             with open(acc_token_file, 'r') as f:
@@ -105,12 +106,13 @@ class WechatApp(models.Model):
             b = json.loads(a)
             if 'errcode' in b.keys():
                 errcode = 0 - int(b['errcode'])
-                default_error_string = get_error_string(errcode)
+                error_string = get_error_string(errcode)
+                logger.error(f'access token refresh failed: {errcode} {error_string}')
                 return False
             else:
                 self.acc_token = b['access_token']
                 self.save()
-                print(f'access_token is refreshed: {self.acc_token}')
+                logger.info(f'access_token is refreshed: {self.acc_token}')
                 return True
 
     def get_subscr_players(self, next_openid=None):
@@ -126,51 +128,54 @@ class WechatApp(models.Model):
         got_count = 0  # 已获取的用户数量
         succ_count = 0  # 更新用户信息成功个数
         fail_count = 0  # 更新用户信息失败个数
-        while got_count < total_count:
-            if not self.in_docker:
-                request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={self.acc_token}'
-                if next_openid:
-                    request_url += f'&next_openid={next_openid}'
-            else:
-                request_url = f'http://api.weixin.qq.com/cgi-bin/user/get'
-                if next_openid:
-                    request_url += f'?next_openid={next_openid}'
-
-            # a = http.request('GET', request_url).data.decode('utf-8')
-            # b = json.loads(a)
-            a = requests.get(request_url)
-            a.encoding = 'utf-8'
-            b = a.json()
-            error_code = b.get('error_code', 0)
-            if error_code == 0:
-                total_count = int(b['total'])
-                got_count += int(b['count'])
-                next_openid = b['next_openid']
-                # data should be like
-                # "data":{
-                #     "openid":["OPENID1","OPENID2"]},
-                openid_list = b['data']['openid']
-                for openid in openid_list:
-                    try:
-                        my_player = WechatPlayer.objects.get(app=self, open_id=openid)  # 应该最多只有1个
-                    except ObjectDoesNotExist:
-                        my_player = WechatPlayer(app=self, open_id=openid)
-                    result, error_code = my_player.get_user_info()
-                    if result:
-                        succ_count += 1
-                    else:
-                        fail_count += 1
-            elif error_code == error_code_access_token_expired:
-                if self.refresh_access_token():
-                    return False, errstring_access_token_expired
+        if self.refresh_access_token():
+            while got_count < total_count:
+                if not self.in_tx_cloud:
+                    request_url = f'https://api.weixin.qq.com/cgi-bin/user/get?access_token={self.acc_token}'
+                    if next_openid:
+                        request_url += f'&next_openid={next_openid}'
                 else:
-                    return False, errstring_access_token_refresh_failed
-            else:
-                error_code = 0 - int(b['error_code'])
-                error_string = get_error_string(error_code)
-                return False, error_string
-        # 如果成功，返回获取到的关注用户数量
-        return True, f'共有{got_count}个关注用户，成功更新{succ_count}个，失败{fail_count}个'
+                    request_url = f'http://api.weixin.qq.com/cgi-bin/user/get'
+                    if next_openid:
+                        request_url += f'?next_openid={next_openid}'
+
+                # a = http.request('GET', request_url).data.decode('utf-8')
+                # b = json.loads(a)
+                a = requests.get(request_url)
+                a.encoding = 'utf-8'
+                b = a.json()
+                error_code = b.get('error_code', 0)
+                if error_code == 0:
+                    total_count = int(b['total'])
+                    got_count += int(b['count'])
+                    next_openid = b['next_openid']
+                    # data should be like
+                    # "data":{
+                    #     "openid":["OPENID1","OPENID2"]},
+                    openid_list = b['data']['openid']
+                    for openid in openid_list:
+                        try:
+                            my_player = WechatPlayer.objects.get(app=self, open_id=openid)  # 应该最多只有1个
+                        except ObjectDoesNotExist:
+                            my_player = WechatPlayer(app=self, open_id=openid)
+                        result, error_code = my_player.get_user_info()
+                        if result:
+                            succ_count += 1
+                        else:
+                            fail_count += 1
+                elif error_code == error_code_access_token_expired:
+                    if self.refresh_access_token():
+                        return False, errstring_access_token_expired
+                    else:
+                        return False, errstring_access_token_refresh_failed
+                else:
+                    error_code = 0 - int(b['error_code'])
+                    error_string = get_error_string(error_code)
+                    return False, error_string
+            # 如果成功，返回获取到的关注用户数量
+            return True, f'共有{got_count}个关注用户，成功更新{succ_count}个，失败{fail_count}个'
+        else:
+            return False, errstring_access_token_refresh_failed
 
     def get_media_from_tencent(self, media_type):
         """
@@ -184,7 +189,7 @@ class WechatApp(models.Model):
         resource_dict = dict()
         offset = 0
         if self.refresh_access_token():
-            if not self.in_docker:
+            if not self.in_tx_cloud:
                 request_url = f'https://api.weixin.qq.com/cgi-bin/material/batchget_material?access_token={self.acc_token}'
             else:
                 request_url = f'http://api.weixin.qq.com/cgi-bin/material/batchget_material'
@@ -266,7 +271,7 @@ class WechatApp(models.Model):
         :param media_type: "voice_count", "video_count","image_count", "news_count"
         :return:
         """
-        if not self.in_docker:
+        if not self.in_tx_cloud:
             # http = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=certifi.where())
             request_count_url = f'https://api.weixin.qq.com/cgi-bin/material/get_materialcount?access_token={self.acc_token}'
         else:

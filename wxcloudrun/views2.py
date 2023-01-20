@@ -15,9 +15,10 @@ import datetime
 from wxcloudrun.models import *
 from wxcloudrun.location_game import *
 from wxcloudrun.ExploerGameHandler import *
-import logging
+from logging import getLogger
 
-logger = logging.getLogger('log')
+# enable logging
+logger = getLogger('django')
 WAITING_FOR_PASSWORD = 'w_password'             # 等待用户输入认证密码
 WAITING_FOR_POI_KEYWORD = 'w_keyword'           # 等待用户输入POI关键词
 WAITING_FOR_POI_DISTANCE = 'w_dist'             # 等待用户输入POI搜索范围（米）
@@ -73,7 +74,6 @@ def check_signature(request):
     else:
         # request方法不正确  print("你的方法不正确....")
         return HttpResponse('seccuss')
-
 
 def autoreply(request, app_en_name):
     """
@@ -391,6 +391,48 @@ def show_profile(request):
             ret_dict['error_msg'] = '异常调用'
             logger.error(f'openid is blank')
     return render(request, template, ret_dict)
+
+
+def game(request):
+    """
+    通过url进入游戏，用django的session来获取用户信息
+    如果openid为空，表示授权失败，要查看errmsg内容
+    如果openid不为空，但errmsg也不为空，表示获取用户信息失败，同样要查看errmsg内容
+
+    """
+    # sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='utf-8') # 改变标准输出的默认编码
+    user = request.user
+    user_name = user.username
+    group_list = [str(x) for x in user.groups.all()]
+    app_en_name = request.GET.get('app_en_name', '')
+    game_name = request.GET.get('game_name', '')
+    cmd = request.GET.get('cmd', '')
+    errmsg = request.GET.get('errmsg', '')
+    ret_dict = dict()
+    if user.is_authenticated:
+        # 临时使用，后面要改成从数据库中读取
+        if len(game_name) == 0:
+            game_name = '社区搞搞震'
+        if len(app_en_name) == 0:
+            app_en_name = 'miaozan'
+
+        template = 'wechat_game.html'
+        if len(errmsg) > 0:
+            ret_dict['error_msg'] = errmsg
+            logger.error(f'error_msg={error_msg}')
+        else:
+            if game_name in group_list:
+                ret_dict = handle_player_command(app_en_name=app_en_name, game_name=game_name,
+                                                 user_name=user_name, cmd=cmd, for_text=False)
+                # logger.info(ret_dict)
+            else:
+                ret_dict['error_msg'] = f'账号{user}无权限进入本游戏'
+                ret_dict['cur_game_name'] = game_name
+                ret_dict['app_en_name'] = app_en_name
+                logger.error(f'account {user} no right to access {game_name}')
+        return render(request, template, ret_dict)
+    else:
+        return HttpResponseRedirect(f'/accounts/login/?next=/game/?game_name={game_name}&app_en_name={app_en_name}')
 
 
 def download(request, filename):
