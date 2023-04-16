@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import time
+from wxcloudrun.Jazzmin_Settings import JAZZMIN_SETTINGS
 
 CUR_PATH = os.path.dirname(os.path.realpath(__file__))  
 # LOG_PATH = os.path.join(os.path.dirname(CUR_PATH), 'logs') # LOG_PATH是存放日志的路径
@@ -15,16 +16,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_&03zc)d*3)w-(0grs-+t-0jjxktn7k%$3y6$9=x_n_ibg4js6'
-
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "not-secret-at-all")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://django-xhen-1758215-1310588344.ap-shanghai.run.tcloudbase.com', 'https://www.key2go.top']
+CSRF_TRUSTED_ORIGINS = ['https://django-xhen-1758215-1310588344.ap-shanghai.run.tcloudbase.com',
+                        'https://www.key2go.top', 'https://www.miao2022.com/']
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -42,6 +44,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
 ]
 
 ROOT_URLCONF = 'wxcloudrun.urls'
@@ -69,13 +72,6 @@ WSGI_APPLICATION = 'wxcloudrun.wsgi.application'
 
 DATABASES = {
     'default': {
-        # 'ENGINE': 'django.db.backends.mysql',
-        # 'NAME': os.environ.get("MYSQL_DATABASE", 'django_demo'),
-        # 'USER': os.environ.get("MYSQL_USERNAME"),
-        # 'HOST': os.environ.get("MYSQL_ADDRESS").split(':')[0],
-        # 'PORT': os.environ.get("MYSQL_ADDRESS").split(':')[1],
-        # 'PASSWORD': os.environ.get("MYSQL_PASSWORD"),
-        # 'OPTIONS': {'charset': 'utf8mb4'},
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get("database"),
         'USER': os.environ.get("user"),
@@ -144,7 +140,7 @@ LOGGING = {
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
-            'formatter': 'standard'
+            'formatter': 'standard',
         },
         # 输出info日志
         'info': {
@@ -161,7 +157,7 @@ LOGGING = {
     'loggers': {
         # 类型 为 django 处理所有类型的日志， 默认调用
         'django': {
-            'handlers': ['default', 'console', 'info', 'error'],
+            'handlers': ['default', 'info', 'error'],
             'level': 'INFO',
             'propagate': False
         },
@@ -200,3 +196,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGS_DIR = '/logs/'
 
 LOGIN_REDIRECT_URL = "/game/"
+
+JAZZMIN_SETTINGS = JAZZMIN_SETTINGS
+
+USE_I18N = True
+USE_L10N = True
+LOCALE_PATHS = (os.path.join(BASE_DIR, "locale"),)

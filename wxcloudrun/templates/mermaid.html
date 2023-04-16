@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}游戏流程图{% endblock %}
+{% block nav_menu_list_user %}
+<li><a href="/summary/list_user/{{appid}}/">玩家详情</a></li>
+{% endblock nav_menu_list_user %}
+{% block nav_menu_list_image %}
+<li><a href="/summary/images/{{appid}}/">图片资源</a></li>
+{% endblock nav_menu_list_image %}
+
+{% block content %}
+<section class="wrapper">
+	<h3>{{ game_name }}<i class="fa fa-angle-right"></i>游戏流程图</h3>
+    <a class="btn btn-primary" href="/summary/list_game/{{ appid }}/">返回</a>
+    <div class="mermaid">
+<!--        %%{init: {'securityLevel': 'loose', 'theme':'base'}}%%-->
+        {{ content|safe }}
+    </div>
+</section>
+
+{% endblock content %}

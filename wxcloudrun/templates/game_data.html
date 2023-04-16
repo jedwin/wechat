@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}玩家详情{% endblock %}
+
+{% block nav_menu_list_user %}
+<li><a href="/summary/">玩家详情</a></li>
+{% endblock nav_menu_list_user %}
+{% block nav_menu_list_image %}
+<li><a href="/summary/">图片资源</a></li>
+{% endblock nav_menu_list_image %}
+
+{% block content %}
+<section class="wrapper">
+	<h3><i class="fa fa-user"></i>{{user_id}}</h3>
+	<div class="row mt">
+
+		<div class="col-md-4">
+			<div class="form-panel">
+				<h4 class="mb">玩家进度</h4>
+				<select class="form-control" >
+					{% for keyword in keyword_list %}
+						{% if keyword == cur_keyword %}
+							<option selected="selected">{{keyword}}</option>
+						{% else %}
+							<option>{{keyword}}</option>
+						{% endif %}
+					{% endfor %}
+				</select>
+			</div>
+
+			<div class="form-panel">
+				<h4 class="mb">输入过的命令列表</h4>
+				<textarea multiple="" class="form-control" rows="10">
+					{{ cmd_str }}
+				</textarea>
+			</div>
+			<div class="form-panel">
+				<h4 class="mb">更改玩家ID</h4>
+				<input type="name" name="name" class="form-control" id="new_name{{open_id}}"
+					   placeholder="{{user_id}}" data-rule="minlen:1" data-msg="新ID不能为空">
+				<div class="validate"></div>
+
+			</div>
+			<div class="btn-group btn-group-justified">
+                <div class="btn-group">
+                  <button type="button" class="btn btn-danger"
+						  onclick="rename('{{appid}}', '{{open_id}}', '{{user_id}}')">改名</button>
+                </div>
+                <div class="btn-group">
+                  <button type="button" class="btn btn-theme02"
+						  onclick="javascript:window.history.reload();">刷新</button>
+                </div>
+                <div class="btn-group">
+                  <a type="button" class="btn btn-primary"
+						  href="/summary/list_user/{{appid}}/">返回</a>
+                </div>
+			</div>
+		</div>
+
+	</div>
+</section>
+	{% endblock %}

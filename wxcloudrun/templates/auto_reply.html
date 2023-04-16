@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>{{ content }}</title>
+</head>
+<body>
+	{% if content.2 %}
+		{% for text_contents in content.2 %}
+			{% for text_content in text_contents %}
+				<p>
+					<div style="font-size:40px;">{{ text_content }}</div>
+				</p>
+			{% endfor %}
+		{% endfor %}
+	{% endif %}
+	{% if content.1 %}
+		{% for pic_url in content.1 %}
+		<p>
+			<div><img width=100% src="http://www.zhuogang.cn.com/static/{{ pic_url }}"></div>
+		</p>
+		{% endfor %}
+	{% endif %}
+	{% if content %}
+		{% for open_id, user_id in content.items() %}
+			<p>
+				<div style="font-size:40px;">{{ user_id }}</div>
+				<div style="font-size:40px;">{{ open_id }}</div>
+			</p>
+		{% endfor %}
+	{% endif %}
+
+</body>
+</html>

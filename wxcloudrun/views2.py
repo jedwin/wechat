@@ -369,7 +369,7 @@ def show_profile(request):
 
     """
     # sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='utf-8') # 改变标准输出的默认编码
-    template = 'wechat_main.html'
+    template = 'choose_game.html'
     app_en_name = request.GET.get('app_en_name', '')
     cur_game_name = request.GET.get('cur_game_name', '')
     open_id = request.GET.get('openid', '')
@@ -380,7 +380,7 @@ def show_profile(request):
     if len(errmsg) > 0:
         print(f'errmsg= {errmsg}')
         ret_dict['error_msg'] = errmsg
-        logger.error(f'error_msg={error_msg}')
+        logger.error(f'error_msg={errmsg}')
     else:
         if len(open_id) > 0:
             ret_dict = handle_player_command(app_en_name=app_en_name, open_id=open_id, game_name=cur_game_name,
@@ -402,35 +402,68 @@ def game(request):
     """
     # sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='utf-8') # 改变标准输出的默认编码
     user = request.user
+    user_id = user.id
     user_name = user.username
     group_list = [str(x) for x in user.groups.all()]
     app_en_name = request.GET.get('app_en_name', '')
     game_name = request.GET.get('game_name', '')
     cmd = request.GET.get('cmd', '')
     errmsg = request.GET.get('errmsg', '')
+    
     ret_dict = dict()
     if user.is_authenticated:
-        # 临时使用，后面要改成从数据库中读取
-        if len(game_name) == 0:
-            game_name = '社区搞搞震'
+
+        # 临时使用，后面要增加判断用户所属的APP
         if len(app_en_name) == 0:
             app_en_name = 'miaozan'
 
-        template = 'wechat_game.html'
-        if len(errmsg) > 0:
-            ret_dict['error_msg'] = errmsg
-            logger.error(f'error_msg={error_msg}')
-        else:
-            if game_name in group_list:
-                ret_dict = handle_player_command(app_en_name=app_en_name, game_name=game_name,
-                                                 user_name=user_name, cmd=cmd, for_text=False)
-                # logger.info(ret_dict)
-            else:
-                ret_dict['error_msg'] = f'账号{user}无权限进入本游戏'
-                ret_dict['cur_game_name'] = game_name
+        if len(game_name) == 0:
+            template = 'choose_game.html'
+            all_game_list = [x.name for x in ExploreGame.objects.filter(is_active=True)]
+            permit_game_list = list(set(all_game_list) & set(group_list))
+            show_game_list = list()
+            for game_name in all_game_list:
+                if game_name in group_list:
+                    show_game_list.append({'game_name': game_name, 'enable': True,
+                                             'comment': '已购买', 'style': OPTION_ENABLE})
+                else:
+                    show_game_list.append({'game_name': game_name, 'enable': False,
+                                             'comment': '未购买', 'style': OPTION_DISABLE})
+            # get the min set from all_game_list and group_list
+
+            if len(permit_game_list) > 1:
+                ret_dict['quest_trigger'] = '请选择你要玩的游戏'
                 ret_dict['app_en_name'] = app_en_name
-                logger.error(f'account {user} no right to access {game_name}')
-        return render(request, template, ret_dict)
+                ret_dict['show_game_list'] = show_game_list
+                ret_dict['page_type'] = 'main'
+                return render(request, template, ret_dict)
+            elif len(permit_game_list) == 1:
+                # 如果名下只有一个游戏，就直接进入游戏
+                template = 'wechat_game.html'
+                game_name = permit_game_list[0]
+                ret_dict = handle_player_command(app_en_name=app_en_name, open_id=user_id, game_name=game_name,
+                                                 user_name=user_name, cmd=cmd, for_text=False)
+                return render(request, template, ret_dict)
+            else:
+                ret_dict['error_msg'] = '这个账号还没购买任何游戏'
+                return render(request, template, ret_dict)
+        else:  # 有game_name
+            template = 'wechat_game.html'
+            if len(errmsg) > 0:
+                ret_dict['error_msg'] = errmsg
+                logger.error(f'error_msg={errmsg}')
+                return render(request, template, ret_dict)
+            else:
+                if game_name in group_list:
+                    ret_dict = handle_player_command(app_en_name=app_en_name, game_name=game_name, open_id=user_id,
+                                                     user_name=user_name, cmd=cmd, for_text=False)
+                    # logger.info(ret_dict)
+                else:
+                    ret_dict['error_msg'] = f'账号{user}无权限进入本游戏'
+                    ret_dict['cur_game_name'] = game_name
+                    ret_dict['app_en_name'] = app_en_name
+                    logger.error(f'account {user} no right to access {game_name}')
+                return render(request, template, ret_dict)
     else:
         return HttpResponseRedirect(f'/accounts/login/?next=/game/?game_name={game_name}&app_en_name={app_en_name}')
 

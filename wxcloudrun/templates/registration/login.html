@@ -24,27 +24,43 @@
             <article class="weui-article">
                  <section>
                      <h2 class="form-login-heading">欢迎进入淼赞文化游戏世界</h2>
+
                  </section>
+                <section>
+                    <p style="text-align: center;"><img src="/images/线上游戏首页图.jpg" alt="线上游戏首页图"></p>
+                </section>
             </article>
             <div class="weui-form">
-                <form method="post" class="weui-cells__group weui-cells__group_form">
+                <form method="post" class="weui-cells__group weui-cells__group_form" id="login_form">
                     <div class="weui-form__text-area">
                         <h2 class="weui-form__title">
-                        请先用收到的账号和密码登录
+                        请使用收到的账号和密码登录
                         </h2>
                     </div>
-                    <div class="weui-cells">
+                    {% csrf_token %}
+                    <label for="id_username" class="weui-cell weui-cell_active">
+                        <div class="weui-cell__hd"><span class="weui-label">
+                            用户名
+                        </span></div>
                         <div class="weui-cell__bd">
-                            {% csrf_token %}
-                            <input type="text" class="weui-input"  name="username" autofocus="" autocapitalize="none"
-                                   autocomplete="off" maxlength="150" required="" id="id_username"
-                                   class="form-control" placeholder="用户名">
-                            <br>
-                            <input type="password" class="weui-input" placeholder="密码" name="password"
-                                   autocomplete="off" required="" id="id_password">
-                            <hr>
+                            <input type="text" class="weui-input" name="username" autofocus="" autocapitalize="none"
+                           autocomplete="off" required="" id="id_username"
+                           class="form-control" placeholder="用户名">
                         </div>
-                        <button class="btn btn-theme btn-block" type="submit">登录</button>
+                    </label>
+                    <label for="id_password" class="weui-cell weui-cell_active">
+                        <div class="weui-cell__hd"><span class="weui-label">
+                            密码
+                        </span></div>
+                        <div class="weui-cell__bd">
+                            <input type="password" class="weui-input" placeholder="" name="password"
+                                   autocomplete="off" required="" id="id_password">
+                        </div>
+                    </label>
+                    <div class="weui-form__opr-area">
+
+                        <button type="submit" role="button" class="weui-btn weui-btn_primary">登录</button>
+
                     </div>
                 </form>
             </div>
@@ -52,8 +68,8 @@
     </script>
 
     <script src="/static/js/zepto.min.js"></script>
-    <script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
-    <script src="https://res.wx.qq.com/t/wx_fed/cdn_libs/res/weui/1.2.8/weui.min.js"></script>
+    <script type="text/javascript" src="/static/js/jweixin-1.0.0.js"></script>
+    <script src="/static/js/weui.min.js"></script>
     <script src="/static/js/example.js"></script>
     <script src="/static/js/wah.js"></script>
 </body>

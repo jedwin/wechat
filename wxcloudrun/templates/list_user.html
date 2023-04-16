@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}玩家列表{% endblock title %}
+
+{% block header_title %}控制台{% endblock header_title%}
+{% block nav_menu_list_user %}
+<li><a href="/summary/list_user/{{appid}}/">玩家列表</a></li>
+{% endblock nav_menu_list_user %}
+{% block nav_menu_list_image %}
+<li><a href="/summary/images/{{appid}}/">图片资源</a></li>
+{% endblock nav_menu_list_image %}
+
+{% block content %}
+
+
+<section class="wrapper">
+	<h3><i class="fa fa-user"></i> 玩家游戏档案列表（共{{total_count}}份）</h3>
+
+		<a class="btn btn-primary" href="/summary/">返回</a>
+		{% for app_game_name in game_name_list %}
+		<a class="btn btn-theme02" href="/summary/list_user/{{appid}}/{{app_game_name}}/">{{app_game_name}}</a>
+		{% endfor %}
+
+	<div class="row">
+
+
+		{% for user_list in all_list %}
+		<div class="col-md-4 mb">
+
+			{% for user_id, open_id, transmit_count, cur_process, appid, game_name, transmit_count_without_tip, game_data_id in user_list %}
+			<div class="white-panel pn">
+                  <div class="white-header">
+                    <h4>{{ user_id }}-->{{ game_name }}</h4>
+                  </div>
+				<p>{{open_id }}</p>
+				<div class="row">
+                    <div class="col-md-4">
+                      <p class="large mt">总步数</p>
+                        <h3>{{ transmit_count }}</h3>
+                    </div>
+                    <div class="col-md-4">
+                      <p class="large mt">不含提示步数</p>
+						<h3>{{transmit_count_without_tip}}</h3>
+                    </div>
+                    <div class="col-md-4">
+                      <p class="large mt">当前进度</p>
+						<h3>{{cur_process}}</h3>
+                    </div>
+                  </div>
+
+
+            </div>
+			<div class="btn-group btn-group-justified">
+				<div class="btn-group">
+				  <a type="button" class="btn btn-primary"
+						  href="/summary/game_data/{{ game_data_id }}/">详情</a>
+				</div>
+
+			</div>
+
+			{% endfor %}
+
+		</div>
+		{% endfor %}
+
+	</div>
+	<a class="btn btn-primary" href="/summary/">返回</a>
+
+</section>
+
+
+{% endblock %}

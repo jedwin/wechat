@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+{% extends "base.html" %}
+
+{% block title %}玩家概览{% endblock title %}
+
+{% block header_title %}控制台{% endblock header_title%}
+
+
+{% block content %}
+<section class="wrapper">
+    <h3><i class="fa fa-angle-right"></i>游戏配置列表（共{{game_list|length}}个）</h3>
+    <a class="btn btn-primary" href="/summary/">返回</a>
+	<div class="row">
+
+			{% for game_dict in game_list %}
+
+				<div class="col-md-4 mb">
+                <!-- WHITE PANEL - TOP USER -->
+                <div class="white-panel pn">
+                  <div class="white-header">
+                    <h5>{{ game_dict.app_name }}-->{{ game_dict.game_name }}</h5>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-4">
+                      <p class="large mt">玩家数</p>
+                        <h3><a href="/admin/mypublic/wechatgamedata/?game__id__exact={{ game_dict.game_pk }}">
+                            {{ game_dict.player_count }}
+                        </a></h3>
+                    </div>
+                    <div class="col-md-4">
+                      <p class="large mt">关键词数</p>
+						<h3><a href="/admin/mypublic/gamekeyword/?game__id__exact={{ game_dict.game_pk }}" >
+                            {{game_dict.keyword_count}}
+                        </a></h3>
+                    </div>
+                    <div class="col-md-4">
+                      <p class="large mt">是否激活</p>
+                        {% if game_dict.is_active %}
+						    <h3 style="color:#0f0"><a href="/admin/mypublic/wechatgame/{{game_dict.game_pk }}/change/">
+                                是</a></h3>
+                        {% else %}
+                            <h3 style="color:#f00"><a href="/admin/mypublic/wechatgame/{{game_dict.game_pk }}/change/">
+                                否</a></h3>
+                        {% endif %}
+                    </div>
+                  </div>
+
+                </div>
+
+                 <div class="btn-group btn-group-justified">
+                    <div class="btn-group">
+                      <a type="button" class="btn btn-primary"
+                              href="/summary/flow_chart/{{ game_dict.appid }}/{{ game_dict.game_name }}/">流程图</a>
+                    </div>
+                    <div class="btn-group">
+                      <a type="button" class="btn btn-theme02"
+                              href="/summary/reload_keyword/{{ game_dict.appid }}/{{ game_dict.game_name }}">更新关键词</a>
+                    </div>
+                    <div class="btn-group">
+                      <a type="button" class="btn btn-danger"
+                         href="/summary/check_media_availability/{{ game_dict.appid }}/{{ game_dict.game_name }}">检查资源缺失</a>
+                    </div>
+                </div>
+              </div>
+			{% endfor %}
+		</div>
+
+</section>
+{% endblock %}

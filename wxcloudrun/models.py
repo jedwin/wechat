@@ -15,6 +15,7 @@ import re
 from wxcloudrun import reply
 # from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.translation import gettext_lazy as _
+
 from logging import getLogger
 
 error_code_access_token_expired = 42001
@@ -74,6 +75,10 @@ class WechatApp(models.Model):
     cur_game_name = models.CharField(max_length=100, default='')
     super_user = models.CharField(max_length=200, null=True)
     in_tx_cloud = models.BooleanField(default=False, verbose_name='是否在腾讯云中运行') # 是否在docker中运行，会影响api调用的方式
+
+    class Meta:
+        verbose_name = '公众号(无需设置)'
+        verbose_name_plural = '公众号(无需设置)'
 
     def __str__(self):
         return self.name
@@ -324,6 +329,10 @@ class WechatMedia(models.Model):
     info = models.JSONField()
     media_type = models.CharField(max_length=20, null=True)
 
+    class Meta:
+        verbose_name = '微信素材(已废弃)'
+        verbose_name_plural = '微信素材(已废弃)'
+
     def __str__(self):
         my_info = self.info
         return self.name
@@ -446,11 +455,12 @@ class WechatPlayer(models.Model):
     
     # {'game_list': [WechatGameData]}
 
-    def __str__(self):
-        return self.nickname
+    class Meta:
+        verbose_name = '玩家'
+        verbose_name_plural = '玩家'
 
-    def game_data_count(self):
-        return len(WechatGameData.objects.filter(player=self))
+    def __str__(self):
+        return self.name
 
     def save(self, *args, **kwargs):
         self.poi_dist = max(self.poi_dist, 10)
@@ -561,6 +571,10 @@ class AppKeyword(models.Model):
     content_type = models.CharField(max_length=100, choices=content_type_choice, default='文字')
     content_data = models.TextField(max_length=1000, default='')
 
+    class Meta:
+        verbose_name = '公众号级别关键词'
+        verbose_name_plural = '公众号级别关键词'
+
     def reply_msg(self, toUser, fromUser):
         if self.content_type in ['文字', 'TEXT']:
             text_content = self.content_data.replace('<br>', '\n').strip()
@@ -595,10 +609,14 @@ class ErrorAutoReply(models.Model):
     """
     玩家答错自动回复对象
     """
-    reply_type_choice = [('TEXT', '文字'), ('PIC', '图片')]
-    reply_type = models.CharField(max_length=10, default='文字', choices=reply_type_choice)
+    reply_type_choice = [('TEXT', '文字')]
+    reply_type = models.CharField(max_length=10, default='文字', choices=reply_type_choice, verbose_name='类型(仅支持文字)')
     reply_content = models.TextField(default=error_reply_default)
     is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = '错误自动回复'
+        verbose_name_plural = '错误自动回复'
 
     def __str__(self):
         return self.reply_content
@@ -612,6 +630,7 @@ class ErrorAutoReply(models.Model):
                 text_content = replace_content_with_hyperlink(text_content)
                 replyMsg = reply.TextMsg(toUser, fromUser, text_content)
             else:
+                # 对于网页版游戏，只用于文字提示，因此仅返回纯文本
                 ret_content = text_content
         elif content_type == 'PIC':
             my_media = WechatMedia.objects.filter(app=self.game.app, name=content_data)
@@ -647,7 +666,11 @@ class WechatMenu(models.Model):
     remark = models.CharField(max_length=100, default='', blank=True)
     MatchRule = models.BooleanField(default=False)
     match_tag_id = models.CharField(max_length=100, default='', blank=True)
-    
+
+    class Meta:
+        verbose_name = '微信菜单(已废弃)'
+        verbose_name_plural = '微信菜单(已废弃)'
+
     def __str__(self):
         return self.remark
 
@@ -726,6 +749,10 @@ class MenuButton(models.Model):
     article_id = models.CharField(max_length=100, default='', blank=True)
     sub_button = models.JSONField(null=True, blank=True)
 
+    class Meta:
+        verbose_name = '菜单按钮(已废弃)'
+        verbose_name_plural = '菜单按钮(已废弃)'
+
     def __str__(self):
         return f'{self.menu.remark} {self.name}'
 
@@ -782,6 +809,10 @@ class MenuSubButton(models.Model):
     pagepath = models.CharField('小程序页面路径', max_length=300, default='', blank=True)
     article_id = models.CharField(max_length=100, default='', blank=True)
 
+    class Meta:
+        verbose_name = '子菜单按钮(已废弃)'
+        verbose_name_plural = '子菜单按钮(已废弃)'
+
     def __str__(self):
         return f'{self.parent_button.name} {self.name}'
 
@@ -812,6 +843,9 @@ class QqMap(models.Model):
     name = models.CharField(max_length=100, default='', blank=True)
     key = models.CharField(max_length=100, default='', blank=True)
 
+    class Meta:
+        verbose_name = '腾讯地图(未使用)'
+        verbose_name_plural = '腾讯地图(未使用)'
     def __str__(self):
         return self.name
 

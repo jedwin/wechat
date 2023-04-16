@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0,viewport-fit=cover">
+    <meta name="wechat-enable-text-zoom-em" content="true">
+    <title>{{ quest_trigger }}</title>
+    <link rel="stylesheet" href="/static/style/weui.css"/>
+    <link rel="stylesheet" href="/static/style/example.css"/>
+
+</head>
+<body ontouchstart>
+    <script type="text/javascript">
+      if(window.__wxWebEnv){
+        document.body.style.webkitTextSizeAdjust = JSON.parse(window.__wxWebEnv.getEnv()).fontScale + '%';
+      }
+
+    </script>
+
+<div class="container" id="container"></div>
+<script type="text/html" id="tpl_home">
+    <div class="page article">
+        <article class="weui-article">
+            <section>
+                <section>
+                    <p style="text-align: center;"><img src="/images/线上游戏首页图.jpg" alt="线上游戏首页图"></p>
+                </section>
+                <section>
+                以下是目前淼赞文化已经开放的游戏
+                </section>
+
+            </section>
+        </article>
+
+        <div class="weui-form">
+            <form class="weui-cells__group weui-cells__group_form" action="/profile/" >
+                <div class="weui-form__text-area">
+                    <h2 class="weui-form__title">
+                    请选择你要进行的游戏
+                    </h2>
+                </div>
+
+                <div class="weui-cells">
+
+                {% if show_game_list|length > 0 %}
+                    {% for game in show_game_list %}
+                    <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ game.style }}"
+                       {% if game.enable %}
+                            href="/game/?app_en_name={{app_en_name}}&game_name={{game.game_name}}">
+                        {% else %}
+                            href="javascript:">
+                        {% endif %}
+                        <span class="weui-cell__bd" id="{{game.trigger}}">
+                            <span>{{game.game_name}}</span>
+                        </span>
+                        <span class="weui-cell__ft">
+                            {{ game.comment }}
+                        </span>
+                    </a>
+                    {% endfor %}
+
+                {% endif %}
+                </div>
+                <div class="page__bd page__bd_spacing">
+                    <article class="weui-article">
+                        <section>
+
+                            <section>
+                            显示没有购买？请退出当前登录用户，并切换不同账号试试
+                            </section>
+
+                        </section>
+                    </article>
+                    <a href="javascript:" role="button" class="weui-btn weui-btn_warn" id="show_logout">切换账号</a>
+                    <!-- 切换游戏对话框 -->
+                    <div class="weui-cells">
+                        <div id="dialog_logout">
+                            <div class="js_dialog_logout" role="dialog"  aria-hidden="true" aria-modal="true"
+                                 aria-labelledby="js_title1" id="iosDialog_logout" style="display: none;">
+                                <div class="weui-mask"></div>
+                                <div class="weui-dialog">
+                                    <div class="weui-dialog__hd"><strong class="weui-dialog__title" id="js_logout">确认</strong></div>
+                                    <div class="weui-dialog__bd" id="notice_logout">确认要切换游戏吗？</div>
+                                    <div class="weui-dialog__ft">
+
+                                        <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_default"
+                                           id="cancle_logout">取消</a>
+                                        <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_primary"
+                                           id="confirm_logout">确认</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 加载中 -->
+                <div role="alert" id="loadingToast" style="display: none;">
+                    <div class="weui-mask_transparent"></div>
+                    <div class="weui-toast">
+                        <span class="weui-primary-loading weui-icon_toast">
+                          <span class="weui-primary-loading__dot"></span>
+                        </span>
+                        <p class="weui-toast__content">载入中</p>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        $(function(){
+
+            let iosDialog_logout = $('#iosDialog_logout');
+            $('#dialog_logout').on('click', '.weui-dialog__btn_default', function(){
+                $(this).parents('.js_dialog_logout').fadeOut(200);
+                $(this).parents('.js_dialog_logout').attr('aria-hidden','true');
+                $(this).parents('.js_dialog_logout').removeAttr('tabindex');
+            });
+            $('#dialog_logout').on('click', '.weui-dialog__btn_primary', function(){
+                globalThis.location='/accounts/logout/?next=/game/?app_en_name={{app_en_name}}';
+            });
+            $('#show_logout').on('click', function(){
+                iosDialog_logout.fadeIn(200);
+                iosDialog_logout.attr('aria-hidden','false');
+                iosDialog_logout.attr('tabindex','0');
+                iosDialog_logout.trigger('focus');
+            });
+
+        });
+
+    </script>
+</script>
+
+<script src="/static/js/zepto.min.js"></script>
+<script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+<script src="https://res.wx.qq.com/t/wx_fed/cdn_libs/res/weui/1.2.8/weui.min.js"></script>
+<script src="/static/js/example.js"></script>
+<script src="/static/js/wah.js"></script>
+
+
+</body>
+</html>

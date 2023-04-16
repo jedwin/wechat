@@ -62,27 +62,27 @@ class ExploreGameQuestInline(admin.TabularInline):
 
 
 class WechatPlayerAdmin(admin.ModelAdmin):
-    list_display = ('open_id', 'nickname', 'app', 'cur_game_name', 'is_audit')
-    list_editable = ['cur_game_name', 'is_audit']
+    list_display = ('open_id', 'name', 'nickname', 'app', 'waiting_status', 'game_hist')
+    list_editable = ['waiting_status', 'game_hist']
     list_filter = ['app']
     # inlines = [GameDataInline,]
-    actions = ['load_player_json_file']
+    # actions = ['load_player_json_file']
     save_on_top = True
-
-    @admin.action(description='加载用户游戏数据')
-    def load_player_json_file(self, request, queryset):
-        count = 0
-        for obj in queryset:
-            if obj.load_player_data():
-                count += 1
-        if count > 0:
-            self.message_user(request, ngettext(
-                f'{count} player data is created',
-                f'{count} players data are created',
-                count
-            ), messages.SUCCESS)
-        else:
-            self.message_user(request, f'No player data is created', messages.WARNING)
+    #
+    # @admin.action(description='加载用户游戏数据')
+    # def load_player_json_file(self, request, queryset):
+    #     count = 0
+    #     for obj in queryset:
+    #         if obj.load_player_data():
+    #             count += 1
+    #     if count > 0:
+    #         self.message_user(request, ngettext(
+    #             f'{count} player data is created',
+    #             f'{count} players data are created',
+    #             count
+    #         ), messages.SUCCESS)
+    #     else:
+    #         self.message_user(request, f'No player data is created', messages.WARNING)
 
 
 class AppAdmin(admin.ModelAdmin):
@@ -168,16 +168,27 @@ class AppKeywordAdmin(admin.ModelAdmin):
 
 
 class ExploreGameAdmin(admin.ModelAdmin):
-    list_display = ['name', 'app', 'settings_file', 'is_active']
-    list_editable = ['app', 'settings_file', 'is_active']
+    list_display = ['name', 'app', 'settings_file', 'account_file', 'is_active', 'entry', 'clear_requirement', 'passwd_init']
+    list_editable = ['app', 'settings_file', 'is_active', 'entry', 'clear_requirement', 'account_file', 'passwd_init']
     list_filter = ['app']
     # inlines = [ExploreGameQuestInline]
-    actions = ['export2csv', 'import_from_csv', 'gen_new_passwd_obj', 'export_passwd_csv']
+    actions = ['export2obsidian', 'export2csv', 'import_from_csv', 'create_new_account', 'import_account_from_csv']
 
     @admin.action(description='保存游戏配置')
     def export2csv(self, request, queryset):
         for obj in queryset:
             result_dict = obj.export_to_csv()
+            result = result_dict['result']
+            errmsg = result_dict['errmsg']
+            if result:
+                self.message_user(request, f'{errmsg}', messages.SUCCESS)
+            else:
+                self.message_user(request, f'{errmsg}', messages.WARNING)
+
+    @admin.action(description='保存游戏配置成Obsidian格式')
+    def export2obsidian(self, request, queryset):
+        for obj in queryset:
+            result_dict = obj.export_to_obsidian()
             result = result_dict['result']
             errmsg = result_dict['errmsg']
             if result:
@@ -216,11 +227,57 @@ class ExploreGameAdmin(admin.ModelAdmin):
             else:
                 return None
 
+    @admin.action(description='生成流程图文件')
+    def save_to_td_markdown_file(self, request, queryset):
+        count = 0
+        for obj in queryset:
+            return_count = obj.save_to_mermaid(graph_type='TD')
+            count += return_count
+
+        if count > 0:
+            self.message_user(request, ngettext(
+                f'{count} game is exported',
+                f'{count} games are exported',
+                count
+            ), messages.SUCCESS)
+        else:
+            self.message_user(request, f'No game is exported', messages.WARNING)
+    @admin.action(description='创建20个新账号')
+    def create_new_account(self, request, queryset):
+        count = 0
+        for obj in queryset:
+            return_count = obj.gen_users(how_many=20, from_file=False)
+            count += return_count
+        if count > 0:
+            self.message_user(request, ngettext(
+                f'{count} account is created',
+                f'{count} accounts are created',
+                count
+            ), messages.SUCCESS)
+        else:
+            self.message_user(request, f'No account is created', messages.WARNING)
+    
+    @admin.action(description='从账号密码文件中导入账号')
+    def import_account_from_csv(self, request, queryset):
+        count = 0
+        for obj in queryset:
+            return_count = obj.gen_users(from_file=True)
+            count += return_count
+        if count > 0:
+            self.message_user(request, ngettext(
+                f'{count} account is created',
+                f'{count} accounts are created',
+                count
+            ), messages.SUCCESS)
+        else:
+            self.message_user(request, f'No account is created', messages.WARNING)
+
+
 class ExploreGameQuestAdmin(admin.ModelAdmin):
-    list_display = ['quest_trigger', 'prequire_list', 'next_list', 'show_next', 'reward_id', 'show_if_unavailable',
-                    'comment_when_clear', 'comment_when_unavailable', 'comment_when_available']
-    list_editable = ['prequire_list', 'reward_id', 'next_list', 'show_next', 'show_if_unavailable',
-                     'comment_when_unavailable', 'comment_when_available', 'comment_when_clear']
+    search_fields = ['quest_trigger', ]
+    list_display = ['quest_trigger', 'prequire_list', 'next_list', 'show_next', 'answer_list',
+                    'reward_id', 'show_if_unavailable']
+    list_editable = ['prequire_list', 'reward_id', 'next_list', 'show_next', 'answer_list', 'show_if_unavailable']
     list_filter = ['game']
 
 
@@ -231,14 +288,14 @@ class PasswdAdmin(admin.ModelAdmin):
     save_on_top = True
 
 
-admin.site.register(WechatMenu, MenuAdmin)
-admin.site.register(MenuButton, ButtonAdmin)
-admin.site.register(WechatApp, AppAdmin)
-admin.site.register(WechatMedia, MediaAdmin)
+# admin.site.register(WechatMenu, MenuAdmin)
+# admin.site.register(MenuButton, ButtonAdmin)
+# admin.site.register(WechatApp, AppAdmin)
+# admin.site.register(WechatMedia, MediaAdmin)
 admin.site.register(WechatPlayer, WechatPlayerAdmin)
 admin.site.register(ErrorAutoReply, ErrorAutoReplyAdmin)
-admin.site.register(AppKeyword, AppKeywordAdmin)
-admin.site.register(QqMap)
+# admin.site.register(AppKeyword, AppKeywordAdmin)
+# admin.site.register(QqMap)
 admin.site.register(ExploreGame, ExploreGameAdmin)
 admin.site.register(ExploreGameQuest, ExploreGameQuestAdmin)
-admin.site.register(WechatGamePasswd, PasswdAdmin)
+# admin.site.register(WechatGamePasswd, PasswdAdmin)
