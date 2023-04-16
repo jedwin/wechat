@@ -9,3 +9,4 @@ certifi
 requests
 tzdata
 psycopg2-binary==2.9.1
+Jazzmin==2.3.1
