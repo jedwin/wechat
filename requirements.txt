@@ -1,7 +1,6 @@
 asgiref
 Django
 powerline-status
-PyMySQL
 pytz
 sqlparse
 urllib3
@@ -10,3 +9,6 @@ requests
 tzdata
 psycopg2-binary==2.9.1
 Jazzmin==2.3.1
+googleapiclient
+google-auth-oauthlib
+requests_oauthlib

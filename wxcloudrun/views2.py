@@ -431,22 +431,22 @@ def game(request):
                                              'comment': '未购买', 'style': OPTION_DISABLE})
             # get the min set from all_game_list and group_list
 
-            if len(permit_game_list) > 1:
-                ret_dict['quest_trigger'] = '请选择你要玩的游戏'
+            if len(permit_game_list) >= 0:
+                ret_dict['quest_trigger'] = '选择游戏'
                 ret_dict['app_en_name'] = app_en_name
                 ret_dict['show_game_list'] = show_game_list
                 ret_dict['page_type'] = 'main'
                 return render(request, template, ret_dict)
-            elif len(permit_game_list) == 1:
-                # 如果名下只有一个游戏，就直接进入游戏
-                template = 'wechat_game.html'
-                game_name = permit_game_list[0]
-                ret_dict = handle_player_command(app_en_name=app_en_name, open_id=user_id, game_name=game_name,
-                                                 user_name=user_name, cmd=cmd, for_text=False)
-                return render(request, template, ret_dict)
-            else:
-                ret_dict['error_msg'] = '这个账号还没购买任何游戏'
-                return render(request, template, ret_dict)
+            # elif len(permit_game_list) == 1:
+            #     # 如果名下只有一个游戏，就直接进入游戏
+            #     template = 'wechat_game.html'
+            #     game_name = permit_game_list[0]
+            #     ret_dict = handle_player_command(app_en_name=app_en_name, open_id=user_id, game_name=game_name,
+            #                                      user_name=user_name, cmd=cmd, for_text=False)
+            #     return render(request, template, ret_dict)
+            # else:
+            #     ret_dict['error_msg'] = '这个账号还没购买任何游戏'
+            #     return render(request, template, ret_dict)
         else:  # 有game_name
             template = 'wechat_game.html'
             if len(errmsg) > 0:

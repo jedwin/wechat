@@ -62,8 +62,9 @@ class ExploreGameQuestInline(admin.TabularInline):
 
 
 class WechatPlayerAdmin(admin.ModelAdmin):
-    list_display = ('open_id', 'name', 'nickname', 'app', 'waiting_status', 'game_hist')
-    list_editable = ['waiting_status', 'game_hist']
+    search_fields = ['name', 'nickname']
+    list_display = ('open_id', 'name', 'nickname', 'app', 'waiting_status', 'game_hist', 'user_info')
+    list_editable = ['waiting_status', 'game_hist', 'user_info']
     list_filter = ['app']
     # inlines = [GameDataInline,]
     # actions = ['load_player_json_file']
@@ -275,9 +276,10 @@ class ExploreGameAdmin(admin.ModelAdmin):
 
 class ExploreGameQuestAdmin(admin.ModelAdmin):
     search_fields = ['quest_trigger', ]
-    list_display = ['quest_trigger', 'prequire_list', 'next_list', 'show_next', 'answer_list',
-                    'reward_id', 'show_if_unavailable']
-    list_editable = ['prequire_list', 'reward_id', 'next_list', 'show_next', 'answer_list', 'show_if_unavailable']
+    list_display = ['quest_trigger', 'prequire_list', 'next_list', 'show_next', 'answer_list', 'back_quest',
+                    'reward_id', 'show_if_unavailable', 'reward', 'comment_when_unavailable', 'comment_when_available', 'comment_when_clear']
+    list_editable = ['prequire_list', 'reward_id', 'next_list', 'show_next', 'answer_list', 'back_quest', 'show_if_unavailable', 'reward', 
+                     'comment_when_unavailable', 'comment_when_available', 'comment_when_clear']
     list_filter = ['game']
 
 

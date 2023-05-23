@@ -17,11 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from wxcloudrun import views2 as mpv2, summary
+from wxcloudrun import social_django as sd
 
 urlpatterns = (
     path('admin/', admin.site.urls),
     path('wechat/miaozan/', mpv2.check_signature),      # 淼赞文化专用
-    path('code/', mpv2.get_user_info_with_code),  # 用于微信网页授权获取用户信息
+    path('code/callback_google/', sd.callback_google),  # 用于Google OAuth2授权回调，获取用户信息
+    path('code/auth_google/', sd.authorize_google),  # 用于触发Google OAuth2授权
+    path('code/callback_github/', sd.callback_github),  # 用于Github OAuth2授权回调，获取用户信息
+    path('code/auth_github/', sd.authorize_github),  # 用于触发Github OAuth2授权
     path('profile/', mpv2.show_profile),  # 显示用户信息（微信风格页面）
     path('check_answer/', mpv2.check_answer),  # 检查js提交的答案是否正确
     path('game/', mpv2.game),  # 以Django用户管理方式进入游戏

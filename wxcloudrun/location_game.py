@@ -60,13 +60,13 @@ def replace_content_with_html(in_content):
         file_name = matched.group('keyword')
         # 根据file_name后缀名，判断是图片、音频还是视频，从而生成不同的html代码
         if file_name.endswith('.jpg') or file_name.endswith('.png'):
-            img_url = f'{home_server}/images/' + file_name
+            img_url = f'/images/' + file_name
             ret_string = f'<p style="text-align: center;"><img src="{img_url}" alt="{file_name}"></p>'
         elif file_name.endswith('.mp3') or file_name.endswith('.m4a'):
-            audio_url = f'{home_server}/mp3/' + file_name
+            audio_url = f'/mp3/' + file_name
             ret_string = f'<p style="text-align: center;"><audio autoplay controls><source src="{audio_url}" type="audio/mpeg"></audio></p>'
         elif file_name.endswith('.mp4') or file_name.endswith('.m4v') or file_name.endswith('.mov'):
-            video_url = f'{home_server}/video/' + file_name
+            video_url = f'/video/' + file_name
             ret_string = f'<p style="text-align: center;"><video src="{video_url}" controls="controls"></video></p>'
         else:
             # 如果不是图片、音频、视频，则直接返回空字符串
@@ -470,6 +470,8 @@ class ExploreGame(models.Model):
             fi = open(output_file, 'r', encoding='utf_8_sig')
             existing_users_data = [x.replace('\n', '').split(',') for x in fi.readlines()]
             fi.close()
+        else:
+            existing_users_data = []
         fo = open(output_file, 'w', encoding='utf_8_sig')
         created_user_list = []
         for i in range(how_many):
@@ -663,7 +665,7 @@ class ExploreGameQuest(models.Model):
     hint_type = models.CharField(max_length=10, choices=question_type_choice,
                                  default='TEXT', verbose_name='提示类型（已废弃，无需设置）')
     hint_data = models.TextField(max_length=1000, default='', verbose_name='提示内容', blank=True)
-    answer_list = models.CharField(max_length=100, default='', verbose_name='谜底列表，以｜分隔，仅在填空题时生效。可以设置多个正确答案，答对任意一个都会跳转到下面第一个分支选项对应的关卡', blank=True)
+    answer_list = models.CharField(max_length=100, default='', verbose_name='谜底列表，以｜分隔，仅在填空题时生效。可以设置多个正确答案，答对任意一个都会跳转到分支选项列的第一个对应的关卡', blank=True)
     options_list = models.CharField(max_length=1000, default='', blank=True,
                                     verbose_name='选项列表（已废弃，无需设置）')
     reward_type = models.CharField(max_length=10, choices=question_type_choice, default='TEXT',
@@ -674,7 +676,7 @@ class ExploreGameQuest(models.Model):
                                  verbose_name='分支选项，以｜分隔，在选择题时作为选项，填空题时仅第一个选项有效')
     show_next = models.BooleanField(default=True,
                                     verbose_name='选中表示选择题，未选中表示填空题')
-    back_quest = models.CharField(max_length=100, default='', verbose_name='返回到某个任务的名称，留空表示返回到开始（未生效）', blank=True)
+    back_quest = models.CharField(max_length=100, default='', verbose_name='用于回答之后跳回到某个任务的名称，留空表示不生效', blank=True)
     show_if_unavailable = models.BooleanField(default=False, verbose_name='未满足挑战条件时是否显示')
     comment_when_unavailable = models.CharField(max_length=100, default='还不能选择', verbose_name='未满足挑战条件时显示的提示', blank=True)
     comment_when_available = models.CharField(max_length=100, default='可选择', verbose_name='满足挑战条件时显示的提示', blank=True)
