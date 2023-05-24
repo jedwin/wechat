@@ -116,7 +116,7 @@ def authorize_google(request):
 
 def callback_google(request):
     # Specify the state when creating the flow in the callback so that it can
-    # verified in the authorization server response.
+    # verify in the authorization server response.
     state = request.GET.get('state', '')
     if state != request.session.get('state', ''):
         # The state in the response doesn't match the state in the request.
@@ -158,6 +158,8 @@ def credentials_to_dict(credentials):
             'client_id': credentials.client_id,
             'client_secret': credentials.client_secret,
             'scopes': credentials.scopes}
+
+
 
 def find_user(id=None, auth_user_info=None, auth_type=None):
     """

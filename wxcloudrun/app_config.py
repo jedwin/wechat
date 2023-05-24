@@ -1,13 +1,13 @@
 # For Microsoft OAuth2.0
 import os
 
-CLIENT_ID = "fafa6d44-c8f8-4186-b4eb-c679c7aa4ae3" # Application (client) ID of app registration
-
-CLIENT_SECRET = "4Sl8Q~VJai8voWPPbAaxq7ZTijJd6sb8L_M-icO7" # Placeholder - for use ONLY during testing.
+# CLIENT_ID = "" # Application (client) ID of app registration
+CLIENT_ID = os.getenv("MS_CLIENT_ID")
+# CLIENT_SECRET = "" # Placeholder - for use ONLY during testing.
 # In a production app, we recommend you use a more secure method of storing your secret,
 # like Azure Key Vault. Or, use an environment variable as described in Flask's documentation:
 # https://flask.palletsprojects.com/en/1.1.x/config/#configuring-from-environment-variables
-# CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+CLIENT_SECRET = os.getenv("MS_CLIENT_SECRET")
 # if not CLIENT_SECRET:
 #     raise ValueError("Need to define CLIENT_SECRET environment variable")
 
