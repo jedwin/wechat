@@ -481,6 +481,8 @@ def download(request, filename):
     else:
         return None
 
+def redirect(request, filename):
+    return HttpResponseRedirect(f'{HOME_SERVER}static/images/layers/{filename}')
 
 def check_answer(request):
     app_en_name = request.GET.get('app_en_name', '')
