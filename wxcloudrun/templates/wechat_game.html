@@ -24,7 +24,7 @@
         <article class="weui-article">
             <section style="margin-bottom: 8px;">
                 <p style="text-align: center;">
-                    <img src="{% static 'images/{{ cur_game_name }}.jpg' %}">
+                    <img src="{{home_server}}images/{{ cur_game_name }}.jpg">
                 </p>
             </section>
             <section>
@@ -32,10 +32,10 @@
                 </section>
                 <section>
                     {% if audio_link|length > 0 %}
-                    <audio autoplay controls><source src="{% static '{{ audio_link }}' %}" type="audio/mpeg"></audio>
+                    <audio autoplay controls><source src="{{ audio_link }}" type="audio/mpeg"></audio>
                     {% elif video_link|length > 0 %}
                     <video autoplay controls>
-                        <source src="{% static '{{ video_link }}' %}" controls="controls" autoplay="autoplay" width="100%" height="100%"></video>
+                        <source src="{{ video_link }}" controls="controls" autoplay="autoplay" width="100%" height="100%"></video>
                     {% endif %}
                 </section>
             </section>
@@ -324,11 +324,11 @@
 </script>
 </script>
 
-<script src="{% static 'static/js/zepto.min.js"></script>
-<script type="text/javascript" src="{% static 'static/js/jweixin-1.0.0.js"></script>
-<script src="{% static 'static/js/weui.min.js"></script>
-<script src="{% static 'static/js/example.js"></script>
-<script src="{% static 'static/js/wah.js"></script>
+<script src="{% static 'static/js/zepto.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'static/js/jweixin-1.0.0.js' %}"></script>
+<script src="{% static 'static/js/weui.min.js' %}"></script>
+<script src="{% static 'static/js/example.js' %}"></script>
+<script src="{% static 'static/js/wah.js' %}"></script>
 
 
 </body>
