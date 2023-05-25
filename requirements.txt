@@ -8,7 +8,7 @@ certifi
 requests
 tzdata
 psycopg2-binary==2.9.1
-Jazzmin==2.3.1
+Jazzmin
 googleapiclient
 google-auth-oauthlib
 requests_oauthlib
