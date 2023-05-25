@@ -37,7 +37,8 @@ OPTION_ENABLE = 'weui-cell weui-cell_access'    # 提供可选选项的样式
 OPTION_DISABLE = 'weui-cell weui-cell_disable'  # 提供不可选选项的样式
 INITIAL_COMMAND = 'init'                        # 初始化命令
 ENDING_COMMAND = 'ending'                          # 已通关标记
-home_server = 'https://www.key2go.top:8443'
+# home_server = 'https://www.key2go.top:8443'
+HOME_SERVER = os.environ.get('HOME_SERVER', '')  # 存放静态文件的服务器地址，留空则使用本地
 domain_name = 'miao2022.com'                    # 用于创建新账号的邮件地址域名
 
 SETTING_PATH = '/settings/'      # 游戏设置文件存放路径

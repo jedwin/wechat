@@ -3,6 +3,7 @@ from pathlib import Path
 import time
 # from wxcloudrun.Jazzmin_Settings import JAZZMIN_SETTINGS
 
+HOME_SERVER = os.environ.get('HOME_SERVER', '')  # 存放静态文件的服务器地址，留空则使用本地
 CUR_PATH = os.path.dirname(os.path.realpath(__file__))  
 # LOG_PATH = os.path.join(os.path.dirname(CUR_PATH), 'logs') # LOG_PATH是存放日志的路径
 LOG_PATH = '/logs/'
@@ -186,7 +187,12 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
-STATIC_URL = 'static/'
+if len(HOME_SERVER) == 0:
+    STATIC_URL = '/'
+elif HOME_SERVER[-1] == '/':
+    STATIC_URL = HOME_SERVER
+else:
+    STATIC_URL = f'{HOME_SERVER}/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

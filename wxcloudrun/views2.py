@@ -1,5 +1,5 @@
 # views.py
-
+import os
 import io
 import sys
 from django.shortcuts import HttpResponse, render, HttpResponseRedirect
@@ -32,6 +32,8 @@ FIELD_CLEAR_CODE = 'clear_code'                 # 存放通过码的字典key
 FIELD_REWARD_LIST = 'reward_list'               # 存放已获取奖励的字典key
 FIELD_COMMAND_LIST = 'cmd_list'                 # 存放已行动命令的字典key
 FIELD_IS_AUDIT = 'is_audit'                     # 存在当前用户在当前游戏是否已认证的key
+
+HOME_SERVER = os.environ.get('HOME_SERVER', '')  # 存放静态文件的服务器地址，留空则使用本地
 
 # django默认开启了csrf防护，@csrf_exempt是去掉防护
 # 微信服务器进行参数交互，主要是和微信服务器进行身份的验证
@@ -411,6 +413,7 @@ def game(request):
     errmsg = request.GET.get('errmsg', '')
     
     ret_dict = dict()
+    ret_dict['home_server'] = HOME_SERVER
     if user.is_authenticated:
 
         # 临时使用，后面要增加判断用户所属的APP
