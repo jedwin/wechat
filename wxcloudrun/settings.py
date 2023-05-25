@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import time
-from wxcloudrun.Jazzmin_Settings import JAZZMIN_SETTINGS
+# from wxcloudrun.Jazzmin_Settings import JAZZMIN_SETTINGS
 
 CUR_PATH = os.path.dirname(os.path.realpath(__file__))  
 # LOG_PATH = os.path.join(os.path.dirname(CUR_PATH), 'logs') # LOG_PATH是存放日志的路径
@@ -197,7 +197,7 @@ LOGS_DIR = '/logs/'
 
 LOGIN_REDIRECT_URL = "/game/"
 
-JAZZMIN_SETTINGS = JAZZMIN_SETTINGS
+# JAZZMIN_SETTINGS = JAZZMIN_SETTINGS
 
 USE_I18N = True
 USE_L10N = True
