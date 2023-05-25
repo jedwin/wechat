@@ -12,7 +12,7 @@ RUN apk add ca-certificates
 
 # 选用国内镜像源以提高下载速度
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tencent.com/g' /etc/apk/repositories
-RUN apk add --update --no-cache python3 py3-pip python3-dev gcc musl-dev postgresql-dev locales
+RUN apk add --update --no-cache python3 py3-pip python3-dev gcc musl-dev postgresql-dev
 RUN rm -rf /var/cache/apk/*
 
 # 拷贝当前项目到/app目录下
