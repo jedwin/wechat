@@ -1,5 +1,7 @@
 # Jazzmin settings
-JAZZMIN_SETTINGS = {
+from typing import Any
+
+JAZZMIN_SETTINGS: Any = {
     # title of the window (Will default to current_admin_site.site_title if absent or None)
     "site_title": "淼赞文化管理后台",
 

@@ -21,7 +21,7 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "not-secret-at-all")
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://django-xhen-1758215-1310588344.ap-shanghai.run.tcloudbase.com/',
+CSRF_TRUSTED_ORIGINS = ['https://miaozan-51588-9-1256107271.sh.run.tcloudbase.com',
                         'https://www.key2go.top', 'https://www.miao2022.com/']
 # Application definition
 
