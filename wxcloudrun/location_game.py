@@ -39,6 +39,11 @@ INITIAL_COMMAND = 'init'                        # 初始化命令
 ENDING_COMMAND = 'ending'                          # 已通关标记
 # home_server = 'https://www.key2go.top:8443'
 HOME_SERVER = os.environ.get('HOME_SERVER', '')  # 存放静态文件的服务器地址，留空则使用本地
+if len(HOME_SERVER) > 0:
+    if HOME_SERVER[-1] != '/':
+        HOME_SERVER += '/'
+else:
+    HOME_SERVER = '/'
 domain_name = 'miao2022.com'                    # 用于创建新账号的邮件地址域名
 
 SETTING_PATH = '/settings/'      # 游戏设置文件存放路径
@@ -61,13 +66,13 @@ def replace_content_with_html(in_content):
         file_name = matched.group('keyword')
         # 根据file_name后缀名，判断是图片、音频还是视频，从而生成不同的html代码
         if file_name.endswith('.jpg') or file_name.endswith('.png'):
-            img_url = f'/images/' + file_name
+            img_url = f'images/' + file_name
             ret_string = f'<p style="text-align: center;"><img src="{HOME_SERVER}{img_url}" alt="{file_name}"></p>'
         elif file_name.endswith('.mp3') or file_name.endswith('.m4a'):
-            audio_url = f'/mp3/' + file_name
+            audio_url = f'mp3/' + file_name
             ret_string = f'<p style="text-align: center;"><audio autoplay controls><source src="{HOME_SERVER}{audio_url}" type="audio/mpeg"></audio></p>'
         elif file_name.endswith('.mp4') or file_name.endswith('.m4v') or file_name.endswith('.mov'):
-            video_url = f'/video/' + file_name
+            video_url = f'video/' + file_name
             ret_string = f'<p style="text-align: center;"><video src="{HOME_SERVER}{video_url}" controls="controls"></video></p>'
         else:
             # 如果不是图片、音频、视频，则直接返回空字符串
