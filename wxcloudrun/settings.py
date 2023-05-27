@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import time
-# from wxcloudrun.Jazzmin_Settings import JAZZMIN_SETTINGS
+from wxcloudrun.Jazzmin_Settings import JAZZMIN_SETTINGS
 
 HOME_SERVER = os.environ.get('HOME_SERVER', '')  # 存放静态文件的服务器地址，留空则使用本地
 CUR_PATH = os.path.dirname(os.path.realpath(__file__))  
@@ -23,11 +23,11 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://miaozan-51588-9-1256107271.sh.run.tcloudbase.com',
-                        'https://www.key2go.top', 'https://www.miao2022.com/']
+                        'https://www.key2go.top', 'https://www.miao2022.com/', 'https://www.zhuogang.online',]
 # Application definition
 
 INSTALLED_APPS = [
-    # 'jazzmin',
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -185,7 +185,6 @@ USE_L10N = True
 USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 if len(HOME_SERVER) == 0:
     STATIC_URL = '/'
@@ -194,8 +193,8 @@ elif HOME_SERVER[-1] == '/':
 else:
     STATIC_URL = f'{HOME_SERVER}/'
 
+
 # Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -203,7 +202,7 @@ LOGS_DIR = '/logs/'
 
 LOGIN_REDIRECT_URL = "/game/"
 
-# JAZZMIN_SETTINGS = JAZZMIN_SETTINGS
+JAZZMIN_SETTINGS = JAZZMIN_SETTINGS
 
 USE_I18N = True
 USE_L10N = True
