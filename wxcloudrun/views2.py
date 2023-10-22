@@ -413,43 +413,50 @@ def game(request):
     errmsg = request.GET.get('errmsg', '')
     
     ret_dict = dict()
-    ret_dict['home_server'] = HOME_SERVER
+    ret_dict['home_server'] = HOME_SERVER   # ret_dict['home_server'] = HOME_SERVER
     if user.is_authenticated:
 
         # 临时使用，后面要增加判断用户所属的APP
         if len(app_en_name) == 0:
             app_en_name = 'miaozan'
-
+        show_games_not_in_group = False
+        cur_app = WechatApp.objects.get(en_name=app_en_name)
+        show_games_not_in_group = cur_app.show_games_not_in_group
+        auto_enter_game = cur_app.auto_enter_game
+        game_brought_text = cur_app.game_brought_text
+        game_not_brought_text = cur_app.game_not_brought_text
         if len(game_name) == 0:
             template = 'choose_game.html'
             all_game_list = [x.name for x in ExploreGame.objects.filter(is_active=True)]
+            # get the min set from all_game_list and group_list
             permit_game_list = list(set(all_game_list) & set(group_list))
             show_game_list = list()
             for game_name in all_game_list:
                 if game_name in group_list:
                     show_game_list.append({'game_name': game_name, 'enable': True,
-                                             'comment': '已购买', 'style': OPTION_ENABLE})
-                else:
+                                             'comment': game_brought_text, 'style': OPTION_ENABLE})
+                elif show_games_not_in_group:
+                    # 设定允许显示未购买游戏
                     show_game_list.append({'game_name': game_name, 'enable': False,
-                                             'comment': '未购买', 'style': OPTION_DISABLE})
-            # get the min set from all_game_list and group_list
+                                             'comment': game_not_brought_text, 'style': OPTION_DISABLE})
+            
 
-            if len(permit_game_list) >= 0:
+            if not(show_games_not_in_group) and auto_enter_game and len(permit_game_list) == 1:
+                # 如果设定允许且名下只有一个游戏，就直接进入游戏
+                template = 'wechat_game.html'
+                game_name = permit_game_list[0]
+                ret_dict = handle_player_command(app_en_name=app_en_name, open_id=user_id, game_name=game_name,
+                                                 user_name=user_name, cmd=cmd, for_text=False)
+                return render(request, template, ret_dict)
+            elif len(permit_game_list) >= 0:
                 ret_dict['quest_trigger'] = '选择游戏'
                 ret_dict['app_en_name'] = app_en_name
                 ret_dict['show_game_list'] = show_game_list
                 ret_dict['page_type'] = 'main'
                 return render(request, template, ret_dict)
-            # elif len(permit_game_list) == 1:
-            #     # 如果名下只有一个游戏，就直接进入游戏
-            #     template = 'wechat_game.html'
-            #     game_name = permit_game_list[0]
-            #     ret_dict = handle_player_command(app_en_name=app_en_name, open_id=user_id, game_name=game_name,
-            #                                      user_name=user_name, cmd=cmd, for_text=False)
-            #     return render(request, template, ret_dict)
-            # else:
-            #     ret_dict['error_msg'] = '这个账号还没购买任何游戏'
-            #     return render(request, template, ret_dict)
+            else:
+                ret_dict['error_msg'] = '这个账号还没购买任何游戏'
+                return render(request, template, ret_dict)
         else:  # 有game_name
             template = 'wechat_game.html'
             if len(errmsg) > 0:
@@ -461,6 +468,7 @@ def game(request):
                     ret_dict = handle_player_command(app_en_name=app_en_name, game_name=game_name, open_id=user_id,
                                                      user_name=user_name, cmd=cmd, for_text=False)
                     ret_dict['home_server'] = HOME_SERVER  # 用于更新静态图片服务器的地址
+                    # ret_dict['home_server'] = '/'
                     # logger.info(ret_dict)
                 else:
                     ret_dict['error_msg'] = f'账号{user}无权限进入本游戏'

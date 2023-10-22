@@ -70,6 +70,71 @@ def callback_github(request):
             return HttpResponse('GitHub授权失败，请重试！')
     else:
         return HttpResponse('state验证失败，请重试！')
+    
+################ for Synology OAuth2.0 ################
+SYNOLOGY_OAUTH_APP_ID = os.environ.get('SYNOLOGY_APP_ID')
+SYNOLOGY_OAUTH_CLIENT_SECRET = os.environ.get('SYNOLOGY_CLIENT_SECRET')
+SYNOLOGY_OAUTH_REDIRECT_URI = os.environ.get('SYNOLOGY_REDIRECT_URI')
+SYNOLOGY_OAUTH_SCOPE = 'user_id'
+SYNOLOGY_OAUTH_AUTHORIZATION_URL = os.environ.get('SYNOLOGY_AUTHORIZATION_URL')
+SYNOLOGY_OAUTH_ACCESSTOKEN_URL = os.environ.get('SYNOLOGY_ACCESSTOKEN_URL')
+
+def authorize_synology(request):
+    if request.user.is_authenticated:
+        return HttpResponseRedirect('/game/')
+    else:
+        # 生成一个随机字符串，用于防止跨站请求伪造攻击
+        state = gen_passwd(leng=16, use_lower=True, use_upper=True, use_number=True, use_symbol=False)
+        # 将state放入当前会话中
+        request.session['state'] = state
+        logger.info(f'set state: {state}')
+        params = dict()
+        params['app_id'] = SYNOLOGY_OAUTH_APP_ID
+        params['redirect_uri'] = SYNOLOGY_OAUTH_REDIRECT_URI
+        params['scope'] = SYNOLOGY_OAUTH_SCOPE
+        params['state'] = state
+        params['synossoJSSDK'] = 'False'
+
+        authorization_url = SYNOLOGY_OAUTH_AUTHORIZATION_URL + '?' + '&'.join([f'{k}={v}' for k, v in params.items()])
+        
+        return HttpResponseRedirect(authorization_url)
+    
+def callback_synology(request):
+    params = request.GET
+    state = params.get('state', '')
+    stored_state = request.session.get('state', '')
+    access_token = params.get('access_token', '')
+    # logger.info(f'returned state: {state}')
+    if state == stored_state:
+        if access_token:
+            params = dict()
+            params['access_token'] = access_token
+            params['action'] = 'exchange'
+            params['app_id'] = SYNOLOGY_OAUTH_APP_ID
+            r = requests.get(SYNOLOGY_OAUTH_ACCESSTOKEN_URL, params=params)
+            if r.status_code == 200:
+                response = r.json()
+                data = response.get('data', {})
+                if data:
+                    user_id = data.get('user_id', '')
+                    user_name = data.get('user_name', '')
+                    if user_id:
+                        user = find_user(id=user_id, auth_user_info=data, auth_type='synology')
+                        if user:
+                            login(request, user)
+                            return HttpResponseRedirect('/game/')
+                        else:
+                            return HttpResponse(f'无法找到对应的玩家。data: {data}')
+                    else:
+                        return HttpResponse(f'无法获取用户ID。data: {data}')
+                else:
+                    return HttpResponse(f'无法获取用户信息。response: {response}')
+            else:
+                return HttpResponse('群晖授权失败，请重试！')
+        else:
+            return HttpResponse('无法获取access_token，请重试！')
+    else:
+        return HttpResponse(f'state验证失败，请重试！state: {state}, stored_state: {stored_state}, access_token: {access_token}')
 
 ################ for Google OAuth2.0 ################
 GOOGLE_API_CLIENT_SECRET = os.environ.get("GOOGLE_API_CLIENT_SECRET")
@@ -165,7 +230,7 @@ def find_user(id=None, auth_user_info=None, auth_type=None):
     根据id和auth_type查找玩家，然后通过玩家user_info json对象中的user_id查找对应的User对象
     param: id: 通过OAuth2.0认证后得到的用户id
     param: auth_user_info: 通过OAuth2.0认证后得到的用户信息字典
-    param: auth_type: 认证类型，目前支持github和google
+    param: auth_type: 认证类型，目前支持群晖、github和google
 
     return: None 或 User对象
     
@@ -176,13 +241,14 @@ def find_user(id=None, auth_user_info=None, auth_type=None):
         for player in players:
             if player.user_info:  # 如果玩家的user_info不为空
                 user_auth_dict = player.user_info.get(auth_type, {})
-                if auth_type in ['github', 'google']:
+                if auth_type in ['github', 'google', 'synology']:
                     auth_user_id = user_auth_dict.get('id', '')
                 else:
-                    return HttpResponse(f'不支持的认证类型：{auth_type}')
-                
+                    return None
+                # 获取玩家在Django数据库中的user_id
                 user_id = player.user_info.get('user_id', '')
                 if user_id:
+                    # 对比SSO返回的id和这个玩家这个鉴权方式的auth_user_id，如果匹配就返回这个玩家对应的User对象，否则继续查找下一个玩家
                     if auth_user_id == id:
                         # 找到匹配的用户，先更新对应的user_info
                         player.user_info[auth_type] = auth_user_info
@@ -192,7 +258,7 @@ def find_user(id=None, auth_user_info=None, auth_type=None):
                             user = User.objects.get(id=user_id)
                             return user
                         except ObjectDoesNotExist:
-                            return HttpResponse(f'找到user_id，但无法找到对应的用户。user_id: {user_id}')
+                            return None
                     else:
                         continue
                 else:
@@ -210,3 +276,7 @@ def find_user(id=None, auth_user_info=None, auth_type=None):
                             continue
                 else:  # 玩家的openid为空
                     continue
+        # 所有玩家都没有匹配的用户，返回None
+        return None
+    else:  # id或auth_type为空
+        return None

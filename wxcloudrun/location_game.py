@@ -1,12 +1,10 @@
-import certifi
+import pandas as pd
 import csv
 import io
-import json
 import os
 import re
 import sys
 import time
-import urllib3
 from django.core.exceptions import *
 from django.db import models
 from django.db.models import F, Q, When, Count
@@ -17,6 +15,7 @@ from wxcloudrun import reply
 from wxcloudrun.models import *
 from wxcloudrun.coordinate_converter import *
 from wxcloudrun.user_manage import gen_passwd
+from sqlalchemy import create_engine, text
 
 WAITING_FOR_PASSWORD = 'w_password'             # 等待用户输入认证密码
 WAITING_FOR_POI_KEYWORD = 'w_keyword'           # 等待用户输入POI关键词
@@ -50,6 +49,19 @@ SETTING_PATH = '/settings/'      # 游戏设置文件存放路径
 sep = '|'           # 分隔符
 alt_sep = '｜'      # 在分隔前会将此字符替换成sep，因此两者等效
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='utf-8')  # 改变标准输出的默认编码
+
+################# 内部数据库信息，用于游戏数据统计 #################
+db_name = os.environ.get("database")
+db_user = os.environ.get("user")
+db_password = os.environ.get("password")
+db_host = '172.17.0.1'
+db_port = '2345'
+to_table = 'game_statisitc_data'
+sslmode = 'require'
+engine_str = f'postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}'
+pg_engine_miao = create_engine(engine_str, connect_args={'sslmode': sslmode}, echo=False)
+###################### 数据库信息结束 ########################
+
 logger = logging.getLogger('django')
 
 def replace_content_with_html(in_content):
@@ -417,6 +429,9 @@ class ExploreGame(models.Model):
             return ret_dict
 
     def gen_passwords(self, how_many=20):
+        """
+        用于生成密码对象，已废弃
+        """
         if how_many > 100:
             # 未免误操作，此处做一个限制
             how_many = 100
@@ -654,6 +669,77 @@ class ExploreGame(models.Model):
             f.writelines(f'```\n')
 
         return True
+
+    def statistic_player(self):
+        """
+        统计本游戏下面的用户情况
+        """
+        ret_dict = dict()
+        ret_dict['result'] = False
+        ret_dict['errmsg'] = 'Initial'
+        output_file = self.settings_file.replace('.csv', '_玩家统计.csv')
+        try:
+            
+            # 从WechatPlayer过滤game_hist字典存在self.name的用户
+            all_players = WechatPlayer.objects.filter(game_hist__has_key=self.name)
+            passed_players = WechatPlayer.objects.filter(game_hist__has_key=self.name, waiting_status=ENDING_COMMAND)
+            all_quests = ExploreGameQuest.objects.filter(game=self)
+            # 逐个检查每个玩家对每个关卡的完成情况
+            with open(f'{SETTING_PATH}{output_file}', 'w', encoding='utf_8_sig') as f:
+                f.writelines('游戏,玩家,关卡名称,关卡类型,完成状态,输入答案数量,答案列表\n')
+                for player in all_players:
+                    # logger.info(f'checking player {player.name}')
+                    reward_list = player.game_hist[self.name].get('reward_list', list())
+                    for quest in all_quests:
+                        str_lines_list = []
+                        str_lines_list.append(self.name)
+                        str_lines_list.append(player.name)
+                        if quest.reward_id > 0:  # 有奖励id的关卡
+                            # logger.info(f'checking quest {quest.quest_trigger}')
+                            str_lines_list.append(quest.quest_trigger)
+                            if quest.show_next:
+                                str_lines_list.append('选择题')
+                            else:
+                                str_lines_list.append('填空题')
+                            cmd_dict = player.game_hist[self.name].get('cmd_dict', dict())
+                            cmd_list = cmd_dict.get(quest.quest_trigger, list())
+                            command_quantity = str(len(cmd_list))
+                            if quest.reward_id in reward_list:
+                                str_lines_list.append('已完成')
+                                str_lines_list.append(command_quantity)
+                                str_lines_list.append(f'{";".join(cmd_list)}')
+                            elif quest.quest_trigger in cmd_dict.keys():
+                                str_lines_list.append('进行中')
+                                str_lines_list.append(command_quantity)
+                                str_lines_list.append(f'{";".join(cmd_list)}')
+                            else:
+                                str_lines_list.append('未开始')
+                                str_lines_list.append('0')
+                                str_lines_list.append('')
+                        else:  # 无需答题的关卡
+                            str_lines_list.append(quest.quest_trigger)
+                            str_lines_list.append('普通关卡')
+                            str_lines_list.append('-')
+                            str_lines_list.append('0')
+                            str_lines_list.append('')
+                        f.writelines(f'{",".join(str_lines_list)}\n')
+            df = pd.read_csv(f'{SETTING_PATH}{output_file}', encoding='utf_8_sig')
+            # check if the table exists
+            if pg_engine_miao.has_table(to_table):
+                # delete the existing data in to_table if the table exists
+                conn = pg_engine_miao.connect()
+                sql = f'delete from public.{to_table} where "游戏"='
+                sql += f"'{self.name}'"
+                conn.execute(text(sql))
+                conn.close()
+            df.to_sql(name=to_table, con=pg_engine_miao, schema='public', if_exists='append', index=False)
+            ret_dict['result'] = True
+            ret_dict['errmsg'] = f'本游戏共有{len(all_players)}个玩家登录了游戏，其中{len(passed_players)}个已经通关。统计结果已输出到数据库'
+            return ret_dict
+        except Exception as e:
+            ret_dict['errmsg'] = f'统计玩家时出错: {e}'
+            return ret_dict
+
 
 class ExploreGameQuest(models.Model):
     game = models.ForeignKey(ExploreGame, on_delete=models.CASCADE)

@@ -10,3 +10,5 @@ tzdata
 psycopg2-binary==2.9.1
 requests_oauthlib
 django-jazzmin
+pandas
+sqlalchemy<2.0.0

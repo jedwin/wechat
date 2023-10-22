@@ -173,7 +173,8 @@ class ExploreGameAdmin(admin.ModelAdmin):
     list_editable = ['app', 'settings_file', 'is_active', 'entry', 'clear_requirement', 'account_file', 'passwd_init']
     list_filter = ['app']
     # inlines = [ExploreGameQuestInline]
-    actions = ['export2obsidian', 'export2csv', 'import_from_csv', 'create_new_account', 'import_account_from_csv']
+    actions = ['export2obsidian', 'export2csv', 'import_from_csv', 'create_new_account', 'import_account_from_csv',
+               'stat_game_player']
 
     @admin.action(description='保存游戏配置')
     def export2csv(self, request, queryset):
@@ -227,6 +228,16 @@ class ExploreGameAdmin(admin.ModelAdmin):
                 return ret_csv
             else:
                 return None
+    @admin.action(description='生成游戏统计数据')
+    def stat_game_player(self, request, queryset):
+        for obj in queryset:
+            result_dict = obj.statistic_player()
+            result = result_dict['result']
+            errmsg = result_dict['errmsg']
+            if result:
+                self.message_user(request, f'{errmsg}', messages.SUCCESS)
+            else:
+                self.message_user(request, f'{errmsg}', messages.WARNING)
 
     @admin.action(description='生成流程图文件')
     def save_to_td_markdown_file(self, request, queryset):
@@ -292,7 +303,7 @@ class PasswdAdmin(admin.ModelAdmin):
 
 # admin.site.register(WechatMenu, MenuAdmin)
 # admin.site.register(MenuButton, ButtonAdmin)
-# admin.site.register(WechatApp, AppAdmin)
+admin.site.register(WechatApp, AppAdmin)
 # admin.site.register(WechatMedia, MediaAdmin)
 admin.site.register(WechatPlayer, WechatPlayerAdmin)
 admin.site.register(ErrorAutoReply, ErrorAutoReplyAdmin)

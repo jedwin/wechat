@@ -23,7 +23,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://miaozan-51588-9-1256107271.sh.run.tcloudbase.com',
-                        'https://www.key2go.top', 'https://www.miao2022.com/', 'https://www.zhuogang.online',]
+                        'https://www.key2go.top',]
 # Application definition
 
 INSTALLED_APPS = [
@@ -41,7 +41,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -192,7 +192,7 @@ elif HOME_SERVER[-1] == '/':
     STATIC_URL = HOME_SERVER
 else:
     STATIC_URL = f'{HOME_SERVER}/'
-
+# STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
 STORAGES = {
@@ -217,3 +217,4 @@ JAZZMIN_SETTINGS = JAZZMIN_SETTINGS
 USE_I18N = True
 USE_L10N = True
 LOCALE_PATHS = (os.path.join(BASE_DIR, "locale"),)
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240

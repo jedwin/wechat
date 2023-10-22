@@ -26,6 +26,8 @@ urlpatterns = (
     # path('code/auth_google/', sd.authorize_google),  # 用于触发Google OAuth2授权
     path('code/callback_github/', sd.callback_github),  # 用于Github OAuth2授权回调，获取用户信息
     path('code/auth_github/', sd.authorize_github),  # 用于触发Github OAuth2授权
+    path('code/callback_synology/', sd.callback_synology),  # 用于群晖OAuth2授权回调，获取用户信息
+    path('code/auth_synology/', sd.authorize_synology),  # 用于触发群晖OAuth2授权
     path('profile/', mpv2.show_profile),  # 显示用户信息（微信风格页面）
     path('check_answer/', mpv2.check_answer),  # 检查js提交的答案是否正确
     path('game/', mpv2.game),  # 以Django用户管理方式进入游戏

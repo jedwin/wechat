@@ -74,11 +74,15 @@ class WechatApp(models.Model):
     en_name = models.CharField(max_length=100, default='')
     cur_game_name = models.CharField(max_length=100, default='')
     super_user = models.CharField(max_length=200, null=True)
-    in_tx_cloud = models.BooleanField(default=False, verbose_name='是否在腾讯云中运行') # 是否在docker中运行，会影响api调用的方式
+    in_tx_cloud = models.BooleanField(default=False, verbose_name='是否在腾讯云中运行')  # 是否在docker中运行，会影响api调用的方式
+    show_games_not_in_group = models.BooleanField(default=False, verbose_name='是否显示未购买的游戏')
+    auto_enter_game = models.BooleanField(default=False, verbose_name='当只有一个已购买游戏时是否自动进入', help_text='仅在不显示未购买游戏时才生效')
+    game_brought_text = models.CharField(max_length=100, default='已购买', verbose_name='已购买游戏的显示文字')
+    game_not_brought_text = models.CharField(max_length=100, default='未购买', verbose_name='未购买游戏的显示文字')
 
     class Meta:
-        verbose_name = '公众号(无需设置)'
-        verbose_name_plural = '公众号(无需设置)'
+        verbose_name = '公众号'
+        verbose_name_plural = '公众号'
 
     def __str__(self):
         return self.name
