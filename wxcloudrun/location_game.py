@@ -1,5 +1,4 @@
-import pandas as pd
-import csv
+
 import io
 import os
 import re
@@ -723,18 +722,19 @@ class ExploreGame(models.Model):
                             str_lines_list.append('0')
                             str_lines_list.append('')
                         f.writelines(f'{",".join(str_lines_list)}\n')
-            df = pd.read_csv(f'{SETTING_PATH}{output_file}', encoding='utf_8_sig')
-            # check if the table exists
-            if pg_engine_miao.has_table(to_table):
-                # delete the existing data in to_table if the table exists
-                conn = pg_engine_miao.connect()
-                sql = f'delete from public.{to_table} where "游戏"='
-                sql += f"'{self.name}'"
-                conn.execute(text(sql))
-                conn.close()
-            df.to_sql(name=to_table, con=pg_engine_miao, schema='public', if_exists='append', index=False)
+            # df = pd.read_csv(f'{SETTING_PATH}{output_file}', encoding='utf_8_sig')
+            # # check if the table exists
+            # if pg_engine_miao.has_table(to_table):
+            #     # delete the existing data in to_table if the table exists
+            #     conn = pg_engine_miao.connect()
+            #     sql = f'delete from public.{to_table} where "游戏"='
+            #     sql += f"'{self.name}'"
+            #     conn.execute(text(sql))
+            #     conn.close()
+            # df.to_sql(name=to_table, con=pg_engine_miao, schema='public', if_exists='append', index=False)
             ret_dict['result'] = True
-            ret_dict['errmsg'] = f'本游戏共有{len(all_players)}个玩家登录了游戏，其中{len(passed_players)}个已经通关。统计结果已输出到数据库'
+            ret_dict['errmsg'] = (f'本游戏共有{len(all_players)}个玩家登录了游戏，其中{len(passed_players)}个已经通关。'
+                                  f'统计结果已输出到{SETTING_PATH}{output_file}库')
             return ret_dict
         except Exception as e:
             ret_dict['errmsg'] = f'统计玩家时出错: {e}'
