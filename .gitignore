@@ -1,9 +1,6 @@
-/.cloudbase/
-/venv/
-/wxcloudrun/migrations/
+/.cloudbase
+/venv
+/wxcloudrun/migrations
 .DS_Store
-wxcloudrun/.DS_Store
-wxcloudrun/static/.DS_Store
-wxcloudrun/static/admin/.DS_Store
-wxcloudrun/static/images/.DS_Store
-wxcloudrun/.DS_Store
+/wxcloudrun/__pycache__
+*.pyc

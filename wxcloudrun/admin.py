@@ -53,6 +53,10 @@ class PlayerInline(admin.TabularInline):
     model = WechatPlayer
 
 
+class GameInline(admin.TabularInline):
+    model = ExploreGame
+
+
 class MediaInline(admin.TabularInline):
     model = WechatMedia
 
@@ -88,7 +92,7 @@ class WechatPlayerAdmin(admin.ModelAdmin):
 
 class AppAdmin(admin.ModelAdmin):
     list_display = ('name', 'appid', 'image_count', 'video_count', 'subscriber_count')
-    inlines = [PlayerInline, ]
+    inlines = [GameInline, ]
     actions = ['get_subscriber_info', 'update_image', 'update_video', 'gen_new_passwd_obj']
 
     @admin.action(description='更新关注用户信息')
