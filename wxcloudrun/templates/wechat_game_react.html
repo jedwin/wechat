@@ -4,227 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0,viewport-fit=cover">
     <meta name="wechat-enable-text-zoom-em" content="true">
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <title>{{ quest_trigger }}</title>
+
+    <title>react</title>
     <link rel="stylesheet" href="../static/style/weui.css"/>
     <!-- <link rel="stylesheet" href="../static/style/example.css"/> -->
-    <title>淼赞文化-{{ cur_game_name }}</title>
+    <title>淼赞文化</title>
 </head>
 <body ontouchstart>
 
 <div class="container" id="container">
     <div id="hint"></div>
-    <div class="page article">
-        <article class="weui-article">
-            <section style="margin-bottom: 8px;">
-                <p style="text-align: center;">
-
-                </p>
-            </section>
-            <section>
-                {{ reply_obj|safe }}
-                </section>
-                <section>
-                    {% if audio_link|length > 0 %}
-                    <audio autoplay controls><source src="{{ audio_link }}" type="audio/mpeg"></audio>
-                    {% elif video_link|length > 0 %}
-                    <video autoplay controls>
-                        <source src="{{ video_link }}" controls="controls" autoplay="autoplay" width="100%" height="100%"></video>
-                    {% endif %}
-                </section>
-            </section>
-        </article>
-
-        <div class="weui-form">
-            <form class="weui-cells__group weui-cells__group_form" action="/game/" >
-                {% if page_type == "quest" or page_type == "main" or page_type == "password" %}
-                    <div class="weui-form__text-area">
-                        <h2 class="weui-form__title">
-                        {% comment %} {% if page_type == "password" %}
-                        请输入密码
-                        {% else %}
-                        开始挑战
-                        {% endif %} {% endcomment %}
-                        </h2>
-                    </div>
-
-                    <div class="weui-cells">
-
-                    {% if reply_options|length > 0 %}
-                        {% for option in reply_options %}
-                        <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}"
-                           {% if option.enable %}
-                                href="/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd={{option.trigger}}">
-                            {% else %}
-                                href="javascript:">
-                            {% endif %}
-                            <span class="weui-cell__bd" id="{{option.trigger}}">
-                                <span>{{option.trigger}}</span>
-                            </span>
-                            <span class="weui-cell__ft">
-                                {{ option.comment }}
-                            </span>
-                        </a>
-                        {% endfor %}
-                    {% else %}
-                        <label for="js_input" class="weui-cell weui-cell_active">
-                            <div class="weui-cell__hd"><span class="weui-label">
-                                {% if page_type == "password" %}
-                                密码：
-                                {% elif page_type == "ending" %}
-                                <div></div>
-                                {% else %}
-                                答案是
-                                {% endif %}
-                            </span></div>
-                            <div class="weui-cell__bd">
-                                {% if page_type == "password" %}
-                                <input id="js_input" class="weui-input" type="tel" pattern="[0-9]{6}" placeholder="请输入密码"/>
-
-                                {% elif page_type == "ending" %}
-                                <div></div>
-                                {% else %}
-                                <input id="js_input" class="weui-input" placeholder="请把你的答案写在这里"/>
-                                {% endif %}
-
-                            </div>
-                        </label>
-                        <br>
-                        <div class="weui-form__opr-area">
-                            <a role="button" disabled aria-disabled="true" href="javascript:" id="showTooltips"
-                               class="weui-btn weui-btn_primary weui-btn_disabled">确定</a>
-                        </div>
-
-                    {% endif %}
-                    </div>
-                {% endif %}
-
-
-                <div class="page__bd page__bd_spacing">
-                    {% if hint_string|length > 0 and page_type == "quest" %}
-                    <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showIOSDialog_hint">提示</a>
-                    {% endif %}
-                    {% comment %} {% if page_type == "quest" or page_type == "main" %}
-                    <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showIOSDialog_progress">查看进度</a>
-                    {% endif %} {% endcomment %}
-                    {% comment %} {% if clear_code|length > 0 %}
-                    <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showClearCode">查看通关码</a>
-                    {% endif %} {% endcomment %}
-                    {% if page_type == "quest" or page_type == "reward" %}
-                    <a href="javascript:" role="button" class="weui-btn weui-btn_primary" id="showGoBack">返回起点</a>
-                    {% endif %}
-                    <br>
-                    <hr>
-                    <br>
-                    <a href="javascript:" role="button" class="weui-btn weui-btn_warn" id="show_logout">切换游戏</a>
-                </div>
-                <!-- 游戏提示对话框 -->
-                <div id="dialog_hint">
-                    <div class="js_dialog_hint" role="dialog"  aria-hidden="true" aria-modal="true"
-                         aria-labelledby="js_title1" id="iosDialog_hint" style="display: none;">
-                        <div class="weui-mask"></div>
-                        <div class="weui-dialog">
-                            <div class="weui-dialog__hd"><strong class="weui-dialog__title" id="js_title1">提示</strong></div>
-                            <div class="weui-dialog__bd" id="notice">{{hint_string|safe}}</div>
-                            <div class="weui-dialog__ft">
-                                <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_default"
-                                   id="confirm_hint">确定</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- 游戏进度对话框 -->
-                <div id="dialog_progress">
-                    <div class="js_dialog_progress" role="dialog"  aria-hidden="true" aria-modal="true"
-                         aria-labelledby="js_title1" id="iosDialog_progress" style="display: none;">
-                        <div class="weui-mask"></div>
-                        <div class="weui-dialog">
-                            <div class="weui-dialog__hd"><strong class="weui-dialog__title" id="js_title2">目前进展</strong></div>
-                            <div class="weui-dialog__bd" id="notice_progress">{{progress}}</div>
-                            <div class="weui-dialog__ft">
-                                <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_default"
-                                   id="confirm_progress">确定</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- 返回对话框 -->
-                <div id="dialog_go_back">
-                    <div class="js_dialog_go_back" role="dialog"  aria-hidden="true" aria-modal="true"
-                         aria-labelledby="js_title1" id="iosDialog_go_back" style="display: none;">
-                        <div class="weui-mask"></div>
-                        <div class="weui-dialog">
-                            <div class="weui-dialog__hd"><strong class="weui-dialog__title" id="js_go_back">确认</strong></div>
-                            <div class="weui-dialog__bd" id="notice_wrong_answer">确认回到游戏起点吗？</div>
-                            <div class="weui-dialog__ft">
-
-                                <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_default"
-                                   id="cancle">取消</a>
-                                <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_primary"
-                                   id="confirm_go_back">确认</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- 通关码 -->
-                <div role="alert" id="textClearCode" style="display: none;">
-                    <div class="weui-mask_transparent"></div>
-                    <div class="weui-toast weui-toast_text-more">
-                        <i class="weui-icon-warn weui-icon_toast"></i>
-                        <p class="weui-toast__content">{{clear_code}}</p>
-                    </div>
-                </div>
-                <!-- 切换游戏对话框 -->
-                <div class="weui-cells">
-                    <div id="dialog_logout">
-                        <div class="js_dialog_logout" role="dialog"  aria-hidden="true" aria-modal="true"
-                             aria-labelledby="js_title1" id="iosDialog_logout" style="display: none;">
-                            <div class="weui-mask"></div>
-                            <div class="weui-dialog">
-                                <div class="weui-dialog__hd"><strong class="weui-dialog__title" id="js_logout">确认</strong></div>
-                                <div class="weui-dialog__bd" id="notice_logout">确认要退出当前账号吗？</div>
-                                <div class="weui-dialog__ft">
-
-                                    <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_default"
-                                       id="cancle_logout">取消</a>
-                                    <a role="button" href="javascript:" class="weui-dialog__btn weui-dialog__btn_primary"
-                                       id="confirm_logout">确认</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- 加载中 -->
-                <div role="alert" id="loadingToast" style="display: none;">
-                    <div class="weui-mask_transparent"></div>
-                    <div class="weui-toast">
-                        <span class="weui-primary-loading weui-icon_toast">
-                          <span class="weui-primary-loading__dot"></span>
-                        </span>
-                        <p class="weui-toast__content">载入中</p>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-<script type="text/babel">
-    import { createRoot } from 'react-dom/client';
-    console.log("react.js loaded");
-    const HintButton = () => {
-        return(
-                <div>
-                    <a role="button" class="weui-btn weui-btn_default" >tip</a>
-                </div>
-            );
-    }
     
-    const domNode = document.getElementById('hint');
-    const root = createRoot(domNode);
-    root.render(HintButton());
-</script>
+</div>
+
+<script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
 <script type="text/babel" src="../static/js/react.js"></script>
 <script type="text/javascript" src="../static/js/zepto.min.js"></script>
 <script type="text/javascript" src="../static/js/jweixin-1.0.0.js"></script>
