@@ -97,19 +97,19 @@
     </div>
     <div class="page__bd page__bd_spacing">
         {% if hint_string|length > 0 and page_type == "quest" %}
-        <br>    
+ 
         <div id="hint"></div>
         {% endif %}
         {% if page_type == "quest" or page_type == "main" %}
-        <br>    
+ 
         <div id="progress"></div>
         {% endif %}
         {% if clear_code|length > 0 %}
-        <br>    
+
         <div id="clearcode"></div>
         {% endif %}
         {% if page_type == "quest" or page_type == "reward" %}
-        <br>    
+
         <div id="goback"></div>
         {% endif %}
     </div>
@@ -117,7 +117,31 @@
     <hr>
     <br>
     <div id="logout"></div>
-    
+    <view class="page__bd page__bd_spacing">
+		<view class="weui-flex">
+			<view class="weui-flex__item"><a role="button" class="weui-btn weui-btn_default" >a</a></view>
+		</view>
+		<view class="weui-flex">
+			<view class="weui-flex__item"><a role="button" class="weui-btn weui-btn_default" >b</a></view>
+			<view class="weui-flex__item"><a role="button" class="weui-btn weui-btn_default" >c</a></view>
+		</view>
+		<view class="weui-flex">
+			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
+			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
+			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
+		</view>
+		<view class="weui-flex">
+			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
+			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
+			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
+			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
+		</view>
+		<view class="weui-flex">
+			<view><view class="placeholder">weui</view></view>
+			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
+			<view><view class="placeholder">weui</view></view>
+		</view>
+	</view>
 </div>
 
 <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
