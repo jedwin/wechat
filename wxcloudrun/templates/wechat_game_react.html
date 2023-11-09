@@ -117,36 +117,13 @@
     <hr>
     <br>
     <div id="logout"></div>
-    <view class="page__bd page__bd_spacing">
-		<view class="weui-flex">
-			<view class="weui-flex__item"><a role="button" class="weui-btn weui-btn_default" >a</a></view>
-		</view>
-		<view class="weui-flex">
-			<view class="weui-flex__item"><a role="button" class="weui-btn weui-btn_default" >b</a></view>
-			<view class="weui-flex__item"><a role="button" class="weui-btn weui-btn_default" >c</a></view>
-		</view>
-		<view class="weui-flex">
-			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
-			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
-			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
-		</view>
-		<view class="weui-flex">
-			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
-			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
-			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
-			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
-		</view>
-		<view class="weui-flex">
-			<view><view class="placeholder">weui</view></view>
-			<view class="weui-flex__item"><view class="placeholder">weui</view></view>
-			<view><view class="placeholder">weui</view></view>
-		</view>
-	</view>
+    
 </div>
 
 <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel" src="../static/js/react.js"></script>
 <script type="text/babel">
     let timeout = 500;
 
@@ -197,15 +174,19 @@
                 </div>
             );
     };
-    ReactDOM.render(<HintButton />,document.querySelector('#hint'));
-    ReactDOM.render(<ProgressButton />,document.querySelector('#progress'));
-    ReactDOM.render(<ClearCodeButton />,document.querySelector('#clearcode'));
+
     ReactDOM.render(<GoBackButton />,document.querySelector('#goback'));
     ReactDOM.render(<LogoutButton />,document.querySelector('#logout'));
+    // ReactDOM.render(<HintButton />,document.querySelector('#hint'));
+    ReactDOM.render(<CommonDialog title="提示" content="some tips" />,document.querySelector('#hint'));
+    ReactDOM.render(<ProgressButton />,document.querySelector('#progress'));
+    ReactDOM.render(<ClearCodeButton />,document.querySelector('#clearcode'));
+    
 </script>
 <script type="text/javascript">
     var $input = document.querySelector('#js_input');
     var $button = document.querySelector('#confirm_button');
+    
     $button.addEventListener('click', function(){
         var answer = $input.value;
         var url = '/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd=' + answer;
