@@ -459,7 +459,7 @@ def game(request):
                 return render(request, template, ret_dict)
         else:  # 有game_name
             # template = 'wechat_game.html'
-            template = 'wechat_game_react.html'
+            template = 'wechat_game.html'
             if len(errmsg) > 0:
                 ret_dict['error_msg'] = errmsg
                 logger.error(f'error_msg={errmsg}')
