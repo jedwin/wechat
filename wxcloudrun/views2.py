@@ -459,7 +459,7 @@ def game(request):
                 return render(request, template, ret_dict)
         else:  # 有game_name
             # template = 'wechat_game.html'
-            template = 'wechat_game.html'
+            template = 'wechat_game_react.html'
             if len(errmsg) > 0:
                 ret_dict['error_msg'] = errmsg
                 logger.error(f'error_msg={errmsg}')
@@ -495,12 +495,15 @@ def redirect(request, filename):
     return HttpResponseRedirect(f'{HOME_SERVER}static/images/layers/{filename}')
 
 def check_answer(request):
+    user = request.user
+    user_id = user.id
+    user_name = user.username
     app_en_name = request.GET.get('app_en_name', '')
     cur_game_name = request.GET.get('cur_game_name', '')
-    open_id = request.GET.get('openid', '')
+    # open_id = request.GET.get('openid', '')
     cmd = request.GET.get('cmd', '')
-    ret_dict = handle_player_command(app_en_name=app_en_name, open_id=open_id, game_name=cur_game_name,
-                                     cmd=cmd, for_text=False)
+    ret_dict = handle_player_command(app_en_name=app_en_name, open_id=user_id, game_name=cur_game_name,
+                                     user_name=user_name, cmd=cmd, for_text=False)
     # logger.info(ret_dict)
     if ret_dict['answer_is_correct']:
         return JsonResponse({'answer_is_correct': True, 'msg': ret_dict['notify_msg']})

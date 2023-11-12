@@ -98,7 +98,7 @@
     <div class="page__bd page__bd_spacing">
         {% if hint_string|length > 0 and page_type == "quest" %}
  
-        <div id="hint"></div>
+        <div id="hint"><a role="button" className="weui-btn weui-btn_default" onClick={()=>{weui.alert("{{hint_string|safe}}");}}>提示1</a></div>
         {% endif %}
         {% if page_type == "quest" or page_type == "main" %}
  
@@ -125,82 +125,46 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script type="text/babel" src="../static/js/react.js"></script>
 <script type="text/babel">
-    let timeout = 500;
-
-    const showGoBack = () => {
-        weui.confirm("确认回到游戏起点吗？", 
-            function () {
-                globalThis.location='/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd=init';
-            });
-    };
-    const showLogout = () => {
-        weui.confirm("确认退出登录吗？", 
-            function () {
-                globalThis.location='/accounts/logout/?next=/game/?app_en_name={{app_en_name}}';
-            });
-    };
-    const HintButton = () => {
-        return(
-                <div>
-                    <a role="button" className="weui-btn weui-btn_default" onClick={()=>{weui.alert("{{hint_string|safe}}");}}>提示</a>
-                </div>
-            );
-    };
-    const ProgressButton = () => {
-        return(
-                <div>
-                    <a role="button" className="weui-btn weui-btn_default" onClick={()=>{weui.alert("{{progress|safe}}");}}>查看进度</a>
-                </div>
-            );
-    };
-    const ClearCodeButton = () => {
-        return(
-                <div>
-                    <a role="button" className="weui-btn weui-btn_default" onClick={()=>{weui.alert("{{clear_code|safe}}");}}>通关码</a>
-                </div>
-            );
-    };
-    const GoBackButton = () => {
-        return(
-                <div>
-                    <a role="button" className="weui-btn weui-btn_default" onClick={showGoBack}>返回起点</a>
-                </div>
-            );
-    };
-    const LogoutButton = () => {
-        return(
-                <div>
-                    <a role="button" className="weui-btn weui-btn_warn" onClick={showLogout}>退出登录</a>
-                </div>
-            );
-    };
-
-    ReactDOM.render(<GoBackButton />,document.querySelector('#goback'));
-    ReactDOM.render(<LogoutButton />,document.querySelector('#logout'));
-    // ReactDOM.render(<HintButton />,document.querySelector('#hint'));
-    ReactDOM.render(<CommonDialog title="提示" content="some tips" />,document.querySelector('#hint'));
-    ReactDOM.render(<ProgressButton />,document.querySelector('#progress'));
-    ReactDOM.render(<ClearCodeButton />,document.querySelector('#clearcode'));
+    
+    ReactDOM.render(<CommonDialog title="提示" content="{{hint}}" />,document.querySelector('#hint'));
+    ReactDOM.render(<CommonDialog title="通关码" content="{{clear_code}}" />,document.querySelector('#clearcode'));
+    ReactDOM.render(<CommonDialog title="查看进度" content="{{progress}}" />,document.querySelector('#progress'));
+    ReactDOM.render(<ConfirmLinkDialog title="返回起点" content="确认要返回到游戏起点吗？" to_link='/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd=init' style="weui-btn weui-btn_primary"  />,document.querySelector('#goback'));
+    ReactDOM.render(<ConfirmLinkDialog title="退出登录" content="确认要退出当前账号吗？" to_link='/accounts/logout/?next=/game/?app_en_name={{app_en_name}}' style="weui-btn weui-btn_warn" />,document.querySelector('#logout'));
     
 </script>
 <script type="text/javascript">
     var $input = document.querySelector('#js_input');
     var $button = document.querySelector('#confirm_button');
-    
+    const Http = new XMLHttpRequest();
+
     $button.addEventListener('click', function(){
         var answer = $input.value;
-        var url = '/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd=' + answer;
+        var url = '/check_answer/?cur_game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd=' + answer;
         if (answer.length == 0){
-            weui.dialog('答案不能为空');
+            
             return;
         }else{
-            globalThis.location=url;
+            //globalThis.location=url;
+            Http.open("GET", url);
+            Http.send();
+            let r = {};
+            weui.loading('加载中');
+            Http.onreadystatechange = (e) => {
+                if (this.readyState == 4){
+                    console.log(Http.responseText);
+                    r = JSON.parse(Http.responseText);
+                }
+                
+            }
+            weui.loading().hide();
+            weui.alert(r.msg);
         };
     });
     $input.addEventListener('input', function(){
         var answer = $input.value;
         if (answer.length == 0){
-            $button.setAttribute('disabled', null);
+            $button.setAttribute('disabled', true);
             $button.classList.add('weui-btn_disabled');
             $button.setAttribute('aria-disabled','true');
         }else{
@@ -208,12 +172,16 @@
             $button.classList.remove('weui-btn_disabled');
             $button.setAttribute('aria-disabled','false');
         };
+    
+        
+        
+        
     });
 </script>
-<script type="text/javascript" src="../static/js/zepto.min.js"></script>
+<!-- <script type="text/javascript" src="../static/js/zepto.min.js"></script> -->
 <script type="text/javascript" src="../static/js/jweixin-1.0.0.js"></script>
 <script type="text/javascript" src="../static/js/weui.min.js"></script>
-<script type="text/javascript" src="../static/js/example.js"></script>
+<!-- <script type="text/javascript" src="../static/js/example.js"></script> -->
 <script type="text/javascript" src="../static/js/wah.js"></script>
 
 
