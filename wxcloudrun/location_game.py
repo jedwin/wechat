@@ -740,6 +740,31 @@ class ExploreGame(models.Model):
             ret_dict['errmsg'] = f'统计玩家时出错: {e}'
             return ret_dict
 
+    def check_media_availability(self):
+        """
+        检查本游戏下面的所有关卡的媒体文件是否存在
+        param:
+            无
+        return:
+            missing_media_dict: dict, key为关卡名称，value为缺失的媒体文件列表
+        
+        """
+        missing_media_dict = dict()
+        all_quests = ExploreGameQuest.objects.filter(game=self)
+        missing_media_list = list()
+        for quest in all_quests:
+            quest_content = quest.question_data + quest.hint_data
+            re_pattern = '「(?P<keyword>[^」]+)」'
+            re_result = re.findall(re_pattern, quest_content)
+            
+            for keyword in re_result:
+                try:
+                    media = WechatMedia.objects.get(game=self, keyword=keyword)
+                except ObjectDoesNotExist:
+                    missing_media_list.append(keyword)
+            # if len(missing_media_list) > 0:
+            #     missing_media_dict[quest.quest_trigger] = missing_media_list
+        return missing_media_list
 
 class ExploreGameQuest(models.Model):
     game = models.ForeignKey(ExploreGame, on_delete=models.CASCADE)
