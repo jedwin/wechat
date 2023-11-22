@@ -18,6 +18,15 @@ from django.contrib import admin
 from django.urls import path, include
 from wxcloudrun import views2 as mpv2, summary
 from wxcloudrun import social_django as sd
+from django.contrib.auth import views
+import os
+
+HOME_SERVER = os.environ.get('HOME_SERVER', '')  # 存放静态文件的服务器地址，留空则使用本地
+if len(HOME_SERVER) > 0:
+    if HOME_SERVER[-1] != '/':
+        HOME_SERVER += '/'
+else:
+    HOME_SERVER = '/'
 
 urlpatterns = (
     path('admin/', admin.site.urls),

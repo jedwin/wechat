@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-{% load static %}
+
 <html lang="zh-cmn-Hans" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0,viewport-fit=cover">
     <meta name="wechat-enable-text-zoom-em" content="true">
     <title>{{ quest_trigger }}</title>
-    <link rel="stylesheet" href="{% static 'static/style/weui.css' %}"/>
-    <link rel="stylesheet" href="{% static 'static/style/example.css' %}"/>
-
+    <link rel="stylesheet" href="{{home_server}}static/style/weui.css"/>
+    <link rel="stylesheet" href="{{home_server}}static/style/example.css"/>
 </head>
 <body ontouchstart>
     <script type="text/javascript">
@@ -24,7 +23,7 @@
         <article class="weui-article">
             <section>
                 <section>
-                    <p style="text-align: center;"><img src="{% static 'images/线上游戏首页图.jpg' %}" alt="线上游戏首页图"></p>
+                    <p style="text-align: center;"><img src="../images/线上游戏首页图.jpg" alt="线上游戏首页图"></p>
                 </section>
                 <section>
                 请点击你想探索的故事，如需了解操作指引，可在公众号后台输入“520”获取。
@@ -129,13 +128,10 @@
 
     </script>
 </script>
-
-<script src="{% static 'static/js/zepto.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'static/js/jweixin-1.0.0.js' %}"></script>
-<script src="{% static 'static/js/weui.min.js' %}"></script>
-<script src="{% static 'static/js/example.js' %}"></script>
-<script src="{% static 'static/js/wah.js' %}"></script>
-
-
+<script type="text/javascript" src="{{home_server}}static/js/zepto.min.js"></script>
+<script type="text/javascript" src="{{home_server}}static/js/jweixin-1.0.0.js"></script>
+<script type="text/javascript" src="{{home_server}}static/js/weui.min.js"></script>
+<script type="text/javascript" src="{{home_server}}static/js/wah.js"></script>
+<script type="text/javascript" src="{{home_server}}static/js/example.js"></script>
 </body>
 </html>

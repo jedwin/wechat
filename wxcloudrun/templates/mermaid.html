@@ -14,9 +14,9 @@
 	<h3>{{ game_name }}<i class="fa fa-angle-right"></i>游戏流程图</h3>
     <a class="btn btn-primary" href="/summary/list_game/{{ appid }}/">返回</a>
     <div class="mermaid">
-<!--        %%{init: {'securityLevel': 'loose', 'theme':'base'}}%%-->
         {{ content|safe }}
     </div>
 </section>
-
+<script src='{{home_server}}static/js/mermaid.min.js'></script>
+    
 {% endblock content %}

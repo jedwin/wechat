@@ -4,7 +4,7 @@ import os
 import json
 from random import sample
 from wxcloudrun.models import *
-from wxcloudrun.location_game import WechatGamePasswd
+from wxcloudrun.location_game import *
 from django.core.exceptions import *
 
 
@@ -219,25 +219,28 @@ def load_user_passwd_dict():
         return False
 
 
-def get_player_summary(appid, game_name=''):
+def get_player_summary(appid, game_name):
+    """
+    统计游戏玩家信息，返回list
+    通过调用game.statistic_player()方法，写入玩家统计，再通关返回dict判断是否成功
+    """
     summary_list = list()
     # player_count = 0
     try:
         my_app = WechatApp.objects.get(appid=appid)
-
-        if len(game_name) > 0:
-            my_game = WechatGame.objects.get(app=my_app, name=game_name)
-            my_game_datas = WechatGameData.objects.filter(game=my_game)
-        else:
-            my_game_datas = WechatGameData.objects.filter(player__app=my_app)
-
-        for my_game_data in my_game_datas:
-            user_id = my_game_data.player.name
-            open_id = my_game_data.player.open_id
-            transmit_count = my_game_data.count_command()
-            transmit_count_without_tip = my_game_data.count_command_without_tip()
-            game_data_id = my_game_data.pk
-            cur_process = my_game_data.cur_keyword
+        my_game = ExploreGame.objects.get(app=my_app, name=game_name)
+        all_players = WechatPlayer.objects.filter(game_hist__has_key=my_game.name)
+        for player in all_players:
+            my_game_data = player.game_hist[my_game.name]
+            user_id = player.name
+            open_id = player.open_id
+            all_command = list()
+            for x in my_game_data['cmd_dict'].values():
+                all_command.extend(x) # 所有的指令
+            transmit_count = len(all_command)
+            transmit_count_without_tip = transmit_count  # 无需统计
+            game_data_id = 0  # 已经废弃
+            cur_process = my_game_data['wait_status']
             summary_list.append([user_id, open_id, transmit_count, cur_process, appid,
                                  my_game_data.game.name, transmit_count_without_tip, game_data_id])
     except ObjectDoesNotExist:

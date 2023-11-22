@@ -10,87 +10,105 @@ from .models import *
 from .location_game import *
 import json
 
+HOME_SERVER = os.environ.get('HOME_SERVER', '')  # 存放静态文件的服务器地址，留空则使用本地
+if len(HOME_SERVER) > 0:
+    if HOME_SERVER[-1] != '/':
+        HOME_SERVER += '/'
+else:
+    HOME_SERVER = '/'
+
+MESSAGE_NO_RIGHT = '你没有权限访问此页面'
 
 @login_required
 def list_app_view(request, appid='', resource_type=''):
-
-    need_logout = request.GET.get('logout', '')
-    if need_logout:
-        logout(request)
-        # print('user logout')
-        return HttpResponseRedirect('/summary/')
-    if appid:
-        try:
-            apps = WechatApp.objects.get(appid=appid)
-        except ObjectDoesNotExist:
-            return HttpResponse(f'App {appid} is not exist')
+    # check login status
+    if request.user.is_superuser:
+        
+        need_logout = request.GET.get('logout', '')
+        if need_logout:
+            logout(request)
+            # print('user logout')
+            return HttpResponseRedirect('/summary/')
+        if appid:
+            try:
+                apps = WechatApp.objects.get(appid=appid)
+            except ObjectDoesNotExist:
+                return HttpResponse(f'App {appid} is not exist')
+        else:
+            apps = WechatApp.objects.all()
+        app_list = list()
+        for app in apps:
+            app_dict = dict()
+            appid = app.appid
+            app_pk = app.id
+            app_dict['appid'] = appid
+            app_dict['app_name'] = app.name
+            user_count = WechatPlayer.objects.filter(app=app).count()
+            game_count = ExploreGame.objects.filter(app=app).count()
+            image_count = WechatMedia.objects.filter(app=app, media_type='image').count()
+            video_count = WechatMedia.objects.filter(app=app, media_type='video').count()
+            app_keyword_count = ErrorAutoReply.objects.count()
+            app_info_dict = dict()
+            app_info_dict['玩家数量'] = [user_count, 'list_user']  # 列表第一个值是对应的value，第二个值对应url的字符串，留空表示不做链接
+            app_info_dict['游戏数量'] = [game_count, 'list_game']
+            app_info_dict['图片数量'] = [image_count, 'images']
+            app_info_dict['视频数量'] = [video_count, 'videos']
+            app_info_dict['自动回复'] = [app_keyword_count, f'/admin/wxcloudrun/errorautoreply/']
+            app_dict['app_info'] = app_info_dict
+            app_list.append(app_dict)
+        return render(request, 'summary.html', {'appid_list': app_list, 'home_server': HOME_SERVER})
     else:
-        apps = WechatApp.objects.all()
-    app_list = list()
-    for app in apps:
-        app_dict = dict()
-        appid = app.appid
-        app_pk = app.id
-        app_dict['appid'] = appid
-        app_dict['app_name'] = app.name
-        user_count = WechatPlayer.objects.filter(app=app).count()
-        game_count = ExploreGame.objects.filter(app=app).count()
-        image_count = WechatMedia.objects.filter(app=app, media_type='image').count()
-        video_count = WechatMedia.objects.filter(app=app, media_type='video').count()
-        app_keyword_count = AppKeyword.objects.filter(app=app).count()
-        app_info_dict = dict()
-        app_info_dict['玩家数量'] = [user_count, 'list_user']  # 列表第一个值是对应的value，第二个值对应url的字符串，留空表示不做链接
-        app_info_dict['游戏数量'] = [game_count, 'list_game']
-        app_info_dict['图片数量'] = [image_count, 'images']
-        app_info_dict['视频数量'] = [video_count, 'videos']
-        app_info_dict['自动回复'] = [app_keyword_count, f'/admin/mypublic/appkeyword/?app__id__exact={app_pk}']
-        app_dict['app_info'] = app_info_dict
-        app_list.append(app_dict)
-    return render(request, 'summary.html', {'appid_list': app_list})
+        return render(request, 'index.html', {'message': MESSAGE_NO_RIGHT})
 
 
 @login_required
 def list_user_view(request, appid, game_name=''):
-    groups_count = int(request.GET.get('groups_count', '3'))
-    try:
-        my_app = WechatApp.objects.get(appid=appid)
-        game_name_list = [x.name for x in ExploreGame.objects.filter(app=my_app, is_active=True)]
-    except ObjectDoesNotExist:
-        return HttpResponse(f'APP ID: {appid} not exists')
-    user_summary_list = get_player_summary(appid=appid, game_name=game_name)
+    if request.user.is_superuser:
+        groups_count = int(request.GET.get('groups_count', '3'))
+        try:
+            my_app = WechatApp.objects.get(appid=appid)
+            game_name_list = [x.name for x in ExploreGame.objects.filter(app=my_app, is_active=True)]
+        except ObjectDoesNotExist:
+            return HttpResponse(f'APP ID: {appid} not exists')
+        user_summary_list = get_player_summary(appid=appid, game_name=game_name)
 
-    total_count = len(user_summary_list)
-    passing_list = list()
-    quantity_per_group = int(total_count / groups_count) + 1
-    for i in range(groups_count):
-        user_list = user_summary_list[(i * quantity_per_group):((i + 1) * quantity_per_group)]
-        passing_list.append(user_list)
+        total_count = len(user_summary_list)
+        passing_list = list()
+        quantity_per_group = int(total_count / groups_count) + 1
+        for i in range(groups_count):
+            user_list = user_summary_list[(i * quantity_per_group):((i + 1) * quantity_per_group)]
+            passing_list.append(user_list)
 
-    return render(request, 'list_user.html', {'all_list': passing_list, 'total_count': total_count,
-                                              'width_lg': int(12 / groups_count), 'appid': appid,
-                                              'game_name_list': game_name_list})
+        return render(request, 'list_user.html', {'all_list': passing_list, 'total_count': total_count,
+                                                'width_lg': int(12 / groups_count), 'appid': appid,
+                                                'game_name_list': game_name_list, 'home_server': HOME_SERVER})
+    else:
+        return render(request, 'index.html', {'message': MESSAGE_NO_RIGHT})
 
 
 @login_required
 def check_user_view(request, appid, open_id):
-    if open_id:
-        try:
-            my_app = WechatApp.objects.get(appid=appid)
-            my_player = WechatPlayer.objects.get(app=my_app, open_id=open_id)
-            # my_game_data = ExploreGameData.objects.filter(player=my_player)[0]
-            # game_name = my_game_data.game.name
-            # cur_process = my_game_data.cur_keyword
-            # cmd_list = my_game_data.cmd_list
-            user_id = my_player.name
-            passing_dict = {'process': cur_process, 'cmd_list': cmd_list, 'user_id': user_id,
-                            'open_id': open_id, 'appid': appid}
-            print(passing_dict)
-            return render(request, 'check_user.html', passing_dict)
+    if request.user.is_superuser:
+        if open_id:
+            try:
+                my_app = WechatApp.objects.get(appid=appid)
+                my_player = WechatPlayer.objects.get(app=my_app, open_id=open_id)
+                # my_game_data = ExploreGameData.objects.filter(player=my_player)[0]
+                # game_name = my_game_data.game.name
+                # cur_process = my_game_data.cur_keyword
+                # cmd_list = my_game_data.cmd_list
+                user_id = my_player.name
+                passing_dict = {'process': cur_process, 'cmd_list': cmd_list, 'user_id': user_id,
+                                'open_id': open_id, 'appid': appid, 'home_server': HOME_SERVER}
+                print(passing_dict)
+                return render(request, 'check_user.html', passing_dict)
 
-        except ObjectDoesNotExist:
-            return HttpResponse(f'Failed to load user_data。 APP ID: {appid}, open_id: {open_id}')
+            except ObjectDoesNotExist:
+                return HttpResponse(f'Failed to load user_data。 APP ID: {appid}, open_id: {open_id}')
+        else:
+            return HttpResponse('Open Id not valid')
     else:
-        return HttpResponse('Open Id not valid')
+        return render(request, 'index.html', {'message': MESSAGE_NO_RIGHT})
 
 
 @login_required
@@ -137,7 +155,7 @@ def list_image_view(request, appid):
             # "url":URL
             #  }
             image_list.append(image_dict)
-        return render(request, 'list_image.html', {'media_list': image_list, 'appid': appid, 'type': 'image'})
+        return render(request, 'list_image.html', {'media_list': image_list, 'appid': appid, 'type': 'image', 'home_server': HOME_SERVER})
     except ObjectDoesNotExist:
         return HttpResponse(f'App: {appid} does not exist')
 
@@ -167,7 +185,7 @@ def list_video_view(request, appid):
             # "vid":
             #  }
             video_list.append(video_dict)
-        return render(request, 'list_image.html', {'media_list': video_list, 'appid': appid, 'type': 'video'})
+        return render(request, 'list_image.html', {'media_list': video_list, 'appid': appid, 'type': 'video', 'home_server': HOME_SERVER})
     except ObjectDoesNotExist:
         return HttpResponse(f'App: {appid} does not exist')
 
@@ -210,7 +228,7 @@ def del_media(request, appid, media_id):
 def user_manage(request):
     user_passwd_dict = load_user_passwd_dict()
     if user_passwd_dict:
-        return render(request, 'list_user.html', {"user_list": user_passwd_dict})
+        return render(request, 'list_user.html', {"user_list": user_passwd_dict, 'home_server': HOME_SERVER})
     else:
         return HttpResponse(f'Failed to load user_passwd_dict')
 
@@ -223,7 +241,8 @@ def show_mermaid_chart(request, appid, game_name):
         if my_game.save_to_mermaid(graph_type='TD'):
             with open(my_game.md_file(), 'r', encoding='utf_8_sig') as f:
                 md_content = ''.join(f.readlines()[1:-1])  # 去掉第一行和最后一行，即去掉```mermaid的标记
-                return render(request, 'mermaid.html', {'content': md_content, 'appid': appid, 'game_name': game_name})
+                md_content = md_content.replace('<br>', '')
+                return render(request, 'mermaid.html', {'content': md_content, 'appid': appid, 'game_name': game_name, 'home_server': HOME_SERVER})
         else:
             return HttpResponse(f'{game_name} 生成流程图失败')
     except ObjectDoesNotExist:
@@ -232,38 +251,49 @@ def show_mermaid_chart(request, appid, game_name):
 
 @login_required
 def check_media_availability(request, appid, game_name):
-    try:
-        my_app = WechatApp.objects.get(appid=appid)
-        my_game = ExploreGame.objects.get(app=my_app, name=game_name)
-        list_missing_media = my_game.check_media_availability()
-        md_content = '<br>'.join(list_missing_media)
-        return render(request, 'media_availability.html', {'content': md_content, 'appid': appid, 'game_name': game_name})
-    except ObjectDoesNotExist:
-        return HttpResponse(f'Game: {game_name} in app: {appid} does not exist')
+    if request.user.is_superuser:
+        try:
+            my_app = WechatApp.objects.get(appid=appid)
+            my_game = ExploreGame.objects.get(app=my_app, name=game_name)
+            all_media_dict = my_game.check_media_availability()
+            md_content = '<table class="table table-striped table-advance table-hover">'
+            md_content += '<thead><tr><th>关卡名</th><th>资源可用性</th></tr></thead>'
+            md_content += '<tbody>'
+            for k,v in all_media_dict.items():
+                md_content += f'<tr><td>{k}</td><td>{v}</td></tr>'
+            md_content += '</tbody></table>'
+            return render(request, 'media_availability.html', {'content': md_content, 'appid': appid, 'game_name': game_name, 'home_server': HOME_SERVER})
+        except ObjectDoesNotExist:
+            return HttpResponse(f'Game: {game_name} in app: {appid} does not exist')
+    else:
+        return render(request, 'index.html', {'message': MESSAGE_NO_RIGHT})
 
 
 @login_required
 def list_game_view(request, appid):
-    try:
-        my_app = WechatApp.objects.get(appid=appid)
-        my_games = ExploreGame.objects.filter(app=my_app)
-        game_list = list()
-        for my_game in my_games:
-            game_dict = dict()
-            game_dict['appid'] = appid
-            game_dict['app_name'] =my_app.name
-            game_dict['game_pk'] = my_game.pk
-            game_dict['game_name'] = my_game.name
-            game_dict['is_active'] = my_game.is_active
-            # player_count = ExploreGameData.objects.filter(game=my_game).count()
-            keyword_count = ExploreGameQuest.objects.filter(game=my_game).count()
-            # game_dict['player_count'] = player_count
-            game_dict['keyword_count'] = keyword_count
-            game_list.append(game_dict)
-        # print(game_list)
-        return render(request, 'list_game.html', {'game_list': game_list})
-    except ObjectDoesNotExist:
-        return HttpResponse(f'App: {appid} does not exist')
+    if request.user.is_superuser:
+        try:
+            my_app = WechatApp.objects.get(appid=appid)
+            my_games = ExploreGame.objects.filter(app=my_app)
+            game_list = list()
+            for my_game in my_games:
+                game_dict = dict()
+                game_dict['appid'] = appid
+                game_dict['app_name'] =my_app.name
+                game_dict['game_pk'] = my_game.pk
+                game_dict['game_name'] = my_game.name
+                game_dict['is_active'] = my_game.is_active
+                player_count = my_game.player_count()
+                keyword_count = ExploreGameQuest.objects.filter(game=my_game).count()
+                game_dict['player_count'] = player_count
+                game_dict['keyword_count'] = keyword_count
+                game_list.append(game_dict)
+            # print(game_list)
+            return render(request, 'list_game.html', {'game_list': game_list, 'home_server': HOME_SERVER})
+        except ObjectDoesNotExist:
+            return HttpResponse(f'App: {appid} does not exist')
+    else:
+        return render(request, 'index.html', {'message': MESSAGE_NO_RIGHT})
 
 
 @login_required
@@ -291,6 +321,7 @@ def gamed_data_view(request, game_data_id):
         pass_dict['cur_keyword'] = my_game_data.cur_keyword.keyword
         pass_dict['cmd_str'] = my_game_data.cmd_str.strip()
         pass_dict['keyword_list'] =keyword_list
+        pass_dict['home_server'] = HOME_SERVER
         return render(request, 'game_data.html', pass_dict)
     except ObjectDoesNotExist:
         return HttpResponse(f'Game data id: {game_data_id} does not exist')

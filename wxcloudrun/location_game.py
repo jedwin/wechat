@@ -594,6 +594,20 @@ class ExploreGame(models.Model):
         """
         生成mermaid的流程图
         """
+        def replace_inllegal_char(in_string, replace_char='', new_line_char='<br>'):
+            """
+            将字符串中的非法字符替换成合法字符
+            param: in_string: 输入的字符串
+            param: replace_char: 非法字符的替换字符
+            param: new_line_char: 换行符的替换字符
+
+            """
+            ret_string = in_string.replace("-", replace_char).replace(NEW_LINE, new_line_char).replace("，", new_line_char)
+            ret_string = ret_string.replace("【", replace_char).replace("】", replace_char).replace("「", replace_char).replace("」", replace_char)
+            ret_string = ret_string.replace("。", replace_char).replace("？", replace_char).replace("！", replace_char).replace("：", replace_char)
+            ret_string = ret_string.replace("（", replace_char).replace("）", replace_char).replace("、", replace_char).replace("；", replace_char)
+            return ret_string
+        
         if md_file:
             game_md_file = md_file
         else:
@@ -617,10 +631,10 @@ class ExploreGame(models.Model):
 
             for my_keyword in my_keywords:
                 try:
-                    from_word = my_keyword.question_data[:20].replace("-", "").replace(NEW_LINE, "<br>").replace("，", "<br>")
-                    from_word = from_word.replace("【", "").replace("】", "").replace("「", "").replace("」", "")
+                    from_word = replace_inllegal_char(my_keyword.question_data[:20])
+                    trigger_string = replace_inllegal_char(my_keyword.quest_trigger)
                     if graph_type == 'TD':
-                        f.writelines(f'id_{my_keyword.pk}["{my_keyword.quest_trigger}-{from_word}"]\n')
+                        f.writelines(f'id_{my_keyword.pk}["{trigger_string}-{from_word}"]\n')
                         # if my_keyword.question_type == '图片':
                         #     f.writelines(f'style id_{my_keyword.pk}\n')
                         # elif my_keyword.question_type == '视频':
@@ -642,16 +656,13 @@ class ExploreGame(models.Model):
                         # remove the space in the next_keyword
                         next_keyword = next_keyword.strip()
                         next_kw = ExploreGameQuest.objects.get(game=self, quest_trigger=next_keyword)
+                        next_keyword_string = replace_inllegal_char(next_keyword[:20])
                         if graph_type == 'TD':
-                            if my_keyword.question_type == '图片':
-                                f.writelines(f'id_{my_keyword.pk}:::picclass --> |{next_keyword}| id_{next_kw.pk}\n')
-                            else:
-                                f.writelines(f'id_{my_keyword.pk} --> |{next_keyword}| id_{next_kw.pk}\n')
+                            f.writelines(f'id_{my_keyword.pk} --> |{next_keyword_string}| id_{next_kw.pk}\n')
                         elif graph_type == 'state':
 
-                            from_word = f'{my_keyword.quest_trigger}'
-
-                            to_word = f'{next_kw.quest_trigger}'
+                            from_word = replace_inllegal_char(my_keyword.quest_trigger)
+                            to_word = replace_inllegal_char(next_kw.quest_trigger)
                             f.writelines(f'{from_word} --> {to_word} : {next_kw.quest_trigger}\n')
                         else:
                             # should not happen
@@ -737,6 +748,7 @@ class ExploreGame(models.Model):
                                   f'统计结果已输出到{SETTING_PATH}{output_file}库')
             return ret_dict
         except Exception as e:
+            ret_dict['result'] = False
             ret_dict['errmsg'] = f'统计玩家时出错: {e}'
             return ret_dict
 
@@ -746,25 +758,42 @@ class ExploreGame(models.Model):
         param:
             无
         return:
-            missing_media_dict: dict, key为关卡名称，value为缺失的媒体文件列表
+            all_media_dict: dict, key为关卡名称，value为媒体文件的url
         
         """
-        missing_media_dict = dict()
+        all_media_dict = dict()
         all_quests = ExploreGameQuest.objects.filter(game=self)
-        missing_media_list = list()
         for quest in all_quests:
             quest_content = quest.question_data + quest.hint_data
             re_pattern = '「(?P<keyword>[^」]+)」'
             re_result = re.findall(re_pattern, quest_content)
-            
-            for keyword in re_result:
-                try:
-                    media = WechatMedia.objects.get(game=self, keyword=keyword)
-                except ObjectDoesNotExist:
-                    missing_media_list.append(keyword)
-            # if len(missing_media_list) > 0:
-            #     missing_media_dict[quest.quest_trigger] = missing_media_list
-        return missing_media_list
+            ret_string = ''
+            for file_name in re_result:
+                
+                # 根据file_name后缀名，判断是图片、音频还是视频，从而生成不同的html代码
+                if file_name.endswith('.jpg') or file_name.endswith('.png'):
+                    img_url = f'../images/' + file_name
+                    ret_string += f'<p style="text-align: center;"><img src="{HOME_SERVER}{img_url}" alt="{file_name}" style="width:150px"></p>'
+                elif file_name.endswith('.mp3') or file_name.endswith('.m4a'):
+                    audio_url = f'../mp3/' + file_name
+                    ret_string += f'<p style="text-align: center;"><audio controls><source src="{HOME_SERVER}{audio_url}" type="audio/mpeg"></audio></p>'
+                elif file_name.endswith('.mp4') or file_name.endswith('.m4v') or file_name.endswith('.mov'):
+                    video_url = f'../video/' + file_name
+                    ret_string += f'<p style="text-align: center;"><video src="{HOME_SERVER}{video_url}" controls="controls" style="width:150px"></video></p>'
+                else:
+                    # 如果不是图片、音频、视频，则直接返回空字符串
+                    ret_string += file_name
+                ret_string = ret_string + '<br>'
+            if len(ret_string) > 0:
+                all_media_dict[quest.quest_trigger] = ret_string
+        return all_media_dict
+
+    def player_count(self):
+        """
+        返回本游戏下面的玩家数量
+        """
+        return WechatPlayer.objects.filter(game_hist__has_key=self.name).count()
+    
 
 class ExploreGameQuest(models.Model):
     game = models.ForeignKey(ExploreGame, on_delete=models.CASCADE)

@@ -187,12 +187,13 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 
 if len(HOME_SERVER) == 0:
-    STATIC_URL = '/'
+    STATIC_URL = '/static/'
 elif HOME_SERVER[-1] == '/':
-    STATIC_URL = HOME_SERVER
+    STATIC_URL = f'{HOME_SERVER}static/'
 else:
-    STATIC_URL = f'{HOME_SERVER}/'
+    STATIC_URL = f'{HOME_SERVER}/static/'
 # STATIC_URL = '/static/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media') 
 MEDIA_URL = '/media/'
 
 STORAGES = {
