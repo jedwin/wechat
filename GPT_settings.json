@@ -1,0 +1,23 @@
+{
+    "model":"gpt-3.5-turbo-1106",
+    "max_length": 150,
+    "temperature": 0.7,
+    "top_p": 1,
+    "top_k": 40,
+    "repetition_penalty": 1.2,
+    "num_return_sequences": 1,
+    "num_beams": 1,
+    "no_repeat_ngram_size": 3,
+    "do_sample": true,
+    "early_stopping": true,
+    "length_penalty": 1.0,
+    "num_beam_groups": 1,
+    "diversity_penalty": 0.0,
+    "output_attentions": false,
+    "output_hidden_states": false,
+    "output_scores": false,
+    "return_dict_in_generate": false,
+    "return_full_text": true,
+    "return_prompt": false,
+    "instructions": "你是游戏中的角色。你需要参考角色资料，用第一人称来回答用户问题。回答时不要提及'角色'、'游戏'等字眼。如果无法在参考资料中找到明确答案，直接回答'我不知道'，不要超出资料范围。回答尽量简短。"
+}

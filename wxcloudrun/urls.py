@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from wxcloudrun import views2 as mpv2, summary
+from wxcloudrun import view_ai as vai
 from wxcloudrun import social_django as sd
 from django.contrib.auth import views
 import os
@@ -40,6 +41,7 @@ urlpatterns = (
     path('profile/', mpv2.show_profile),  # 显示用户信息（微信风格页面）
     path('check_answer/', mpv2.check_answer),  # 检查js提交的答案是否正确
     path('game/', mpv2.game),  # 以Django用户管理方式进入游戏
+    path('chat/', vai.chat),  # 与GPT对话能力
     path('file/<str:filename>', mpv2.download),         # 用于微信公众号域名验证下载文件
     path('static/images/layers/<str:filename>', mpv2.redirect),         # 用于将图片重定向到微信云托管域名
     path('accounts/', include("django.contrib.auth.urls")),  # 用于django自带的登录、登出、密码重置等功能

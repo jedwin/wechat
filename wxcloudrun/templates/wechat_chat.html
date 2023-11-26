@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0,viewport-fit=cover">
+    <meta name="wechat-enable-text-zoom-em" content="true">
+
+    <title>{{ quest_trigger }}</title>
+    <link rel="stylesheet" href="../static/style/weui.css"/>
+    <!-- <link rel="stylesheet" href="../static/style/example.css"/> -->
+    <title>NPC</title>
+</head>
+<body >
+
+<div class="container" id="container" data-weui-theme="dark">
+<div type="text/html" id="tpl_home">
+    <div class="page article">
+        <article class="weui-article">
+            <section style="margin-bottom: 8px;">
+                <p style="text-align: center;">
+                    <H1>NPC应答测试</H1>
+                </p>
+            </section>
+            <section>
+                {{ reply_obj | safe}}
+            </section>
+            
+        </article>
+    </div>
+    
+    <div class="weui-form">
+        <form class="weui-cells__group weui-cells__group_form" action="/game/" >
+            <div class="weui-cells__group weui-cells__group_form">
+                <div class="weui-cells weui-cells_radio">
+                    {% for npc in characters %}
+                        <label class="weui-cell weui-cell_active weui-check__label" for="{{npc}}">
+                            <div class="weui-cell__bd">
+                                <p>{{npc}}</p>
+                            </div>
+                            <div class="weui-cell__ft">
+                                
+                                {% if npc == chosen_character %}
+                                <input type="radio" class="weui-check" name="radio1" id="{{npc}}" checked>
+                                {% else %}
+                                <input type="radio" class="weui-check" name="radio1" id="{{npc}}">
+                                {% endif %}
+                                <span class="weui-icon-checked"></span>
+                            </div>
+                        </label>
+                    {% endfor %}
+                    
+                </div>
+              </div>
+
+            <div class="weui-cells">
+                
+                <label for="js_input" class="weui-cell weui-cell_active">
+                    
+                    <div class="weui-cell__bd">
+                        
+                            <input id="js_input" class="weui-input" placeholder="你想问什么问题？"/>
+                        
+                    </div>
+                </label>
+                    
+    <br>
+    <hr>
+    <br>
+                <div class="weui-form__opr-area">
+                    <a role="button" disabled aria-disabled="true" href="javascript:" id="confirm_button"
+                    class="weui-btn weui-btn_primary weui-btn_disabled">确定</a>
+                </div>
+            </div>  
+        </form>
+    </div>
+
+
+   </div> 
+</div>
+
+
+<script type="text/javascript">
+    var $input = document.querySelector('#js_input');
+    var $button = document.querySelector('#confirm_button');
+    var $labels = document.querySelectorAll('.weui-check__label');
+    const Http = new XMLHttpRequest();
+
+    $button.addEventListener('click', function(){
+        var answer = $input.value;
+        var checked_span = document.querySelector('.weui-check:checked');
+        if (checked_span == undefined){
+            alert('请选择NPC');
+            return;
+        }else{
+            var checked_label = checked_span.parentNode.parentNode.querySelector('p').innerText;
+        }
+        if (answer.length == 0){
+            return;
+        }else{
+            var url = '/chat/?question='+answer+'&character='+checked_label;
+            //alert(url);
+            globalThis.location=url;
+            
+        };
+    });
+    $input.addEventListener('input', function(){
+        var answer = $input.value;
+        if (answer.length == 0){
+            $button.setAttribute('disabled', true);
+            $button.classList.add('weui-btn_disabled');
+            $button.setAttribute('aria-disabled','true');
+        }else{
+            $button.removeAttribute('disabled');
+            $button.classList.remove('weui-btn_disabled');
+            $button.setAttribute('aria-disabled','false');
+        };
+    
+        
+        
+        
+    });
+</script>
+<!-- <script type="text/javascript" src="../static/js/zepto.min.js"></script> -->
+<script type="text/javascript" src="../static/js/jweixin-1.0.0.js"></script>
+<script type="text/javascript" src="../static/js/weui.min.js"></script>
+<!-- <script type="text/javascript" src="../static/js/example.js"></script> -->
+<script type="text/javascript" src="../static/js/wah.js"></script>
+
+
+</body>
+</html>

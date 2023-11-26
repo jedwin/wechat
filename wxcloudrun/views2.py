@@ -17,6 +17,7 @@ from wxcloudrun.location_game import *
 from wxcloudrun.ExploerGameHandler import *
 from logging import getLogger
 
+
 # enable logging
 logger = getLogger('django')
 WAITING_FOR_PASSWORD = 'w_password'             # 等待用户输入认证密码
@@ -458,8 +459,8 @@ def game(request):
                 ret_dict['error_msg'] = '这个账号还没购买任何游戏'
                 return render(request, template, ret_dict)
         else:  # 有game_name
-            # template = 'wechat_game.html'
-            template = 'wechat_game_react.html'
+            template = 'wechat_game.html'
+            # template = 'wechat_game_react.html'
             if len(errmsg) > 0:
                 ret_dict['error_msg'] = errmsg
                 logger.error(f'error_msg={errmsg}')
