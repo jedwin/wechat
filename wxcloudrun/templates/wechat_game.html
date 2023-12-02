@@ -325,18 +325,16 @@
 </script>
 <script>
     function imageInit(){
-      let domain=document.domain;
-      let port=window.location.port;
-      let url='{{home_server}}';
+      
       var imgList = [];
       // 获取容器内所有的img元素
       var imgObjs = $(".game_img");
       // 遍历img元素
       for(var i=0; i<imgObjs.length; i++){
-        imgList.push(url+imgObjs.eq(i).attr('src'));
+        imgList.push(imgObjs.eq(i).attr('src'));
         // 给img元素添加点击事件
         imgObjs.eq(i).click(function(){
-          var imgUrl = url+$(this).attr('src');
+          var imgUrl = $(this).attr('src');
           wx.previewImage({
             current: imgUrl , // 当前显示图片的http链接
             urls: imgList     // 需要预览的图片http链接列表
