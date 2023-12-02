@@ -21,19 +21,31 @@
                     <h5>{{ game_dict.app_name }}-->{{ game_dict.game_name }}</h5>
                   </div>
                   <div class="row">
-                    <div class="col-md-4">
-                      <p class="large mt">玩家数</p>
-                        <h3><a href="/admin/mypublic/wechatgamedata/?game__id__exact={{ game_dict.game_pk }}">
-                            {{ game_dict.player_count }}
+                    <div class="col-md-2">
+                      <p class="large mt">总玩家数</p>
+                        <h3><a href="/summary/list_user/{{game_dict.appid}}/{{game_dict.game_name}}/">
+                            {{ game_dict.player_count.all_player_count }}
                         </a></h3>
                     </div>
-                    <div class="col-md-4">
-                      <p class="large mt">关键词数</p>
+                    <div class="col-md-2">
+                      <p class="large mt">实际参与数</p>
+                        <h3><a href="/summary/list_user/{{game_dict.appid}}/{{game_dict.game_name}}/">
+                            {{ game_dict.player_count.actual_player_count }}
+                        </a></h3>
+                    </div>
+                    <div class="col-md-2">
+                      <p class="large mt">通关玩家数</p>
+                        <h3><a href="/summary/list_user/{{game_dict.appid}}/{{game_dict.game_name}}/">
+                            {{ game_dict.player_count.passed_player_count }}
+                        </a></h3>
+                    </div>
+                    <div class="col-md-2">
+                      <p class="large mt">任务关卡数</p>
 						<h3><a href="/admin/wxcloudrun/exploregamequest/?game__id__exact={{ game_dict.game_pk }}" >
                             {{game_dict.keyword_count}}
                         </a></h3>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-2">
                       <p class="large mt">是否激活</p>
                         {% if game_dict.is_active %}
 						    <h3 style="color:#0f0"><a href="/admin/wxcloudrun/exploregame/{{game_dict.game_pk }}/change/">

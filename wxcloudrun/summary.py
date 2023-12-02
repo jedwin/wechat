@@ -261,7 +261,7 @@ def check_media_availability(request, appid, game_name):
             my_app = WechatApp.objects.get(appid=appid)
             my_game = ExploreGame.objects.get(app=my_app, name=game_name)
             all_media_dict = my_game.check_media_availability()
-            md_content = '<table class="table table-striped table-advance table-hover">'
+            md_content = '<table class="table table-hover">'
             md_content += '<thead><tr><th>关卡名</th><th>资源可用性</th></tr></thead>'
             md_content += '<tbody>'
             for k,v in all_media_dict.items():
@@ -288,9 +288,9 @@ def list_game_view(request, appid):
                 game_dict['game_pk'] = my_game.pk
                 game_dict['game_name'] = my_game.name
                 game_dict['is_active'] = my_game.is_active
-                player_count = my_game.player_count()
+                player_count_dict = my_game.player_count()
                 keyword_count = ExploreGameQuest.objects.filter(game=my_game).count()
-                game_dict['player_count'] = player_count
+                game_dict['player_count'] = player_count_dict
                 game_dict['keyword_count'] = keyword_count
                 game_list.append(game_dict)
             # print(game_list)

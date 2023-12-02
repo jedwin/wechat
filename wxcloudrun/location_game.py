@@ -78,7 +78,7 @@ def replace_content_with_html(in_content):
         # 根据file_name后缀名，判断是图片、音频还是视频，从而生成不同的html代码
         if file_name.endswith('.jpg') or file_name.endswith('.png'):
             img_url = f'images/' + file_name
-            ret_string = f'<p style="text-align: center;"><img src="{HOME_SERVER}{img_url}" alt="{file_name}"></p>'
+            ret_string = f'<p style="text-align: center;"><img class="game_img" src="{HOME_SERVER}{img_url}" alt="{file_name}"></p>'
         elif file_name.endswith('.mp3') or file_name.endswith('.m4a'):
             audio_url = f'mp3/' + file_name
             ret_string = f'<p style="text-align: center;"><audio autoplay controls><source src="{HOME_SERVER}{audio_url}" type="audio/mpeg"></audio></p>'
@@ -773,7 +773,7 @@ class ExploreGame(models.Model):
                 # 根据file_name后缀名，判断是图片、音频还是视频，从而生成不同的html代码
                 if file_name.endswith('.jpg') or file_name.endswith('.png'):
                     img_url = f'../images/' + file_name
-                    ret_string += f'<p style="text-align: center;"><img src="{HOME_SERVER}{img_url}" alt="{file_name}" style="width:150px"></p>'
+                    ret_string += f'<p style="text-align: center;"><a class="fancybox" href="{HOME_SERVER}{img_url}"><img class="img-responsive" src="{HOME_SERVER}{img_url}" alt="{file_name}" style="width:150px"></a></p>'
                 elif file_name.endswith('.mp3') or file_name.endswith('.m4a'):
                     audio_url = f'../mp3/' + file_name
                     ret_string += f'<p style="text-align: center;"><audio controls><source src="{HOME_SERVER}{audio_url}" type="audio/mpeg"></audio></p>'
@@ -790,9 +790,30 @@ class ExploreGame(models.Model):
 
     def player_count(self):
         """
-        返回本游戏下面的玩家数量
+        返回本游戏下面的各种玩家数量
+        return: dict, 包含以下字段
+            all_player_count: int, 本游戏下面的所有玩家数量
+            actual_player_count: int, 本游戏下面的实际玩家数量，即完成了至少一关的玩家数量
+            passed_player_count: int, 本游戏下面的通关玩家数量
+
         """
-        return WechatPlayer.objects.filter(game_hist__has_key=self.name).count()
+        all_player = WechatPlayer.objects.filter(game_hist__has_key=self.name)
+        all_player_count = len(all_player)
+        actual_player_count = 0
+        passed_player_count = 0
+        for player in all_player:
+            play_hist = player.game_hist[self.name]
+            cmd_dict = play_hist.get('cmd_dict', dict())
+            if len(cmd_dict) > 0:
+                actual_player_count += 1
+            if len(play_hist.get('clear_code', ''))>0:
+                passed_player_count += 1
+        ret_dict = dict()
+        ret_dict['all_player_count'] = all_player_count
+        ret_dict['actual_player_count'] = actual_player_count
+        ret_dict['passed_player_count'] = passed_player_count
+        return ret_dict
+        
     
 
 class ExploreGameQuest(models.Model):
