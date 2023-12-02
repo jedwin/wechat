@@ -470,8 +470,7 @@ def game(request):
                     ret_dict = handle_player_command(app_en_name=app_en_name, game_name=game_name, open_id=user_id,
                                                      user_name=user_name, cmd=cmd, for_text=False)
                     ret_dict['home_server'] = HOME_SERVER  # 用于更新静态图片服务器的地址
-                    # ret_dict['home_server'] = '/'
-                    # logger.info(ret_dict)
+
                 else:
                     ret_dict['error_msg'] = f'账号{user}无权限进入本游戏'
                     ret_dict['cur_game_name'] = game_name

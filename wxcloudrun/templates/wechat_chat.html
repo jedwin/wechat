@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="zh-cmn-Hans" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +7,7 @@
     <meta name="wechat-enable-text-zoom-em" content="true">
 
     <title>{{ quest_trigger }}</title>
-    <link rel="stylesheet" href="../static/style/weui.css"/>
+    <link rel="stylesheet" href="{% static 'style/weui.css' %}"/>
     <!-- <link rel="stylesheet" href="../static/style/example.css"/> -->
     <title>NPC</title>
 </head>
@@ -213,12 +214,9 @@
             });
         });
     </script>
-    <!-- <script type="text/javascript" src="../static/js/zepto.min.js"></script> -->
-    <script type="text/javascript" src="../static/js/jweixin-1.0.0.js"></script>
-    <script type="text/javascript" src="../static/js/weui.min.js"></script>
-    <!-- <script type="text/javascript" src="../static/js/example.js"></script> -->
-    <script type="text/javascript" src="../static/js/wah.js"></script>
 
-
+    <script type="text/javascript" src="{% static 'js/jweixin-1.0.0.js' %}"></script>
+    <script src="{% static 'js/weui.min.js' %}"></script>
+    <script src="{% static 'js/wah.js' %}"></script>
 </body>
 </html>
