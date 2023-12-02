@@ -78,7 +78,7 @@ def chat(request):
                     result_dict = json.loads(r.text)
                     if result_dict.get('status', False):
                         result = result_dict['result']
-                        logger.info(f'result: {result}')
+                        # logger.info(f'result: {result}')
                         finish_reason = result['choices'][0]['finish_reason']
                         answer = result['choices'][0]['message']['content']
                         model = result['model']
@@ -87,11 +87,12 @@ def chat(request):
                         completion_tokens = result['usage']['completion_tokens']
                         usage = accounting(model, completion_tokens, prompt_tokens)
                         reply_obj = answer
-                        reply_obj += f'<br>应答模型：{model}'
-                        reply_obj += f'<br>本次费用估算（人民币）：{usage}'
-                        # reply_obj += f'<br>终止状态：{finish_reason}'
+                        summary = f'<br>应答模型：{model}'
+                        summary += f'<br>本次费用估算（人民币）：{usage:.4f}'
+                        summary += f'<br>终止状态：{finish_reason}'
                         ret_dict['reply_obj'] = reply_obj
-                        logger.info(f'reply_obj: {ret_dict}')
+                        ret_dict['summary'] = summary
+                        # logger.info(f'reply_obj: {ret_dict}')
                         return render(request, template, ret_dict)
                     else:
                         return HttpResponse(f'服务器返回异常！{result_dict}')

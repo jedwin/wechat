@@ -235,14 +235,16 @@ def get_player_summary(appid, game_name):
             user_id = player.name
             open_id = player.open_id
             all_command = list()
-            for x in my_game_data['cmd_dict'].values():
-                all_command.extend(x) # 所有的指令
+            x = my_game_data.get('cmd_dict', dict())
+            # x = {'关卡1': [指令1, 指令2, ...], '关卡2': [指令1, 指令2, ...]}
+            for y in x.values():
+                all_command.extend(y) # 所有的指令
             transmit_count = len(all_command)
-            transmit_count_without_tip = transmit_count  # 无需统计
+            transmit_count_without_tip = len(x)  # 改为进入过的关卡数
             game_data_id = 0  # 已经废弃
             cur_process = my_game_data['wait_status']
             summary_list.append([user_id, open_id, transmit_count, cur_process, appid,
-                                 my_game_data.game.name, transmit_count_without_tip, game_data_id])
+                                 game_name, transmit_count_without_tip, game_data_id])
     except ObjectDoesNotExist:
         raise
     except MultipleObjectsReturned:

@@ -1,5 +1,5 @@
 {
-    "model":"gpt-3.5-turbo-1106",
+    "model":"gpt-4-1106-preview",
     "max_length": 150,
     "temperature": 0.7,
     "top_p": 1,
@@ -19,5 +19,5 @@
     "return_dict_in_generate": false,
     "return_full_text": true,
     "return_prompt": false,
-    "instructions": "你是游戏中的角色。你需要参考角色资料，用第一人称来回答用户问题。回答时不要提及'角色'、'游戏'等字眼。如果无法在参考资料中找到明确答案，直接回答'我不知道'，不要超出资料范围。回答尽量简短。"
+    "instructions": "你是游戏中的角色。你需要参考角色资料，用第一人称来回答用户问题。回答时不要提及'角色'、'游戏'等字眼。如果无法在上下文中找到答案，直接回答'我不知道'。回答尽量简短。"
 }

@@ -12,119 +12,212 @@
 </head>
 <body >
 
-<div class="container" id="container" data-weui-theme="dark">
-<div type="text/html" id="tpl_home">
-    <div class="page article">
-        <article class="weui-article">
-            <section style="margin-bottom: 8px;">
-                <p style="text-align: center;">
-                    <H1>NPC应答测试</H1>
-                </p>
-            </section>
-            <section>
-                {{ reply_obj | safe}}
-            </section>
+    <div class="container" id="container" data-weui-theme="dark">
+        <div type="text/html" id="tpl_home">
+            <div class="page article">
+                <article class="weui-article">
+                    <section style="margin-bottom: 8px;">
+                        <p style="text-align: center;">
+                            <H1>NPC应答测试</H1>
+                        </p>
+                    </section>
+                    <section>
+                        {{ reply_obj | safe}}
+                    </section>
+                    
+                </article>
+            </div>
             
-        </article>
-    </div>
-    
-    <div class="weui-form">
-        <form class="weui-cells__group weui-cells__group_form" action="/game/" >
-            <div class="weui-cells__group weui-cells__group_form">
-                <div class="weui-cells weui-cells_radio">
-                    {% for npc in characters %}
-                        <label class="weui-cell weui-cell_active weui-check__label" for="{{npc}}">
+            <div class="weui-form">
+                <form class="weui-cells__group weui-cells__group_form" action="/game/" >
+                    <div class="weui-cells__group weui-cells__group_form">
+                        <div class="weui-cells weui-cells_radio">
+                            {% for npc in characters %}
+                                <label class="weui-cell weui-cell_active weui-check__label" for="{{npc}}">
+                                    <div class="weui-cell__bd">
+                                        <p>{{npc}}</p>
+                                    </div>
+                                    <div class="weui-cell__ft">
+                                        
+                                        {% if npc == chosen_character %}
+                                        <input type="radio" class="weui-check" name="radio1" id="{{npc}}" checked>
+                                        {% else %}
+                                        <input type="radio" class="weui-check" name="radio1" id="{{npc}}">
+                                        {% endif %}
+                                        <span class="weui-icon-checked"></span>
+                                    </div>
+                                </label>
+                            {% endfor %}
+                            
+                        </div>
+                    </div>
+
+                    <div class="weui-cells">
+                        
+                        <label for="js_input" class="weui-cell weui-cell_active">
+                            
                             <div class="weui-cell__bd">
-                                <p>{{npc}}</p>
-                            </div>
-                            <div class="weui-cell__ft">
                                 
-                                {% if npc == chosen_character %}
-                                <input type="radio" class="weui-check" name="radio1" id="{{npc}}" checked>
-                                {% else %}
-                                <input type="radio" class="weui-check" name="radio1" id="{{npc}}">
-                                {% endif %}
-                                <span class="weui-icon-checked"></span>
+                                    <input id="js_input" class="weui-input" placeholder="你想问什么问题？"/>
+                                
                             </div>
                         </label>
-                    {% endfor %}
-                    
-                </div>
-              </div>
+                            
+                        <br>
+                        <hr>
+                        <br>
+                        <div class="weui-form__opr-area">
+                            <a role="button" disabled aria-disabled="true" href="javascript:" id="confirm_button"
+                            class="weui-btn weui-btn_primary weui-btn_disabled">确定</a>
+                        </div>
 
-            <div class="weui-cells">
-                
-                <label for="js_input" class="weui-cell weui-cell_active">
-                    
-                    <div class="weui-cell__bd">
-                        
-                            <input id="js_input" class="weui-input" placeholder="你想问什么问题？"/>
-                        
-                    </div>
-                </label>
-                    
-    <br>
-    <hr>
-    <br>
-                <div class="weui-form__opr-area">
-                    <a role="button" disabled aria-disabled="true" href="javascript:" id="confirm_button"
-                    class="weui-btn weui-btn_primary weui-btn_disabled">确定</a>
-                </div>
-            </div>  
-        </form>
+                    </div>  
+                </form>
+            </div>
+            <div class="page__bd page__bd_spacing">
+                <a href="javascript:" role="button" class="weui-btn weui-btn_default" id="showPicker" wah-hotarea="click">选择你要对话的NPC</a>
+            </div>
+            <div class="weui-footer weui-footer_fixed-bottom">
+
+                <p class="weui-footer__text">{{summary|safe}}</p>
+
+            </div>
+        </div> 
     </div>
 
+    <script type="text/javascript">
+        var $input = document.querySelector('#js_input');
+        var $button = document.querySelector('#confirm_button');
+        var $labels = document.querySelectorAll('.weui-check__label');
+        const Http = new XMLHttpRequest();
 
-   </div> 
-</div>
+        $button.addEventListener('click', function(){
+            var answer = $input.value;
+            var checked_span = document.querySelector('.weui-check:checked');
+            if (checked_span == undefined){
+                alert('请选择NPC');
+                return;
+            }else{
+                var checked_label = checked_span.parentNode.parentNode.querySelector('p').innerText;
+            }
+            if (answer.length == 0){
+                return;
+            }else{
+                var url = '/chat/?question='+answer+'&character='+checked_label;
+                //alert(url);
+                globalThis.location=url;
+                
+            };
+        });
+        $input.addEventListener('input', function(){
+            var answer = $input.value;
+            if (answer.length == 0){
+                $button.setAttribute('disabled', true);
+                $button.classList.add('weui-btn_disabled');
+                $button.setAttribute('aria-disabled','true');
+            }else{
+                $button.removeAttribute('disabled');
+                $button.classList.remove('weui-btn_disabled');
+                $button.setAttribute('aria-disabled','false');
+            }; 
+        });
 
-
-<script type="text/javascript">
-    var $input = document.querySelector('#js_input');
-    var $button = document.querySelector('#confirm_button');
-    var $labels = document.querySelectorAll('.weui-check__label');
-    const Http = new XMLHttpRequest();
-
-    $button.addEventListener('click', function(){
-        var answer = $input.value;
-        var checked_span = document.querySelector('.weui-check:checked');
-        if (checked_span == undefined){
-            alert('请选择NPC');
-            return;
-        }else{
-            var checked_label = checked_span.parentNode.parentNode.querySelector('p').innerText;
-        }
-        if (answer.length == 0){
-            return;
-        }else{
-            var url = '/chat/?question='+answer+'&character='+checked_label;
-            //alert(url);
-            globalThis.location=url;
-            
-        };
-    });
-    $input.addEventListener('input', function(){
-        var answer = $input.value;
-        if (answer.length == 0){
-            $button.setAttribute('disabled', true);
-            $button.classList.add('weui-btn_disabled');
-            $button.setAttribute('aria-disabled','true');
-        }else{
-            $button.removeAttribute('disabled');
-            $button.classList.remove('weui-btn_disabled');
-            $button.setAttribute('aria-disabled','false');
-        };
+    </script>
     
-        
-        
-        
-    });
-</script>
-<!-- <script type="text/javascript" src="../static/js/zepto.min.js"></script> -->
-<script type="text/javascript" src="../static/js/jweixin-1.0.0.js"></script>
-<script type="text/javascript" src="../static/js/weui.min.js"></script>
-<!-- <script type="text/javascript" src="../static/js/example.js"></script> -->
-<script type="text/javascript" src="../static/js/wah.js"></script>
+    <script type="text/javascript" class="home js_show">
+        $(function(){
+            function setFoot(){
+              var $foot = $('.page__ft');
+              if ($foot.length > 0) {
+                $foot.removeClass('j_bottom');
+                var winH = $(window).height();
+                if ($foot.offsetTop + $foot.offsetHeight < winH) {
+                  $foot.addClass('j_bottom');
+                }
+              }
+            }
+            var winH = $(window).height();
+            var categorySpace = 10;
+            function expandMenu(){
+                setFoot();
+                var $this = $(this),
+                    $inner = $this.next('.js_categoryInner'),
+                    $page = $this.parents('.page'),
+                    $parent = $(this).parent('li');
+                var innerH = $inner.data('height');
+    
+                if(!innerH){
+                    $inner.css('height', 'auto');
+                    innerH = $inner.height();
+                    $inner.removeAttr('style');
+                    $inner.data('height', innerH);
+                }
+    
+                if($parent.hasClass('js_show')){
+                    $parent.removeClass('js_show');
+                    $this.attr('aria-expanded','false');
+                    $this.children('img').attr('alt',' 展开');
+                    $inner.attr('aria-hidden','true');
+                    $('.js_item', $(this).siblings()).attr('tabindex','-1');
+                }else{
+                    $parent.siblings().removeClass('js_show');
+                    $parent.siblings().children('.js_category').attr('aria-expanded','false');
+                    $parent.siblings().children('.js_category img').attr('alt',' 展开');
+                    $parent.siblings().children('.js_categoryInner').attr('aria-hidden','true');
+                    $('.js_item', $parent.siblings().children('.js_categoryInner')).attr('tabindex','-1');
+    
+                    $parent.addClass('js_show');
+                    $this.attr('aria-expanded','true');
+                    $this.children('img').attr('alt',' 收起');
+                    $inner.attr('aria-hidden','false');
+                    $('.js_item', $(this).siblings()).attr('tabindex','0');
+    
+                    if(this.offsetTop + this.offsetHeight + innerH > $page.scrollTop() + winH){
+                        var scrollTop = this.offsetTop + this.offsetHeight + innerH - winH + categorySpace;
+    
+                        if(scrollTop > this.offsetTop){
+                            scrollTop = this.offsetTop - categorySpace;
+                        }
+    
+                        $page.scrollTop(scrollTop);
+                    }
+                }
+    
+                var winH = $(window).height();
+                var $foot = $('body').find('.page__ft');
+                if($foot.length < 1) return;
+    
+                if($foot.position().top + $foot.height() < winH){
+                    $foot.addClass('j_bottom');
+                }else{
+                    $foot.removeClass('j_bottom');
+                }
+            }
+    
+            $('.js_category').attr('tabindex','0');
+            $('.js_item').attr('tabindex','0');
+            $('.js_item', $('.js_category').siblings()).attr('tabindex','-1');
+    
+            $('.js_item').on('click', function(){
+                var id = $(this).data('id');
+                window.pageManager.go(id);
+            });
+            $('.js_category').on('click', function(){
+                $(this).attr('aria-live','assertive');
+                expandMenu.call(this);
+            });
+            $('.js_category').on('keydown', function(event) {
+              if (event.keyCode === 13) {
+                expandMenu.call(this);
+              }
+            });
+        });
+    </script>
+    <!-- <script type="text/javascript" src="../static/js/zepto.min.js"></script> -->
+    <script type="text/javascript" src="../static/js/jweixin-1.0.0.js"></script>
+    <script type="text/javascript" src="../static/js/weui.min.js"></script>
+    <!-- <script type="text/javascript" src="../static/js/example.js"></script> -->
+    <script type="text/javascript" src="../static/js/wah.js"></script>
 
 
 </body>

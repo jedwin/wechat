@@ -64,12 +64,17 @@ def list_app_view(request, appid='', resource_type=''):
 @login_required
 def list_user_view(request, appid, game_name=''):
     if request.user.is_superuser:
-        groups_count = int(request.GET.get('groups_count', '3'))
+        groups_count = int(request.GET.get('groups_count', '3'))  # 分组数量
         try:
             my_app = WechatApp.objects.get(appid=appid)
             game_name_list = [x.name for x in ExploreGame.objects.filter(app=my_app, is_active=True)]
         except ObjectDoesNotExist:
             return HttpResponse(f'APP ID: {appid} not exists')
+        if len(game_name) == 0:
+            if len(game_name_list) > 0:
+                game_name = game_name_list[0]
+            else:
+                return HttpResponse(f'APP ID: {appid} has no game')
         user_summary_list = get_player_summary(appid=appid, game_name=game_name)
 
         total_count = len(user_summary_list)
