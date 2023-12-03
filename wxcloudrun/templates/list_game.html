@@ -9,7 +9,7 @@
 {% block content %}
 <section class="wrapper">
     <h3><i class="fa fa-angle-right"></i>游戏配置列表（共{{game_list|length}}个）</h3>
-    <a class="btn btn-primary" href="/summary/">返回</a>
+    <a class="btn btn-primary" href="/summary/"><i class="fa fa-backward"></i>返回</a>
 	<div class="row">
 
 			{% for game_dict in game_list %}
@@ -41,19 +41,23 @@
                     </div>
                     <div class="col-md-2">
                       <p class="large mt">任务关卡数</p>
-						<h3><a href="/admin/wxcloudrun/exploregamequest/?game__id__exact={{ game_dict.game_pk }}" >
+						            <h3><a target="_blank" href="/admin/wxcloudrun/exploregamequest/?game__id__exact={{ game_dict.game_pk }}" >
                             {{game_dict.keyword_count}}
                         </a></h3>
                     </div>
                     <div class="col-md-2">
                       <p class="large mt">是否激活</p>
                         {% if game_dict.is_active %}
-						    <h3 style="color:#0f0"><a href="/admin/wxcloudrun/exploregame/{{game_dict.game_pk }}/change/">
+						                <h3><a target="_blank" href="/admin/wxcloudrun/exploregame/{{game_dict.game_pk }}/change/">
                                 是</a></h3>
                         {% else %}
-                            <h3 style="color:#f00"><a href="/admin/wxcloudrun/exploregame/{{game_dict.game_pk }}/change/">
+                            <h3><a style="color:#f00" target="_blank" href="/admin/wxcloudrun/exploregame/{{game_dict.game_pk }}/change/">
                                 否</a></h3>
                         {% endif %}
+                    </div>
+                    <div class="col-md-2">
+                      <p class="large mt">备注</p>
+                      {{ game_dict.remark }}
                     </div>
                   </div>
 
@@ -64,10 +68,7 @@
                       <a type="button" class="btn btn-primary"
                               href="/summary/flow_chart/{{ game_dict.appid }}/{{ game_dict.game_name }}/">流程图</a>
                     </div>
-                    <div class="btn-group">
-                      <a type="button" class="btn btn-theme02"
-                              href="/summary/reload_keyword/{{ game_dict.appid }}/{{ game_dict.game_name }}">更新关键词</a>
-                    </div>
+                    
                     <div class="btn-group">
                       <a type="button" class="btn btn-danger"
                          href="/summary/check_media_availability/{{ game_dict.appid }}/{{ game_dict.game_name }}">检查资源缺失</a>

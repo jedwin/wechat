@@ -221,8 +221,17 @@ def load_user_passwd_dict():
 
 def get_player_summary(appid, game_name):
     """
-    统计游戏玩家信息，返回list
-    通过调用game.statistic_player()方法，写入玩家统计，再通关返回dict判断是否成功
+    统计某个游戏内的玩家信息，通过遍历每个玩家的game_hist来实现
+    :param appid:      appid
+    :param game_name:  游戏名称
+    :return:           返回一个list，每个元素一个dict，代表一个玩家的情况，包含以下内容：
+        user_id, open_id: 玩家的id和open_id
+        transmit_count: 玩家共计发出过多少个指令，例如回答问题, 
+        cur_process: 玩家当前所处的任务关卡, 
+        quests_num: 玩家进入过的关卡数,
+        rewards_num: 玩家获得过的奖励数,
+        is_passed: 玩家是否通关
+            
     """
     summary_list = list()
     # player_count = 0
@@ -232,19 +241,20 @@ def get_player_summary(appid, game_name):
         all_players = WechatPlayer.objects.filter(game_hist__has_key=my_game.name)
         for player in all_players:
             my_game_data = player.game_hist[my_game.name]
-            user_id = player.name
-            open_id = player.open_id
+            player_info = dict()
+            player_info['user_id'] = player.name
+            player_info['open_id'] = player.open_id
             all_command = list()
             x = my_game_data.get('cmd_dict', dict())
             # x = {'关卡1': [指令1, 指令2, ...], '关卡2': [指令1, 指令2, ...]}
             for y in x.values():
                 all_command.extend(y) # 所有的指令
-            transmit_count = len(all_command)
-            transmit_count_without_tip = len(x)  # 改为进入过的关卡数
-            game_data_id = 0  # 已经废弃
-            cur_process = my_game_data['wait_status']
-            summary_list.append([user_id, open_id, transmit_count, cur_process, appid,
-                                 game_name, transmit_count_without_tip, game_data_id])
+            player_info['transmit_count'] = len(all_command)
+            player_info['quests_num'] = len(x)  # 进入过的关卡数
+            player_info['rewards_num'] = len(my_game_data.get('rewards', list()))  # 获得过的奖励数
+            player_info['cur_process'] = my_game_data['wait_status']
+            player_info['is_passed'] = len(my_game_data.get('clear_code', ''))>0
+            summary_list.append(player_info)
     except ObjectDoesNotExist:
         raise
     except MultipleObjectsReturned:

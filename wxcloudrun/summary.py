@@ -64,7 +64,7 @@ def list_app_view(request, appid='', resource_type=''):
 @login_required
 def list_user_view(request, appid, game_name=''):
     if request.user.is_superuser:
-        groups_count = int(request.GET.get('groups_count', '3'))  # 分组数量
+        column_count = int(request.GET.get('groups_count', '3'))  # 横向的显示分组数量
         try:
             my_app = WechatApp.objects.get(appid=appid)
             game_name_list = [x.name for x in ExploreGame.objects.filter(app=my_app, is_active=True)]
@@ -72,6 +72,7 @@ def list_user_view(request, appid, game_name=''):
             return HttpResponse(f'APP ID: {appid} not exists')
         if len(game_name) == 0:
             if len(game_name_list) > 0:
+                # 默认显示第一个游戏的用户统计
                 game_name = game_name_list[0]
             else:
                 return HttpResponse(f'APP ID: {appid} has no game')
@@ -79,13 +80,13 @@ def list_user_view(request, appid, game_name=''):
 
         total_count = len(user_summary_list)
         passing_list = list()
-        quantity_per_group = int(total_count / groups_count) + 1
-        for i in range(groups_count):
-            user_list = user_summary_list[(i * quantity_per_group):((i + 1) * quantity_per_group)]
+        row_count = int(total_count / column_count)+1
+        for i in range(row_count):
+            user_list = user_summary_list[(i * column_count):((i * column_count)+column_count)]
             passing_list.append(user_list)
 
         return render(request, 'list_user.html', {'all_list': passing_list, 'total_count': total_count,
-                                                'width_lg': int(12 / groups_count), 'appid': appid,
+                                                'width_lg': int(12 / column_count), 'appid': appid, 'game_name': game_name,
                                                 'game_name_list': game_name_list, 'home_server': HOME_SERVER})
     else:
         return render(request, 'index.html', {'message': MESSAGE_NO_RIGHT})
@@ -292,6 +293,7 @@ def list_game_view(request, appid):
                 keyword_count = ExploreGameQuest.objects.filter(game=my_game).count()
                 game_dict['player_count'] = player_count_dict
                 game_dict['keyword_count'] = keyword_count
+                game_dict['remark'] = my_game.remark
                 game_list.append(game_dict)
             # print(game_list)
             return render(request, 'list_game.html', {'game_list': game_list, 'home_server': HOME_SERVER})

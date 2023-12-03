@@ -130,6 +130,7 @@ class ExploreGame(models.Model):
     passwd_init = models.CharField(max_length=5, default='0', verbose_name='本游戏密码的开头字符', blank=True)
     entry = models.CharField(max_length=100, default='', verbose_name='游戏入口任务，留空表示直接显示所有可以挑战任务', blank=True)
     account_file = models.CharField(max_length=300, default='', verbose_name='用户名列表文件，用于创建用户', blank=True)
+    remark = models.TextField(max_length=500, default='', verbose_name='备注', blank=True)
 
     class Meta:
         verbose_name = '游戏'

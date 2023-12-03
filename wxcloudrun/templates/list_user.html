@@ -17,55 +17,59 @@
 <section class="wrapper">
 	<h3><i class="fa fa-user"></i> 玩家游戏档案列表（共{{total_count}}份）</h3>
 
-		<a class="btn btn-primary" href="/summary/">返回</a>
+		<a class="btn btn-primary" href="/summary/"><i class="fa fa-backward"></i>返回</a>
 		{% for app_game_name in game_name_list %}
-		<a class="btn btn-theme02" href="/summary/list_user/{{appid}}/{{app_game_name}}/">{{app_game_name}}</a>
+			{% if app_game_name == game_name %}
+			<p class="btn btn-theme"><i class="fa fa-angle-double-right"></i>{{app_game_name}}</p>
+			{% else %}
+			<a class="btn btn-theme02" href="/summary/list_user/{{appid}}/{{app_game_name}}/"><i class="fa fa-tasks"></i>{{app_game_name}}</a>
+			{% endif %}
 		{% endfor %}
-
-	<div class="row">
-
-
 		{% for user_list in all_list %}
-		<div class="col-md-4 mb">
+		<div class="row">
+			{% for user in user_list %}
+			<div class="col-md-4 mb">
+				<div class="white-panel pn">
+					<div class="white-header">
+						<h3><a target="_blank" href="/admin/wxcloudrun/wechatplayer/{{user.open_id}}/change/">{{ user.user_id }}</a></h3>
+					</div>
+				
+					<div class="row">
+						<div class="col-md-2">
+							<p class="large mt">总步数</p>
+							<h3>{{ user.transmit_count }}</h3>
+						</div>
+						<div class="col-md-2">
+							<p class="large mt">进入关卡数</p>
+							<h3>{{user.quests_num}}</h3>
+						</div>
+						<div class="col-md-2">
+							<p class="large mt">已获得奖励数</p>
+							<h3>{{user.rewards_num}}</h3>
+						</div>
+						<div class="col-md-2">
+							<p class="large mt">当前进度</p>
+							<h5>{{user.cur_process}}</h5>
+						</div>
+						<div class="col-md-2">
+							<p class="large mt">是否通关</p>
+							{% if user.is_passed %}
+								<h3><a target="_blank" href="/admin/wxcloudrun/wechatplayer/{{user.open_id}}/change/">是</a></h3>
+							{% else %}
+								<h3><a style="color:#f00" target="_blank" href="/admin/wxcloudrun/wechatplayer/{{user.open_id}}/change/">否</a></h3>
+							{% endif %}
 
-			{% for user_id, open_id, transmit_count, cur_process, appid, game_name, transmit_count_without_tip, game_data_id in user_list %}
-			<div class="white-panel pn">
-                  <div class="white-header">
-                    <h4>{{ user_id }}-->{{ game_name }}</h4>
-                  </div>
-				<p>{{open_id }}</p>
-				<div class="row">
-                    <div class="col-md-4">
-                      <p class="large mt">总步数</p>
-                        <h3>{{ transmit_count }}</h3>
-                    </div>
-                    <div class="col-md-4">
-                      <p class="large mt">进入过的任务关卡数</p>
-						<h3>{{transmit_count_without_tip}}</h3>
-                    </div>
-                    <div class="col-md-4">
-                      <p class="large mt">当前进度</p>
-						<h3>{{cur_process}}</h3>
-                    </div>
-                  </div>
-
-
-            </div>
-			<div class="btn-group btn-group-justified">
-				<div class="btn-group">
-				  <a type="button" class="btn btn-primary"
-						  href="/summary/game_data/{{ game_data_id }}/">详情</a>
-				</div>
-
+						</div>
+					</div>
+            	</div>
 			</div>
-
 			{% endfor %}
 
 		</div>
 		{% endfor %}
 
-	</div>
-	<a class="btn btn-primary" href="/summary/">返回</a>
+
+	<a class="btn btn-primary" href="/summary/"><i class="fa fa-fast-backward"></i>返回总览</a>
 
 </section>
 
