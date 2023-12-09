@@ -43,7 +43,7 @@ urlpatterns = (
     path('game/', mpv2.game),  # 以Django用户管理方式进入游戏
     path('chat/', vai.chat),  # 与GPT对话能力
     path('file/<str:filename>', mpv2.download),         # 用于微信公众号域名验证下载文件
-    path('static/images/layers/<str:filename>', mpv2.redirect),         # 用于将图片重定向到微信云托管域名
+    # path('static/images/layers/<str:filename>', mpv2.redirect),         # 用于将图片重定向到微信云托管域名
     path('accounts/', include("django.contrib.auth.urls")),  # 用于django自带的登录、登出、密码重置等功能
     path('summary/', summary.list_app_view),  # 定制管理页面
     path('summary/<appid>/', summary.list_app_view),  # 定制管理页面

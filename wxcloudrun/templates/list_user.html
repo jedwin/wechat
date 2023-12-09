@@ -16,62 +16,64 @@
 
 <section class="wrapper">
 	<h3><i class="fa fa-user"></i> 玩家游戏档案列表（共{{total_count}}份）</h3>
-
-		<a class="btn btn-primary" href="/summary/"><i class="fa fa-backward"></i>返回</a>
-		{% for app_game_name in game_name_list %}
-			{% if app_game_name == game_name %}
-			<p class="btn btn-theme"><i class="fa fa-angle-double-right"></i>{{app_game_name}}</p>
-			{% else %}
-			<a class="btn btn-theme02" href="/summary/list_user/{{appid}}/{{app_game_name}}/"><i class="fa fa-tasks"></i>{{app_game_name}}</a>
-			{% endif %}
-		{% endfor %}
-		{% for user_list in all_list %}
-		<div class="row">
-			{% for user in user_list %}
-			<div class="col-md-4 mb">
-				<div class="white-panel pn">
-					<div class="white-header">
-						<h3><a target="_blank" href="/admin/wxcloudrun/wechatplayer/{{user.open_id}}/change/">{{ user.user_id }}</a></h3>
-					</div>
-				
-					<div class="row">
-						<div class="col-md-2">
-							<p class="large mt">总步数</p>
-							<h3>{{ user.transmit_count }}</h3>
-						</div>
-						<div class="col-md-2">
-							<p class="large mt">进入关卡数</p>
-							<h3>{{user.quests_num}}</h3>
-						</div>
-						<div class="col-md-2">
-							<p class="large mt">已获得奖励数</p>
-							<h3>{{user.rewards_num}}</h3>
-						</div>
-						<div class="col-md-2">
-							<p class="large mt">当前进度</p>
-							<h5>{{user.cur_process}}</h5>
-						</div>
-						<div class="col-md-2">
-							<p class="large mt">是否通关</p>
+	
+	{% for app_game in game_list %}
+	
+		{% if app_game.name == game_name %}
+			<p class="btn btn-theme btn-sm"><i class="fa fa-angle-double-right"></i>{{app_game.name}}</p>
+		{% elif app_game.is_active %}
+			<a class="btn btn-theme02 btn-sm" href="/summary/list_user/{{appid}}/{{app_game.name}}/">{{app_game.name}}</a>
+		{% else %}
+			<a class="btn btn-default btn-sm" href="/summary/list_user/{{appid}}/{{app_game.name}}/">{{app_game.name}}</a>
+		{% endif %}
+	{% endfor %}
+	
+	<div class="content-panel">
+		<h4><i class="fa fa-angle-right"></i>玩家统计</h4>
+		<hr>
+		<div class="adv-table">
+			<div id="hidden-table-info_wrapper" class="dataTables_wrapper form-inline" role="grid">
+				<table class="table table-striped table-advance display dataTable" id="hidden-table-info" aria-describedby="hidden-table-info_info">
+					<thead>
+					<tr role="row">
+						<th class="sorting_asc" role="columnheader" aria-label="玩家ID: activate to sort column descending" aria-controls="hidden-table-info" aria-sort="ascending">玩家ID</th>
+						<th class="sorting_asc" role="columnheader" aria-label="总步数: activate to sort column descending" aria-controls="hidden-table-info" aria-sort="ascending">总步数</th>
+						<th class="sorting_asc" role="columnheader" aria-label="进入关卡数: activate to sort column descending" aria-controls="hidden-table-info" aria-sort="ascending">进入关卡数</th>
+						<th class="sorting_asc" role="columnheader" aria-label="已获得奖励数: activate to sort column descending" aria-controls="hidden-table-info" aria-sort="ascending">已获得奖励数</th>
+						<th class="sorting_asc" role="columnheader" aria-label="当前进度: activate to sort column descending" aria-controls="hidden-table-info" aria-sort="ascending">当前进度</th>
+						<th class="sorting_asc" role="columnheader" aria-label="是否通关: activate to sort column descending" aria-controls="hidden-table-info" aria-sort="ascending">是否通关</th>
+						<th></th>
+					</tr>
+					</thead>
+					<tbody role="alert" aria-live="polite" aria-relevant="all">
+					{% for user_list in all_list %}
+						{% for user in user_list %}
+						<tr>
+							<td><a target="_blank" href="/admin/wxcloudrun/wechatplayer/{{user.open_id}}/change/">{{ user.user_id }}</a></td>
+							<td>{{ user.transmit_count }}</td>
+							<td>{{user.quests_num}}</td>
+							<td>{{user.rewards_num}}</td>
+							<td>{{user.cur_process}}</td>
 							{% if user.is_passed %}
-								<h3><a target="_blank" href="/admin/wxcloudrun/wechatplayer/{{user.open_id}}/change/">是</a></h3>
+								<td><a target="_blank" href="/admin/wxcloudrun/wechatplayer/{{user.open_id}}/change/">是</a></td>
 							{% else %}
-								<h3><a style="color:#f00" target="_blank" href="/admin/wxcloudrun/wechatplayer/{{user.open_id}}/change/">否</a></h3>
+								<td><a style="color:#f00" target="_blank" href="/admin/wxcloudrun/wechatplayer/{{user.open_id}}/change/">否</a></td>
 							{% endif %}
-
-						</div>
-					</div>
-            	</div>
+							<td>
+								<div class="btn-group">
+									<a class="btn btn-default btn-xs" href="/summary/user_detail/{{appid}}/{{user.open_id}}/"><i class="fa fa-search"></i></a>
+								</div>
+							</td>
+						</tr>
+						{% endfor %}
+					{% endfor %}
+					</tbody>
+				</table>
 			</div>
-			{% endfor %}
-
-		</div>
-		{% endfor %}
-
-
+		</div><!-- /adv-table -->
+	</div><!-- /content-panel -->
 	<a class="btn btn-primary" href="/summary/"><i class="fa fa-fast-backward"></i>返回总览</a>
 
 </section>
-
 
 {% endblock %}

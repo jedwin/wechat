@@ -44,15 +44,25 @@ def list_app_view(request, appid='', resource_type=''):
             app_dict['appid'] = appid
             app_dict['app_name'] = app.name
             user_count = WechatPlayer.objects.filter(app=app).count()
-            game_count = ExploreGame.objects.filter(app=app).count()
-            image_count = WechatMedia.objects.filter(app=app, media_type='image').count()
-            video_count = WechatMedia.objects.filter(app=app, media_type='video').count()
+            game_list = ExploreGame.objects.filter(app=app)
+            image_count = 0
+            video_count = 0
+            audio_count = 0
+            other_count = 0
+            for game in game_list:
+                media_count = game.media_count()
+                image_count += media_count['image_count']
+                video_count += media_count['video_count']
+                audio_count += media_count['audio_count']
+                other_count += media_count['other_count']
+            
             app_keyword_count = ErrorAutoReply.objects.count()
             app_info_dict = dict()
             app_info_dict['玩家数量'] = [user_count, 'list_user']  # 列表第一个值是对应的value，第二个值对应url的字符串，留空表示不做链接
-            app_info_dict['游戏数量'] = [game_count, 'list_game']
-            app_info_dict['图片数量'] = [image_count, 'images']
-            app_info_dict['视频数量'] = [video_count, 'videos']
+            app_info_dict['游戏数量'] = [len(game_list), 'list_game']
+            app_info_dict['图片数量'] = [image_count, '']
+            app_info_dict['视频数量'] = [video_count, '']
+            app_info_dict['音频数量'] = [audio_count, '']
             app_info_dict['自动回复'] = [app_keyword_count, f'/admin/wxcloudrun/errorautoreply/']
             app_dict['app_info'] = app_info_dict
             app_list.append(app_dict)
@@ -67,13 +77,13 @@ def list_user_view(request, appid, game_name=''):
         column_count = int(request.GET.get('groups_count', '3'))  # 横向的显示分组数量
         try:
             my_app = WechatApp.objects.get(appid=appid)
-            game_name_list = [x.name for x in ExploreGame.objects.filter(app=my_app, is_active=True)]
+            game_list = [{"name":x.name, "is_active":x.is_active} for x in ExploreGame.objects.filter(app=my_app)]
         except ObjectDoesNotExist:
             return HttpResponse(f'APP ID: {appid} not exists')
         if len(game_name) == 0:
-            if len(game_name_list) > 0:
+            if len(game_list) > 0:
                 # 默认显示第一个游戏的用户统计
-                game_name = game_name_list[0]
+                game_name = game_list[0]['name']  # 取第一个游戏的名字, game_list的格式是[{'name': 'game1', 'is_active': True}, {'name': 'game2', 'is_active': False}]
             else:
                 return HttpResponse(f'APP ID: {appid} has no game')
         user_summary_list = get_player_summary(appid=appid, game_name=game_name)
@@ -87,7 +97,7 @@ def list_user_view(request, appid, game_name=''):
 
         return render(request, 'list_user.html', {'all_list': passing_list, 'total_count': total_count,
                                                 'width_lg': int(12 / column_count), 'appid': appid, 'game_name': game_name,
-                                                'game_name_list': game_name_list, 'home_server': HOME_SERVER})
+                                                'game_list': game_list, 'home_server': HOME_SERVER})
     else:
         return render(request, 'index.html', {'message': MESSAGE_NO_RIGHT})
 
@@ -260,15 +270,15 @@ def check_media_availability(request, appid, game_name):
     if request.user.is_superuser:
         try:
             my_app = WechatApp.objects.get(appid=appid)
+            game_list = ExploreGame.objects.filter(app=my_app)
             my_game = ExploreGame.objects.get(app=my_app, name=game_name)
             all_media_dict = my_game.check_media_availability()
-            md_content = '<table class="table table-hover">'
-            md_content += '<thead><tr><th>关卡名</th><th>资源可用性</th></tr></thead>'
-            md_content += '<tbody>'
-            for k,v in all_media_dict.items():
-                md_content += f'<tr><td>{k}</td><td>{v}</td></tr>'
-            md_content += '</tbody></table>'
-            return render(request, 'media_availability.html', {'content': md_content, 'appid': appid, 'game_name': game_name, 'home_server': HOME_SERVER})
+            media_info_list = list()
+            for quest_name, media_list in all_media_dict.items():
+                quest_pkey = media_list[0]
+                media_list = media_list[1:]
+                media_info_list.append([quest_name, quest_pkey, media_list])
+            return render(request, 'media_availability.html', {'game_list': game_list, 'appid': appid, 'game_name': game_name, 'home_server': HOME_SERVER, 'media_info_list': media_info_list})
         except ObjectDoesNotExist:
             return HttpResponse(f'Game: {game_name} in app: {appid} does not exist')
     else:

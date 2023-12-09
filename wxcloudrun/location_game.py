@@ -759,34 +759,46 @@ class ExploreGame(models.Model):
         param:
             无
         return:
-            all_media_dict: dict, key为关卡名称，value为媒体文件的url
+            all_media_dict: dict, key为关卡名称，value为list: [quest.pk, media_dict1, media_dict2, ...]
+                media_dict: dict: {'type': 'image', 
+                                    'url': 'http://xxx', 
+                                    'name': 'xxx.jpg', 
+                                    'html': '<p >xxx</p>'}
         
         """
         all_media_dict = dict()
         all_quests = ExploreGameQuest.objects.filter(game=self)
         for quest in all_quests:
             quest_content = quest.question_data + quest.hint_data
+            all_media_dict[quest.quest_trigger] = [quest.pk]
             re_pattern = '「(?P<keyword>[^」]+)」'
             re_result = re.findall(re_pattern, quest_content)
-            ret_string = ''
             for file_name in re_result:
-                
+                media_dict = dict()
+                media_dict['name'] = file_name
                 # 根据file_name后缀名，判断是图片、音频还是视频，从而生成不同的html代码
-                if file_name.endswith('.jpg') or file_name.endswith('.png'):
+                if file_name.lower().endswith('.jpg') or file_name.lower().endswith('.png'):
                     img_url = f'../images/' + file_name
-                    ret_string += f'<p style="text-align: center;"><a class="fancybox" href="{HOME_SERVER}{img_url}"><img class="img-responsive" src="{HOME_SERVER}{img_url}" alt="{file_name}" style="width:150px"></a></p>'
-                elif file_name.endswith('.mp3') or file_name.endswith('.m4a'):
+                    media_dict['type'] = 'image'
+                    media_dict['url'] = f'{HOME_SERVER}{img_url}'
+                    media_dict['html'] = f'<a class="fancybox" href="{HOME_SERVER}{img_url}"><img class="img-responsive" src="{HOME_SERVER}{img_url}" alt="{file_name}" style="width:150px"></a>'
+                elif file_name.lower().endswith('.mp3') or file_name.lower().endswith('.m4a'):
                     audio_url = f'../mp3/' + file_name
-                    ret_string += f'<p style="text-align: center;"><audio controls><source src="{HOME_SERVER}{audio_url}" type="audio/mpeg"></audio></p>'
-                elif file_name.endswith('.mp4') or file_name.endswith('.m4v') or file_name.endswith('.mov'):
+                    media_dict['type'] = 'audio'
+                    media_dict['url'] = f'{HOME_SERVER}{audio_url}'
+                    media_dict['html']= f'<audio controls><source src="{HOME_SERVER}{audio_url}" type="audio/mpeg"></audio>'
+                elif file_name.lower().endswith('.mp4') or file_name.lower().endswith('.m4v') or file_name.lower().endswith('.mov'):
                     video_url = f'../video/' + file_name
-                    ret_string += f'<p style="text-align: center;"><video src="{HOME_SERVER}{video_url}" controls="controls" style="width:150px"></video></p>'
+                    media_dict['type'] = 'video'
+                    media_dict['url'] = f'{HOME_SERVER}{video_url}'
+                    media_dict['html']= f'<video src="{HOME_SERVER}{video_url}" controls="controls" style="width:150px"></video>'
                 else:
                     # 如果不是图片、音频、视频，则直接返回空字符串
-                    ret_string += file_name
-                ret_string = ret_string + '<br>'
-            if len(ret_string) > 0:
-                all_media_dict[quest.quest_trigger] = ret_string
+                    media_dict['type'] = 'other'
+                    media_dict['url'] = ''
+                    media_dict['html'] = ''
+                if len(media_dict) > 0:
+                    all_media_dict[quest.quest_trigger].append(media_dict)
         return all_media_dict
 
     def player_count(self):
@@ -815,7 +827,36 @@ class ExploreGame(models.Model):
         ret_dict['passed_player_count'] = passed_player_count
         return ret_dict
         
-    
+    def media_count(self):
+        """
+        返回本游戏下面的各种媒体文件数量
+        return: dict, 包含以下字段
+            image_count: int, 本游戏下面的图片数量
+            audio_count: int, 本游戏下面的音频数量
+            video_count: int, 本游戏下面的视频数量
+            other_count: int, 本游戏下面的其他媒体文件数量
+        """
+        image_count = 0
+        audio_count = 0
+        video_count = 0
+        other_count = 0
+        all_media_dict = self.check_media_availability()
+        for quest in all_media_dict.keys():
+            for media_dict in all_media_dict[quest][1:]:
+                if media_dict['type'] == 'image':
+                    image_count += 1
+                elif media_dict['type'] == 'audio':
+                    audio_count += 1
+                elif media_dict['type'] == 'video':
+                    video_count += 1
+                else:
+                    other_count += 1
+        ret_dict = dict()
+        ret_dict['image_count'] = image_count
+        ret_dict['audio_count'] = audio_count
+        ret_dict['video_count'] = video_count
+        ret_dict['other_count'] = other_count
+        return ret_dict
 
 class ExploreGameQuest(models.Model):
     game = models.ForeignKey(ExploreGame, on_delete=models.CASCADE)

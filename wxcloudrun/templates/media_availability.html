@@ -12,9 +12,59 @@
 {% block content %}
 <section class="wrapper">
 	<h3>{{ game_name }}<i class="fa fa-angle-right"></i>游戏资源可用性列表</h3>
-    <a class="btn btn-primary" href="/summary/list_game/{{ appid }}/">返回</a>
+    {% for app_game in game_list %}
+	
+		{% if app_game.name == game_name %}
+			<p class="btn btn-theme btn-sm"><i class="fa fa-angle-double-right"></i>{{app_game.name}}</p>
+		{% elif app_game.is_active %}
+			<a class="btn btn-theme02 btn-sm" href="/summary/check_media_availability/{{appid}}/{{app_game.name}}/">{{app_game.name}}</a>
+		{% else %}
+			<a class="btn btn-default btn-sm" href="/summary/check_media_availability/{{appid}}/{{app_game.name}}/">{{app_game.name}}</a>
+		{% endif %}
+	{% endfor %}
+    <div class="content-panel">
+		<h4><i class="fa fa-angle-right"></i>资源统计</h4>
+		<hr>
+		<div class="adv-table">
+			<div id="hidden-table-info_wrapper">
+				<table class="table table-striped table-advance table-hover">
+					<thead>
+					<tr role="row">
+						<th>关卡名</th>
+						<th>资源名称</th>
+						<th>资源类型</th>
+						<th>资源预览</th>
+					</tr>
+					</thead>
+					<tbody>
+					{% for quest_name, quest_pkey, media_list in media_info_list %}
+						{% for media_dict in media_list %}
+						<tr>
+							<td><a target="_blank" href="/admin/wxcloudrun/exploregamequest/{{quest_pkey}}/change/">{{ quest_name }}</a></td>
+							<td>{{media_dict.name}}</td>
+                            
+							<td>
+                                {% if media_dict.type == 'image' %}
+                                <span class="btn btn-success btn-sm"><i class="fa fa-picture-o"></i></span>
+                                {% elif media_dict.type == 'audio' %}
+                                <span class="btn btn-info btn-sm"><i class="fa fa-music"></i></span>
+                                {% elif media_dict.type == 'video' %}
+                                <span class="btn btn-warning btn-sm"><i class="fa fa-video-camera"></i></span>
+                                {% else %}
+                                <span class="btn btn-danger btn-sm"><i class="fa fa-file"></i></span>
+                                {% endif %}
+                            </td>
+							<td>{{media_dict.html|safe}}</td>
+						</tr>
+						{% endfor %}
+					{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div><!-- /adv-table -->
+	</div><!-- /content-panel -->
+	<a class="btn btn-primary" href="/summary/"><i class="fa fa-fast-backward"></i>返回总览</a>
 
-        {{ content|safe }}
 
 </section>
 {% endblock content %}

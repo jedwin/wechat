@@ -22,12 +22,11 @@
                       {% for app_info_key, app_info_value in app_dict.app_info.items %}
                     <div class="col-md-2 col-xs-3">
                         <p class="large mt">{{ app_info_key }}</p>
-                        {% if app_info_value.1|length < 20 %}
+                        {% if app_info_value.1|length > 0 %}
                             <h3><a href="/summary/{{app_info_value.1 }}/{{ app_dict.appid }}" >
                                 {{ app_info_value.0 }}</a></h3>
                         {% else %}
-                            <h3><a href="{{app_info_value.1 }}" >
-                                {{ app_info_value.0 }}</a></h3>
+                            <h3>{{ app_info_value.0 }}</h3>
                         {% endif %}
                     </div>
                       {% endfor %}

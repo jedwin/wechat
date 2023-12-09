@@ -251,8 +251,8 @@ def get_player_summary(appid, game_name):
                 all_command.extend(y) # 所有的指令
             player_info['transmit_count'] = len(all_command)
             player_info['quests_num'] = len(x)  # 进入过的关卡数
-            player_info['rewards_num'] = len(my_game_data.get('rewards', list()))  # 获得过的奖励数
-            player_info['cur_process'] = my_game_data['wait_status']
+            player_info['rewards_num'] = len(my_game_data.get('reward_list', list()))  # 获得过的奖励数
+            player_info['cur_process'] = my_game_data.get('wait_status', '')  # 当前所处的任务关卡
             player_info['is_passed'] = len(my_game_data.get('clear_code', ''))>0
             summary_list.append(player_info)
     except ObjectDoesNotExist:
