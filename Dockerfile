@@ -7,8 +7,9 @@ FROM alpine:3.13
 # 选用国内镜像源以提高下载速度
 # RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tencent.com/g' /etc/apk/repositories
 # 替换阿里云的源
-RUN echo "http://mirrors.aliyun.com/alpine/latest-stable/main/" > /etc/apk/repositories
-RUN echo "http://mirrors.aliyun.com/alpine/latest-stable/community/" >> /etc/apk/repositories
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+# RUN echo "http://mirrors.aliyun.com/alpine/latest-stable/main/" > /etc/apk/repositories
+#　RUN echo "http://mirrors.aliyun.com/alpine/latest-stable/community/" >> /etc/apk/repositories
 RUN apk update
 RUN apk add --update --no-cache python3 py3-pip python3-dev gcc musl-dev postgresql-dev
 # 容器默认时区为UTC，如需使用上海时间请启用以下时区设置命令
