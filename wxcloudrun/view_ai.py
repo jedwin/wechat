@@ -1,4 +1,3 @@
-from openai import OpenAI
 import json
 from django.shortcuts import HttpResponse, render, HttpResponseRedirect
 import requests

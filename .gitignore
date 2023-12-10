@@ -6,3 +6,6 @@
 *.pyc
 .*.*
 .*
+Docker-compose.yaml
+Docker-compose.yml
+compose.yaml
