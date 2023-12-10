@@ -23,7 +23,28 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = ['https://miaozan-51588-9-1256107271.sh.run.tcloudbase.com',
-                        'https://www.key2go.top',]
+                        'https://www.key2go.top', 'https://game.lovelymiu.com', HOME_SERVER]
+
+############## CORS ################
+CORS_ALLOWED_ORIGINS = ['https://miaozan-51588-9-1256107271.sh.run.tcloudbase.com', 
+                        HOME_SERVER, 'https://www.key2go.top', 'https://game.lovelymiu.com']
+CORS_ALLOW_METHODS = ['GET', 'OPTIONS', 'POST']
+CORS_ALLOW_HEADERS = [
+'accept',
+'accept-encoding',
+'authorization',
+'content-type',
+'dnt',
+'origin',
+'user-agent',
+'x-csrftoken',
+'x-requested-with',
+]
+CORS_EXPOSE_HEADERS = []
+CORS_ALLOW_CREDENTIALS = True
+########### End of CORS ############
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -34,12 +55,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'wxcloudrun'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
