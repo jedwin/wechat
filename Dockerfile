@@ -27,7 +27,7 @@ RUN sed -i "s@http://\(deb\|security\).debian.org@https://mirrors.aliyun.com@g" 
 RUN apt update && apt install -y uwsgi uwsgi-plugin-python3
 
 # 拷贝当前项目requirments.txt到/app目录下
-# COPY . /app
+COPY . /app
 COPY requirements.txt /tmp
 
 # 设定当前的工作目录
