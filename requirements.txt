@@ -1,5 +1,5 @@
 asgiref
-Django
+Django<5
 powerline-status
 pytz
 sqlparse
@@ -7,8 +7,10 @@ urllib3
 certifi
 requests
 tzdata
-psycopg2-binary==2.9.1
+# psycopg2-binary==2.9.1
+psycopg2-binary
 requests_oauthlib
 django-jazzmin
 django-cors-headers
 sqlalchemy<2.0.0
+openai

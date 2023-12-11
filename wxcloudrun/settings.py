@@ -3,7 +3,7 @@ from pathlib import Path
 import time
 from wxcloudrun.Jazzmin_Settings import JAZZMIN_SETTINGS
 
-HOME_SERVER = os.environ.get('HOME_SERVER', '')  # 存放静态文件的服务器地址，留空则使用本地
+HOME_SERVER = os.environ.get('HOME_SERVER', '/')  # 存放静态文件的服务器地址，留空则使用本地
 if HOME_SERVER[-1] == '/':
     HOME_SERVER = HOME_SERVER[:-1]  # 去掉末尾的斜杠，以免在CORS_ALLOWED_ORIGINS中出错
 CUR_PATH = os.path.dirname(os.path.realpath(__file__))  
@@ -29,7 +29,7 @@ CSRF_TRUSTED_ORIGINS = ['https://miaozan-51588-9-1256107271.sh.run.tcloudbase.co
 
 ############## CORS ################
 CORS_ALLOWED_ORIGINS = ['https://miaozan-51588-9-1256107271.sh.run.tcloudbase.com', 
-                        HOME_SERVER, 'https://www.key2go.top', 'https://game.lovelymiu.com']
+                        HOME_SERVER, 'https://www.key2go.top', 'https://game.lovelymiu.com:8443']
 CORS_ALLOW_METHODS = ['GET', 'OPTIONS', 'POST']
 CORS_ALLOW_HEADERS = [
 'accept',
