@@ -23,7 +23,7 @@ FROM python:3.9-slim-bullseye
 
 # For debian
 # RUN touch /etc/apt/sources.list
-RUN sed -i "s@http://\(deb\|security\).debian.org@https://mirrors.aliyun.com@g" /etc/apt/sources.list
+RUN sed -i "s@http://\(deb\|security\).debian.org@https://mirrors.tencent.com@g" /etc/apt/sources.list
 RUN apt update && apt install -y uwsgi uwsgi-plugin-python3
 
 # 拷贝当前项目requirments.txt到/app目录下
