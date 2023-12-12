@@ -176,7 +176,10 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', user
         ret_dict['player_is_audit'] = player_is_audit
         ret_dict['player_game_info'] = cur_player_game_dict
         ret_dict['player_info'] = cur_player.user_info
-        ret_dict['clear_code'] = clear_code
+        if len(clear_code)>0:
+            ret_dict['clear_code'] = f'{cur_player.name}：{clear_code}'
+        else:
+            ret_dict['clear_code'] = ''
         ret_dict['progress'] = cur_game.check_progress(reward_list=reward_list)
     else:
         # 如果游戏不是激活状态
@@ -511,7 +514,10 @@ def set_quest(cur_game, trigger, ret_dict, open_id, reward_list=list(), cur_play
         cur_player.game_hist[cur_game_name] = cur_player_game_dict
         cur_player.waiting_status = ENDING_COMMAND
         cur_player.save()
-        ret_dict['clear_code'] = clear_code
+        if len(clear_code)>0:
+            ret_dict['clear_code'] = f'{cur_player.name}：{clear_code}'
+        else:
+            ret_dict['clear_code'] = ''
         ret_dict = set_ending(cur_game=cur_game, ret_dict=ret_dict)
     else:
         # 玩家还没有通关整个游戏

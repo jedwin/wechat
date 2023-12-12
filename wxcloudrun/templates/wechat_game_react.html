@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0,viewport-fit=cover">
     <meta name="wechat-enable-text-zoom-em" content="true">
-
+    <meta name="color-scheme" content="light dark">
     <title>{{ quest_trigger }}</title>
     <link rel="stylesheet" href="../static/style/weui.css"/>
     <!-- <link rel="stylesheet" href="../static/style/example.css"/> -->
@@ -133,6 +133,7 @@
     ReactDOM.render(<ConfirmLinkDialog title="退出登录" content="确认要退出当前账号吗？" to_link='/accounts/logout/?next=/game/?app_en_name={{app_en_name}}' style="weui-btn weui-btn_warn" />,document.querySelector('#logout'));
     
 </script>
+
 <script type="text/javascript">
     var $input = document.querySelector('#js_input');
     var $button = document.querySelector('#confirm_button');

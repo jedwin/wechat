@@ -66,6 +66,8 @@ def chat(request):
                         assistant = f.read()
                         # replace \n with '\n'
                         assistant = assistant.replace('\n', '')
+                else:
+                    return HttpResponse(f'{character_file}文件不存在！')
                 form_data['instructions'] = f"你是{character}，" + instructions + assistant
                 form_data['assistant'] = ''
                 form_data['max_tokens'] = max_length
