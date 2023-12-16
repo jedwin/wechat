@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import time
+import shutil
 from django.core.exceptions import *
 from django.db import models
 from django.db.models import F, Q, When, Count
@@ -181,15 +182,19 @@ class ExploreGame(models.Model):
         ret_dict['errmsg'] = 'Initial'
         find_string = '\r\n'
         replace_string = '</p><p>'
-        try:
-            f = open(f'{SETTING_PATH}{self.settings_file}', 'w', encoding='utf_8_sig')
-            f.writelines('任务, 前置条件, 地点要求, 用户位置搜索关键词, 谜面类型,谜面,')
-            f.writelines('提示类型,提示内容,答案列表,选项列表(已废弃),奖励类型,奖励内容,奖励id,')
-            f.writelines('下一步选项列表,是否显示下一步,返回任务名称,未满足条件时是否显示,')
-            f.writelines('未满足条件时显示的提示,满足条件时显示的提示,已完成时显示的提示,音频文件链接\n')
-        except Exception as e:
-            ret_dict['errmsg'] = f'setting file can not be created: {e}'
-            return ret_dict
+        # try:
+        
+        tmp_file = time.strftime('%Y%m%d%H%M%S',time.localtime()) + '.csv'
+        full_temp_name = os.path.join(SETTING_PATH, tmp_file)
+        full_name = os.path.join(SETTING_PATH, self.settings_file).encode("utf-8")
+        f = open(full_name, 'w', encoding='utf_8_sig')
+        f.writelines('任务, 前置条件, 地点要求, 用户位置搜索关键词, 谜面类型,谜面,')
+        f.writelines('提示类型,提示内容,答案列表,选项列表(已废弃),奖励类型,奖励内容,奖励id,')
+        f.writelines('下一步选项列表,是否显示下一步,返回任务名称,未满足条件时是否显示,')
+        f.writelines('未满足条件时显示的提示,满足条件时显示的提示,已完成时显示的提示,音频文件链接\n')
+        # except Exception as e:
+        #     ret_dict['errmsg'] = f'setting file can not be created: {e}'
+        #     return ret_dict
         all_quests = ExploreGameQuest.objects.filter(game=self)
         count = 0
         for quest in all_quests:
@@ -217,9 +222,12 @@ class ExploreGame(models.Model):
             f.writelines(','.join(export_list))
             f.writelines('\n')
             count += 1
-
+        f.close()
+        # move the the temp file to the final file
+        # shutil.move(full_temp_name, full_name)
         ret_dict['result'] = True
         ret_dict['errmsg'] = f'export {count} quests'
+        
         return ret_dict
 
     def export_to_obsidian(self):

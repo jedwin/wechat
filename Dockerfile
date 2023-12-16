@@ -24,7 +24,9 @@ FROM python:3.9-slim-bullseye
 # For debian
 # RUN touch /etc/apt/sources.list
 RUN sed -i "s@http://\(deb\|security\).debian.org@https://mirrors.tencent.com@g" /etc/apt/sources.list
-RUN apt update && apt install -y uwsgi uwsgi-plugin-python3
+RUN apt update && apt install -y uwsgi uwsgi-plugin-python3 locales
+RUN sed -i -e 's/# zh_CN.UTF-8 UTF-8/zh_CN.UTF-8 UTF-8/' /etc/locale.gen
+RUN dpkg-reconfigure --frontend=noninteractive locales
 
 # 拷贝当前项目requirments.txt到/app目录下
 COPY . /app

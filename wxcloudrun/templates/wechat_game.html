@@ -52,7 +52,7 @@
                     
                 </div>
                 <div class="weui-form__control-area">
-                    <form class="weui-cells__group weui-cells__group_form" method="post" action="/game/">
+                    <form class="weui-cells__group weui-cells__group_form" method="post" action="/game/" id="form_question">
                         <input type="hidden" name="game_name" value="{{ cur_game_name }}">
                         <input type="hidden" name="app_en_name" value="{{ app_en_name }}">
                         {% csrf_token %}
@@ -61,9 +61,10 @@
                         <div class="weui-cells__title">请选择</div>
                         <div class="weui-cells">
                             {% for option in reply_options %}
-                            <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}"
+                            <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}" 
                             {% if option.enable %}
-                                    href="/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd={{option.trigger}}">
+                                    href="javascript:" onClick="option_click('{{option.trigger}}');">
+                                    <!-- href="/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd={{option.trigger}}"> -->
                                 {% else %}
                                     href="javascript:">
                                 {% endif %}
@@ -102,8 +103,8 @@
                             </label>
                             <br>
                             <div class="weui-form__opr-area">
-                                <input type="submit" role="button" disabled aria-disabled="true" id="btnConfirm" 
-                                class="weui-btn weui-btn_primary weui-btn_disabled" value="确定">
+                                <a type="submit" role="button" disabled aria-disabled="true" id="btnConfirm" href="javascript:"
+                                class="weui-btn weui-btn_primary weui-btn_disabled">确定</a>
                             </div>
                         {% endif %}
                         </div>
@@ -242,46 +243,46 @@
     </div>
 </div> <!-- end popups -->
 <script src="{% static 'js/jquery.min.js' %}"></script>
-
-<script>
-    function imageInit(){
-      
-      var imgList = [];
-      // 获取容器内所有的img元素
-      var imgObjs = $(".game_img");
-      // 遍历img元素
-      for(var i=0; i<imgObjs.length; i++){
-        imgList.push(imgObjs.eq(i).attr('src'));
-        // 给img元素添加点击事件
-        imgObjs.eq(i).click(function(){
-          var imgUrl = $(this).attr('src');
-          wx.previewImage({
-            current: imgUrl , // 当前显示图片的http链接
-            urls: imgList     // 需要预览的图片http链接列表
-          });
-        });
-      }
-    }
-    
+<script src="{% static 'js/common.js' %}"></script>
+<script class="preview_image">
     window.onload = function(){
       imageInit();
     }
 </script>
-<script>
-    function show_dialog(dialog, Dialog_div, next_url=null){
+<script class="show_dialog_functions">
+    function show_dialog(dialog, Dialog_div, cmd_value=null){
+        // dialog: 要显示的对话框
+        // Dialog_div: 对话框的容器
+        // my_form: 页面表单
+        // cmd: 表单提交时附带的cmd属性值
         dialog.fadeIn(200);
         dialog.attr('aria-hidden','false');
         dialog.attr('tabindex','0');
         dialog.trigger('focus');
         Dialog_div.on('click', '.weui-dialog__btn_default', function(){
+            // 点击取消按钮
             dialog.fadeOut(200);
             dialog.attr('aria-hidden','true');
             dialog.removeAttr('tabindex');
         });
         Dialog_div.on('click', '.weui-dialog__btn_primary', function(){
-            globalThis.location=next_url;
+            // 如果有确定按钮并被点击
+            var my_form=$('#form_question');
+            var $input = $('#js_input');
+            if ($input.length == 0) {
+                $input = $('<input type="hidden" name="cmd" id="js_input">');
+            }
+            $input.val(cmd_value);
+            // add $input into form
+            my_form.append($input);
+            dialog.fadeOut(200);
+            dialog.attr('aria-hidden','true');
+            dialog.removeAttr('tabindex');
+            my_form.submit();
         });
     }
+
+    var my_form = $('#form_question');
     // 游戏提示对话框
     var Dialog_hint = $('#iosDialog_hint');
     var Dialog_hint_div = $('#dialog_hint');
@@ -300,33 +301,33 @@
     var Dialog_go_back = $('#iosDialog_go_back');
     var Dialog_go_back_div = $('#dialog_go_back');
     $('#showGoBack').on('click', function(){
-        show_dialog(Dialog_go_back, Dialog_go_back_div, '/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd=init');
+        show_dialog(Dialog_go_back, Dialog_go_back_div, 'init');
     });
 
     // 退出登录对话框
     var Dialog_logout = $('#iosDialog_logout');
     var Dialog_logout_div = $('#dialog_logout');
     $('#show_logout').on('click', function(){
-        show_dialog(Dialog_logout, Dialog_logout_div, '/accounts/logout/?next=/game/?app_en_name={{app_en_name}}');
+        show_dialog(Dialog_logout, Dialog_logout_div, 'logout');
     });
+</script>  
+<script class="confirm_button">
+   // 验证输入框是否为空，为空则禁用确定按钮
+   var $input = $('#js_input');
+   $input.on('input', function(){
+   if ($input.val()){
+       $('#btnConfirm').removeClass('weui-btn_disabled');
+       $('#btnConfirm').attr('aria-disabled','false');
+       $('#btnConfirm').removeAttr('disabled');
+   }else{
+       $('#btnConfirm').addClass('weui-btn_disabled');
+       $('#btnConfirm').attr('aria-disabled','true');
+       $('#btnConfirm').addAttr('disabled');
+   }
+   });
 
-    // 验证输入框是否为空，为空则禁用确定按钮
-    var $input = $('#js_input');
-    $input.on('input', function(){
-    if ($input.val()){
-        $('#btnConfirm').removeClass('weui-btn_disabled');
-        $('#btnConfirm').attr('aria-disabled','false');
-        $('#btnConfirm').removeAttr('disabled');
-    }else{
-        $('#btnConfirm').addClass('weui-btn_disabled');
-        $('#btnConfirm').addClass('weui-btn_disabled');
-        $('#btnConfirm').attr('aria-disabled','true');
-        $('#btnConfirm').addAttr('disabled');
-    }
-    });
-    // 点击确定按钮的操作
-    /* 
-    $('#btnConfirm').on('click', function(){
+   // 点击确定按钮的操作
+   $('#btnConfirm').on('click', function(){
         if ($(this).hasClass('weui-btn_disabled')) return;
         var $loadingToast = $('#loadingToast');
         if ($loadingToast.css('display') != 'none') return;
@@ -334,25 +335,15 @@
         setTimeout(function () {
             $loadingToast.fadeOut(100);
         }, 2000);
-        globalThis.location='/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd='+$input.val();
+        //my_form.cmd.value=$input.val();
+        my_form.submit();
+        //globalThis.location='/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd='+$input.val();
 
-    });
-    */
-    $(function(){
-        
+   });
+   
 
-        
-        /* 
-        $('#dialog_wrong_answer').on('click', '.weui-dialog__btn_default', function(){
-            $(this).parents('.js_dialog_wrong_answer').fadeOut(200);
-            $(this).parents('.js_dialog_wrong_answer').attr('aria-hidden','true');
-            $(this).parents('.js_dialog_wrong_answer').removeAttr('tabindex');
-        });
-        */
-        
-    });
 
-</script>  
+</script>
 <script src="{% static 'js/zepto.min.js' %}"></script>
 <script src="{% static 'js/jweixin-1.4.0.js' %}"></script>
 <script src="{% static 'js/weui.min.js' %}"></script>

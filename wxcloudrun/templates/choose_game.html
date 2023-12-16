@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0,viewport-fit=cover">
     <meta name="wechat-enable-text-zoom-em" content="true">
-    <title>{{ quest_trigger }}</title>
+    <meta name="color-scheme" content="light dark">
+    <title>请选择你要进行的游戏</title>
     <link rel="stylesheet" href="{% static 'style/weui.css' %}"/>
-    <link rel="stylesheet" href="{% static 'style/example.css' %}"/>
 </head>
 <body ontouchstart>
     <script type="text/javascript">
@@ -17,8 +17,7 @@
 
     </script>
 
-<div class="container" id="container"></div>
-<script type="text/html" id="tpl_home">
+<div id="container">
     <div class="page article">
         <article class="weui-article">
             <section>
@@ -33,7 +32,9 @@
         </article>
 
         <div class="weui-form">
-            <form class="weui-cells__group weui-cells__group_form" action="/profile/" >
+            <form class="weui-cells__group weui-cells__group_form" action="/game/" method="post" id="form_choose_game">
+                <input type="hidden" name="app_en_name" value="{{ app_en_name }}">
+                {% csrf_token %}
                 <div class="weui-form__text-area">
                     <h2 class="weui-form__title">
                     请选择你要进行的游戏
@@ -46,7 +47,8 @@
                     {% for game in show_game_list %}
                     <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ game.style }}"
                        {% if game.enable %}
-                            href="/game/?app_en_name={{app_en_name}}&game_name={{game.game_name}}">
+                            href="javascript:" onClick="game_click('{{game.game_name}}');">
+                            
                         {% else %}
                             href="javascript:">
                         {% endif %}
@@ -127,11 +129,12 @@
         });
 
     </script>
-</script>
+</div>
+<script src="{% static 'js/jquery.min.js' %}"></script>
+<script src="{% static 'js/common.js' %}"></script>
 <script src="{% static 'js/zepto.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/jweixin-1.0.0.js' %}"></script>
+<script src="{% static 'js/jweixin-1.4.0.js' %}"></script>
 <script src="{% static 'js/weui.min.js' %}"></script>
-<script src="{% static 'js/example.js' %}"></script>
 <script src="{% static 'js/wah.js' %}"></script>
 </body>
 </html>

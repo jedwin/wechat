@@ -29,6 +29,7 @@ ASK_FOR_PASSWORD = '请先输入从客服处获得的密码'
 GAME_IS_NOT_ACTIVE = '对不起，游戏未启动或时间已过'
 CHECK_CLEAR_CODE = '查看通关密码'
 CHECK_PROGRESS = '查看当前进度'
+CMD_LOGOUT = 'logout'                           # 当cmd=CMD_LOGOUT时，表示用户要退出登录
 FIELD_CLEAR_CODE = 'clear_code'                 # 存放通过码的字典key
 FIELD_REWARD_LIST = 'reward_list'               # 存放已获取奖励的字典key
 FIELD_COMMAND_LIST = 'cmd_list'                 # 存放已行动命令的字典key
@@ -409,10 +410,11 @@ def game(request):
     user_name = user.username
     group_list = [str(x) for x in user.groups.all()]
     if request.method == 'GET':
+        # 对于GET，只接收app_en_name和game_name
         app_en_name = request.GET.get('app_en_name', '')
         game_name = request.GET.get('game_name', '')
-        cmd = request.GET.get('cmd', '')
-        errmsg = request.GET.get('errmsg', '')
+        cmd = ''
+        errmsg = ''
     elif request.method == 'POST':
         app_en_name = request.POST.get('app_en_name', '')
         game_name = request.POST.get('game_name', '')
@@ -424,17 +426,19 @@ def game(request):
     ret_dict = dict()
     ret_dict['home_server'] = HOME_SERVER   # ret_dict['home_server'] = HOME_SERVER
     if user.is_authenticated:
-
-        # 临时使用，后面要增加判断用户所属的APP
         if len(app_en_name) == 0:
+            # 临时使用，后面要增加判断用户所属的APP
             app_en_name = 'miaozan'
+        if cmd == CMD_LOGOUT:
+            # 用户要退出登录
+            return HttpResponseRedirect(f'/accounts/logout/?next=/game/?app_en_name={app_en_name}')
         show_games_not_in_group = False
         cur_app = WechatApp.objects.get(en_name=app_en_name)
         show_games_not_in_group = cur_app.show_games_not_in_group
         auto_enter_game = cur_app.auto_enter_game
         game_brought_text = cur_app.game_brought_text
         game_not_brought_text = cur_app.game_not_brought_text
-        if len(game_name) == 0:
+        if len(game_name) == 0: # 未携带game_name
             template = 'choose_game.html'
             all_game_list = [x.name for x in ExploreGame.objects.filter(is_active=True)]
             # get the min set from all_game_list and group_list
@@ -486,7 +490,7 @@ def game(request):
                     logger.error(f'account {user} no right to access {game_name}')
                 return render(request, template, ret_dict)
     else:
-        return HttpResponseRedirect(f'/accounts/login/?next=/game/?game_name={game_name}&app_en_name={app_en_name}')
+        return HttpResponseRedirect(f'/accounts/login/?next=/game/?app_en_name={app_en_name}')
 
 
 def download(request, filename):
