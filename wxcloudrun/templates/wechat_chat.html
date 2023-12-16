@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0,viewport-fit=cover">
     <meta name="wechat-enable-text-zoom-em" content="true">
-
+    <meta name="color-scheme" content="light dark">
     <title>{{ quest_trigger }}</title>
     <link rel="stylesheet" href="{% static 'style/weui.css' %}"/>
     <!-- <link rel="stylesheet" href="../static/style/example.css"/> -->
@@ -30,7 +30,9 @@
             </div>
             
             <div class="weui-form">
-                <form class="weui-cells__group weui-cells__group_form" action="/game/" >
+                <form class="weui-cells__group weui-cells__group_form" action="/chat/" method="post" id="form_question" >
+                    {% csrf_token %}
+                    <input type="hidden" name="character" value="" id="character">
                     <div class="weui-cells__group weui-cells__group_form">
                         <div class="weui-cells weui-cells_radio">
                             {% for npc in characters %}
@@ -59,7 +61,7 @@
                             
                             <div class="weui-cell__bd">
                                 
-                                    <input id="js_input" class="weui-input" placeholder="你想问什么问题？"/>
+                                    <input id="js_input" class="weui-input" placeholder="你想问什么问题？" name="question"/>
                                 
                             </div>
                         </label>
@@ -85,8 +87,9 @@
     </div>
 
     <script type="text/javascript">
-        var $input = document.querySelector('#js_input');
-        var $button = document.querySelector('#confirm_button');
+        var $input = document.getElementById('js_input');
+        var $button = document.getElementById('confirm_button');
+        var $character = document.getElementById('character');
         var $labels = document.querySelectorAll('.weui-check__label');
         const Http = new XMLHttpRequest();
 
@@ -98,13 +101,18 @@
                 return;
             }else{
                 var checked_label = checked_span.parentNode.parentNode.querySelector('p').innerText;
+                $character.value = checked_label;
             }
             if (answer.length == 0){
                 return;
             }else{
-                var url = '/chat/?question='+answer+'&character='+checked_label;
+                // var url = '/chat/?question='+answer+'&character='+checked_label;
+                var my_form = document.getElementById('form_question');
+                //my_form.character.value = checked_label;
+                //my_form.question.value = answer;
+                my_form.submit();
                 //alert(url);
-                globalThis.location=url;
+                //globalThis.location=url;
                 
             };
         });

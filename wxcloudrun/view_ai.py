@@ -26,8 +26,14 @@ def accounting(model, completion_tokens, prompt_tokens):
 
 def chat(request):
     user = request.user
-    question = request.GET.get('question', '')
-    character = request.GET.get('character', '')
+    if request.method == 'POST':
+        question = request.POST.get('question', '')
+        character = request.POST.get('character', '')
+    elif request.method == 'GET':
+        question = ''
+        character = ''
+    else:
+        return HttpResponse('request method error!')
     ret_dict = dict()
     ret_dict['home_server'] = HOME_SERVER
     ret_dict['chosen_character'] = ''

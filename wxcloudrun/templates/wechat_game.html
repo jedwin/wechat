@@ -8,7 +8,6 @@
     <meta name="color-scheme" content="light dark">
     <title>{{ quest_trigger }}</title>
     <link rel="stylesheet" href="{% static 'style/weui.css' %}"/>
-    <link rel="stylesheet" href="{% static 'style/example.css' %}"/>
     <title>淼赞文化-{{ cur_game_name }}</title>
 </head>
 <body ontouchstart>
@@ -53,7 +52,10 @@
                     
                 </div>
                 <div class="weui-form__control-area">
-                    <form class="weui-cells__group weui-cells__group_form" action="/game/" >
+                    <form class="weui-cells__group weui-cells__group_form" method="post" action="/game/">
+                        <input type="hidden" name="game_name" value="{{ cur_game_name }}">
+                        <input type="hidden" name="app_en_name" value="{{ app_en_name }}">
+                        {% csrf_token %}
                     {% if page_type == "quest" or page_type == "main" or page_type == "password" %}
                         {% if reply_options|length > 0 %}
                         <div class="weui-cells__title">请选择</div>
@@ -88,20 +90,20 @@
                                 </span></div>
                                 <div class="weui-cell__bd">
                                     {% if page_type == "password" %}
-                                    <input id="js_input" class="weui-input" type="tel" pattern="[0-9]{6}" placeholder="请输入密码"/>
+                                    <input id="js_input" name="cmd" class="weui-input" type="tel" pattern="[0-9]{6}" placeholder="请输入密码"/>
 
                                     {% elif page_type == "ending" %}
                                     <div></div>
                                     {% else %}
-                                    <input id="js_input" class="weui-input" placeholder="请把你的答案写在这里"/>
+                                    <input id="js_input" name="cmd" class="weui-input" placeholder="请把你的答案写在这里"/>
                                     {% endif %}
 
                                 </div>
                             </label>
                             <br>
                             <div class="weui-form__opr-area">
-                                <a role="button" disabled aria-disabled="true" href="javascript:" id="btnConfirm"
-                                class="weui-btn weui-btn_primary weui-btn_disabled">确定</a>
+                                <input type="submit" role="button" disabled aria-disabled="true" id="btnConfirm" 
+                                class="weui-btn weui-btn_primary weui-btn_disabled" value="确定">
                             </div>
                         {% endif %}
                         </div>
@@ -266,150 +268,91 @@
     }
 </script>
 <script>
+    function show_dialog(dialog, Dialog_div, next_url=null){
+        dialog.fadeIn(200);
+        dialog.attr('aria-hidden','false');
+        dialog.attr('tabindex','0');
+        dialog.trigger('focus');
+        Dialog_div.on('click', '.weui-dialog__btn_default', function(){
+            dialog.fadeOut(200);
+            dialog.attr('aria-hidden','true');
+            dialog.removeAttr('tabindex');
+        });
+        Dialog_div.on('click', '.weui-dialog__btn_primary', function(){
+            globalThis.location=next_url;
+        });
+    }
+    // 游戏提示对话框
+    var Dialog_hint = $('#iosDialog_hint');
+    var Dialog_hint_div = $('#dialog_hint');
+    $('#showIOSDialog_hint').on('click', function(){
+        show_dialog(Dialog_hint, Dialog_hint_div);
+    });
+
+    // 通关码对话框
+    var Dialog_ClearCode = $('#iosDialog_clear');
+    var Dialog_ClearCode_div = $('#dialog_clear');
+    $('#showClearCode').on('click', function(){
+        show_dialog(Dialog_ClearCode, Dialog_ClearCode_div);
+    });
+
+    // 重新开始对话框
+    var Dialog_go_back = $('#iosDialog_go_back');
+    var Dialog_go_back_div = $('#dialog_go_back');
+    $('#showGoBack').on('click', function(){
+        show_dialog(Dialog_go_back, Dialog_go_back_div, '/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd=init');
+    });
+
+    // 退出登录对话框
+    var Dialog_logout = $('#iosDialog_logout');
+    var Dialog_logout_div = $('#dialog_logout');
+    $('#show_logout').on('click', function(){
+        show_dialog(Dialog_logout, Dialog_logout_div, '/accounts/logout/?next=/game/?app_en_name={{app_en_name}}');
+    });
+
+    // 验证输入框是否为空，为空则禁用确定按钮
+    var $input = $('#js_input');
+    $input.on('input', function(){
+    if ($input.val()){
+        $('#btnConfirm').removeClass('weui-btn_disabled');
+        $('#btnConfirm').attr('aria-disabled','false');
+        $('#btnConfirm').removeAttr('disabled');
+    }else{
+        $('#btnConfirm').addClass('weui-btn_disabled');
+        $('#btnConfirm').addClass('weui-btn_disabled');
+        $('#btnConfirm').attr('aria-disabled','true');
+        $('#btnConfirm').addAttr('disabled');
+    }
+    });
+    // 点击确定按钮的操作
+    /* 
+    $('#btnConfirm').on('click', function(){
+        if ($(this).hasClass('weui-btn_disabled')) return;
+        var $loadingToast = $('#loadingToast');
+        if ($loadingToast.css('display') != 'none') return;
+        $loadingToast.fadeIn(100);
+        setTimeout(function () {
+            $loadingToast.fadeOut(100);
+        }, 2000);
+        globalThis.location='/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd='+$input.val();
+
+    });
+    */
     $(function(){
-        var iosDialog_hint = $('#iosDialog_hint');
-        $('#dialog_hint').on('click', '.weui-dialog__btn_default', function(){
-            $(this).parents('.js_dialog_hint').fadeOut(200);
-            $(this).parents('.js_dialog_hint').attr('aria-hidden','true');
-            $(this).parents('.js_dialog_hint').removeAttr('tabindex');
-        });
-        $('#showIOSDialog_hint').on('click', function(){
-            iosDialog_hint.fadeIn(200);
-            iosDialog_hint.attr('aria-hidden','false');
-            iosDialog_hint.attr('tabindex','0');
-            iosDialog_hint.trigger('focus');
-        });
+        
 
-        var iosDialog_progress = $('#iosDialog_progress');
-        $('#dialog_progress').on('click', '.weui-dialog__btn_default', function(){
-            $(this).parents('.js_dialog_progress').fadeOut(200);
-            $(this).parents('.js_dialog_progress').attr('aria-hidden','true');
-            $(this).parents('.js_dialog_progress').removeAttr('tabindex');
-        });
-        $('#showIOSDialog_progress').on('click', function(){
-            iosDialog_progress.fadeIn(200);
-            iosDialog_progress.attr('aria-hidden','false');
-            iosDialog_progress.attr('tabindex','0');
-            iosDialog_progress.trigger('focus');
-        });
-
-        var iosDialog_clear = $('#iosDialog_clear');
-        $('#dialog_clear').on('click', '.weui-dialog__btn_default', function(){
-            $(this).parents('.js_dialog_clear').fadeOut(200);
-            $(this).parents('.js_dialog_clear').attr('aria-hidden','true');
-            $(this).parents('.js_dialog_clear').removeAttr('tabindex');
-        });
-        $('#showClearCode').on('click', function(){
-            iosDialog_clear.fadeIn(200);
-            iosDialog_clear.attr('aria-hidden','false');
-            iosDialog_clear.attr('tabindex','0');
-            iosDialog_clear.trigger('focus');
-        });
-
-        let iosDialog_go_back = $('#iosDialog_go_back');
-        $('#dialog_go_back').on('click', '.weui-dialog__btn_default', function(){
-            $(this).parents('.js_dialog_go_back').fadeOut(200);
-            $(this).parents('.js_dialog_go_back').attr('aria-hidden','true');
-            $(this).parents('.js_dialog_go_back').removeAttr('tabindex');
-        });
-        $('#dialog_go_back').on('click', '.weui-dialog__btn_primary', function(){
-            globalThis.location='/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd=init';
-        });
-        $('#showGoBack').on('click', function(){
-            iosDialog_go_back.fadeIn(200);
-            iosDialog_go_back.attr('aria-hidden','false');
-            iosDialog_go_back.attr('tabindex','0');
-            iosDialog_go_back.trigger('focus');
-        });
-
-        let iosDialog_logout = $('#iosDialog_logout');
-        $('#dialog_logout').on('click', '.weui-dialog__btn_default', function(){
-            $(this).parents('.js_dialog_logout').fadeOut(200);
-            $(this).parents('.js_dialog_logout').attr('aria-hidden','true');
-            $(this).parents('.js_dialog_logout').removeAttr('tabindex');
-        });
-        $('#dialog_logout').on('click', '.weui-dialog__btn_primary', function(){
-            globalThis.location='/accounts/logout/?next=/game/?app_en_name={{app_en_name}}';
-        });
-        $('#show_logout').on('click', function(){
-            iosDialog_logout.fadeIn(200);
-            iosDialog_logout.attr('aria-hidden','false');
-            iosDialog_logout.attr('tabindex','0');
-            iosDialog_logout.trigger('focus');
-        });
-
-        var $input = $('#js_input');
-        $input.on('input', function(){
-        if ($input.val()){
-          $('#btnConfirm').removeClass('weui-btn_disabled');
-          $('#btnConfirm').attr('aria-disabled','false');
-          $('#btnConfirm').removeAttr('disabled');
-        }else{
-          $('#btnConfirm').addClass('weui-btn_disabled');
-          $('#btnConfirm').addClass('weui-btn_disabled');
-          $('#btnConfirm').attr('aria-disabled','true');
-          $('#btnConfirm').addAttr('disabled');
-        }
-        });
-
+        
+        /* 
         $('#dialog_wrong_answer').on('click', '.weui-dialog__btn_default', function(){
             $(this).parents('.js_dialog_wrong_answer').fadeOut(200);
             $(this).parents('.js_dialog_wrong_answer').attr('aria-hidden','true');
             $(this).parents('.js_dialog_wrong_answer').removeAttr('tabindex');
         });
-        $('#btnConfirm').on('click', function(){
-            if ($(this).hasClass('weui-btn_disabled')) return;
-            var $loadingToast = $('#loadingToast');
-            if ($loadingToast.css('display') != 'none') return;
-            $loadingToast.fadeIn(100);
-            setTimeout(function () {
-                $loadingToast.fadeOut(100);
-            }, 2000);
-            globalThis.location='/game/?game_name={{cur_game_name}}&app_en_name={{app_en_name}}&cmd='+$input.val();
-
-        });
+        */
+        
     });
 
 </script>  
-<script type="text/javascript" class="actionsheet js_show">
-    // ios
-    $(function(){
-        var $iosActionsheet = $('#iosActionsheet');
-        var $iosMask = $('#iosMask');
-
-        function hideActionSheet() {
-            $iosActionsheet.removeClass('weui-actionsheet_toggle').attr('aria-hidden','true');
-            $iosMask.fadeOut(200);
-            $('#showIOSActionSheet').trigger('focus');
-        }
-
-        $iosMask.on('click', hideActionSheet);
-        $('#iosActionsheetCancel').on('click', hideActionSheet);
-        $("#showIOSActionSheet").on("click", function(){
-            $iosActionsheet.attr('aria-hidden','false').addClass('weui-actionsheet_toggle');
-            $iosMask.fadeIn(200);
-            setTimeout(function(){
-              $('#current1').trigger('focus');
-            },200)
-        });
-    });
-
-    // android
-    $(function(){
-        var $androidActionSheet = $('#androidActionsheet');
-
-        $("#showAndroidActionSheet").on('click', function(){
-            $androidActionSheet.attr('aria-hidden','false').fadeIn(200);
-            setTimeout(function(){
-              $('#androidClose').trigger('focus');
-            },200)
-        });
-        $('#androidClose').on('click',function () {
-          $androidActionSheet.attr('aria-hidden','true').fadeOut(200);
-          $('#showAndroidActionSheet').trigger('focus');
-        });
-
-    });</script>
 <script src="{% static 'js/zepto.min.js' %}"></script>
 <script src="{% static 'js/jweixin-1.4.0.js' %}"></script>
 <script src="{% static 'js/weui.min.js' %}"></script>

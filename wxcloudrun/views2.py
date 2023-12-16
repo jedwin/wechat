@@ -408,10 +408,18 @@ def game(request):
     user_id = user.id
     user_name = user.username
     group_list = [str(x) for x in user.groups.all()]
-    app_en_name = request.GET.get('app_en_name', '')
-    game_name = request.GET.get('game_name', '')
-    cmd = request.GET.get('cmd', '')
-    errmsg = request.GET.get('errmsg', '')
+    if request.method == 'GET':
+        app_en_name = request.GET.get('app_en_name', '')
+        game_name = request.GET.get('game_name', '')
+        cmd = request.GET.get('cmd', '')
+        errmsg = request.GET.get('errmsg', '')
+    elif request.method == 'POST':
+        app_en_name = request.POST.get('app_en_name', '')
+        game_name = request.POST.get('game_name', '')
+        cmd = request.POST.get('cmd', '')
+        errmsg = request.POST.get('errmsg', '')
+    else:
+        return HttpResponse('不支持的请求方式')
     
     ret_dict = dict()
     ret_dict['home_server'] = HOME_SERVER   # ret_dict['home_server'] = HOME_SERVER
