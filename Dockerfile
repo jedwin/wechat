@@ -50,5 +50,5 @@ EXPOSE 80
 # RUN python3 manage.py makemigrations
 # RUN python3 manage.py migrate
 # 设定启动命令
-# CMD ["python3", "manage.py", "runserver", "0.0.0.0:9001"]
-CMD ["uwsgi", "--ini", "uwsgi_setting.ini"]
+CMD ["python3", "manage.py", "runserver", "0.0.0.0:9001"]
+# CMD ["uwsgi", "--ini", "uwsgi_setting.ini"]
