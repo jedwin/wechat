@@ -115,6 +115,7 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', user
     # 如果cur_player.cur_game_name也为空，就返回失败信息
     if len(game_name) > 0:
         cur_game_name = game_name
+        
     elif len(cur_player.cur_game_name) > 0:
         cur_game_name = cur_player.cur_game_name
     else:
@@ -189,6 +190,8 @@ def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', user
 
     # 用了Django的session机制，如果用户信息已经传递到这里，就不需要再次鉴权
     if True:  # player_is_audit:
+        cur_player.cur_game_name = cur_game_name
+        cur_player.save()
         if len(clear_code) > 0:
             # 如果通关码不为空，表示用户已通关，直接显示通关页面
             ret_dict = set_ending(cur_game=cur_game, ret_dict=ret_dict)

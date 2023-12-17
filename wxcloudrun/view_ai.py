@@ -3,7 +3,9 @@ from django.shortcuts import HttpResponse, render, HttpResponseRedirect
 import requests
 import os
 from logging import getLogger
-
+from wxcloudrun.common_functions import load_private_key, load_public_key, encrypt_message, decrypt_message
+from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding
+import base64
 
 HOME_SERVER = os.environ.get('HOME_SERVER', '')
 
@@ -29,17 +31,24 @@ def chat(request):
     if request.method == 'POST':
         question = request.POST.get('question', '')
         character = request.POST.get('character', '')
+        encrypt_msg = request.POST.get('encrypt_msg', '')
+        csrf_token = request.POST.get('csrfmiddlewaretoken')
+        
     elif request.method == 'GET':
         question = ''
         character = ''
+        encrypt_msg = ''
     else:
         return HttpResponse('request method error!')
+    public_key = load_public_key('public_key.pem')
     ret_dict = dict()
     ret_dict['home_server'] = HOME_SERVER
     ret_dict['chosen_character'] = ''
+    # ret_dict['public_key'] = public_key.public_bytes(encoding=Encoding.PEM, format=PublicFormat.SubjectPublicKeyInfo).decode('utf-8')
     if user.is_authenticated:
         if 'GPT' in user.groups.values_list('name', flat=True):
             template = 'wechat_chat.html'
+            
             if os.path.exists('characters.json'):
                 with open('characters.json', 'r', encoding='utf-8') as f:
                     character_DICT = json.load(f)
@@ -105,7 +114,17 @@ def chat(request):
                         return HttpResponse(f'服务器返回异常！{result_dict}')
                 else:
                     return HttpResponse(f'服务器错误！{r.text}')
-                
+            elif encrypt_msg != '':
+                try:
+                    private_key = load_private_key('private_key.pem')
+                    decryp_msg = decrypt_message(private_key=private_key, encrypted_message=encrypt_msg)
+                    decryp_msg = decryp_msg.decode('utf-8')
+                    ret_dict['reply_obj'] = '解密成功！'
+                    ret_dict['encrypted_msg'] = encrypt_message(public_key=public_key, message=f'服务器已收到：{decryp_msg}')
+                    return render(request, template, ret_dict)
+                except Exception as e:
+                    ret_dict['reply_obj'] = f'解密失败！{e}'
+                    return render(request, template, ret_dict)
             else:
                 
                 return render(request, template, ret_dict)

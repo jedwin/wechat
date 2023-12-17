@@ -1,9 +1,11 @@
 from django.db import models
 from django.core.exceptions import *
+from django.contrib.auth.models import User, Group
 from hashlib import sha1
 from urllib3 import ProxyManager
 from wxcloudrun.coordinate_converter import *
 from django.db.models import F, Q, When, Count
+from django.utils.html import mark_safe
 import urllib3
 import requests
 import certifi
@@ -320,6 +322,41 @@ class WechatApp(models.Model):
         my_menu = WechatMenu(app=self, remark=remark, menu_string=menu_string)
         my_menu.save()
 
+    def orgenize_user(self):
+        """
+        对用户进行整理
+        1、遍历App内所有用户
+        2、对每个用户，通过openid获取对应玩家对象
+        3、如果玩家对象不存在，就log并跳过
+        4、如果玩家对象存在，就用用户组列表中的第一个组名，更新玩家对象的cur_game_name
+        :return:
+        """
+        my_users = User.objects.all()
+        total_count = 0
+        succ_count = 0
+        fail_count = 0
+        no_need_count = 0
+        for my_user in my_users:
+            
+            try:
+                my_open_id = sha1(str(my_user.id).encode('utf-8')).hexdigest()
+                my_player = WechatPlayer.objects.get(app=self, open_id=my_open_id)
+                total_count += 1
+            except ObjectDoesNotExist:
+                # 这个用户没有对应的玩家对象，跳过
+                continue
+            my_groups = my_user.groups.all()
+            if len(my_player.cur_game_name) > 0:
+                no_need_count += 1
+            elif len(my_groups) > 0:
+                my_group = my_groups[0]
+                my_player.cur_game_name = my_group.name
+                my_player.save()
+                succ_count += 1
+            else:
+                logger.error(f'用户{my_user.name}没有分组')
+                fail_count += 1
+        return True, f'共有{total_count}个用户，成功更新{succ_count}个, 不需要更新{no_need_count}个，失败{fail_count}个'
 
 class WechatMedia(models.Model):
     """
@@ -564,8 +601,70 @@ class WechatPlayer(models.Model):
             return result, errmsg
 
     def hash_with_game(self, cur_game_name, len=8):
+        """
+        通过openid和游戏名生成一个hash值，用于游戏的通关码
+        """
         temp_string = (self.open_id + cur_game_name).encode('utf-8')
         return sha1(temp_string).hexdigest()[0-len:]
+
+    def get_game_hist(self):
+        """
+        从数据库中获取玩家当前游戏的记录
+        :return: 游戏记录的字典
+        """
+        if self.game_hist is None:
+            return dict()
+        else:
+            ret_string = ''
+            return self.game_hist.get(self.cur_game_name, dict())
+            
+    @property
+    def get_wait_status(self):
+        """
+        从当前游戏记录中获取等待状态
+        """
+
+        game_hist = self.get_game_hist()
+        return game_hist.get('wait_status', '')
+
+    @property
+    def get_is_passed(self):
+        """
+        从当前游戏记录中获取通关情况
+        return True/False
+        """
+        game_hist = self.get_game_hist()
+        clear_code = game_hist.get('clear_code', '')
+        if len(clear_code) == 0:
+            return mark_safe('<img src="/static/admin/img/icon-no.svg" alt="False">')
+        else:
+            return mark_safe('<img src="/static/admin/img/icon-yes.svg" alt="True">')
+    
+    @property
+    def get_reward_count(self):
+        game_hist = self.get_game_hist()
+        return len(game_hist.get('reward_list', []))
+    
+    @property
+    def get_cmd_count(self):
+        game_hist = self.get_game_hist()
+        cmd_dict = game_hist.get('cmd_dict', {})
+        move_count = 0
+        for cmd, cmd_list in cmd_dict.items():
+            move_count += len(cmd_list)
+        return move_count
+    
+    @property
+    def get_quest_count(self):
+        game_hist = self.get_game_hist()
+        cmd_dict = game_hist.get('cmd_dict', {})
+        return len(cmd_dict)
+
+    get_quest_count.fget.short_description = '进入过的关卡数'
+    get_cmd_count.fget.short_description = '发出的指令数'
+    get_reward_count.fget.short_description = '获得的奖励id数'
+    get_is_passed.fget.short_description = '是否已通关'
+    get_wait_status.fget.short_description = '当前关卡'
 
 
 class AppKeyword(models.Model):

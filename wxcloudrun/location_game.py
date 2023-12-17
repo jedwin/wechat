@@ -43,7 +43,7 @@ if len(HOME_SERVER) > 0:
         HOME_SERVER += '/'
 else:
     HOME_SERVER = '/'
-domain_name = 'miao2022.com'                    # 用于创建新账号的邮件地址域名
+domain_name = 'lovelymiu.com'                    # 用于创建新账号的邮件地址域名
 
 SETTING_PATH = '/settings/'      # 游戏设置文件存放路径
 sep = '|'           # 分隔符
@@ -324,7 +324,8 @@ class ExploreGame(models.Model):
         update_count = 0
         delete_count = 0
         try:
-            f = open(f'{SETTING_PATH}{self.settings_file}', 'r', encoding='utf_8_sig')
+            in_file = os.path.join(SETTING_PATH, self.settings_file).encode("utf-8")
+            f = open(in_file, 'r', encoding='utf_8_sig')
         except:
             ret_dict['errmsg'] = f'can not open setting file: {self.settings_file}'
             return ret_dict
@@ -467,7 +468,7 @@ class ExploreGame(models.Model):
         :return: 成功生成的用户数量
         
         """
-        output_file = f'{SETTING_PATH}{self.name}_新账号清单.csv'
+        output_file = os.path.join(SETTING_PATH, f'{self.name}_新账号清单.csv').encode("utf-8")
         if how_many > 100:
             # 未免误操作，此处做一个限制
             how_many = 100
@@ -487,6 +488,7 @@ class ExploreGame(models.Model):
                 return 0
             try:
                 # open a file to read
+                in_file_name = os.path.join(SETTING_PATH, self.account_file).encode("utf-8")
                 f = open(f'{SETTING_PATH}{self.account_file}', 'r', encoding='utf_8_sig')
                 input_data = f.readlines()
                 how_many = len(input_data)
@@ -508,8 +510,8 @@ class ExploreGame(models.Model):
                 if from_file:
                     # 从文件中读取用户名和密码
                     user_data_list = input_data[i].replace('\n', '').split(',')
-                    if len(user_data_list) == 2:
-                        # 如果该行有两列，第一列作为用户名，第二列作为密码
+                    if len(user_data_list) >= 2:
+                        # 如果该行有两列或以上，第一列作为用户名，第二列作为密码
                         new_user_name, new_passwd_str = user_data_list
                         new_passwd_str = new_passwd_str.strip()
                     else:
@@ -534,6 +536,12 @@ class ExploreGame(models.Model):
 
                 new_user = User.objects.create_user(new_user_name, f'{new_user_name}@{domain_name}', new_passwd_str)
                 new_user.groups.add(group)
+                open_id = sha1(str(new_user.id).encode('utf-8')).hexdigest()
+                new_player = WechatPlayer(app=self.app, open_id=open_id, name=new_user_name, cur_game_name=self.name)
+                new_player.user_info = dict()
+                new_player.user_info['user_id'] = new_user_name
+                new_player.save()
+                new_clear_code = new_player.hash_with_game(self.name)  # 生成这个用户在这个游戏的通关码
                 marked = False
                 for x in existing_users_data:
                     if x[0] == new_user_name:
@@ -541,7 +549,7 @@ class ExploreGame(models.Model):
                         marked = True
                         break
                 if not marked:
-                    existing_users_data.append([new_user_name, new_passwd_str])
+                    existing_users_data.append([new_user_name, new_passwd_str, new_clear_code])
                 # created_user_list.append(f'{new_user_name},{new_passwd_str}')
                 count += 1
             except Exception as e:

@@ -58,7 +58,7 @@
                         {% csrf_token %}
                     {% if page_type == "quest" or page_type == "main" or page_type == "password" %}
                         {% if reply_options|length > 0 %}
-                        <div class="weui-cells__title">请选择</div>
+                        <div class="weui-cells__title"></div>
                         <div class="weui-cells">
                             {% for option in reply_options %}
                             <a aria-labelledby="js_cell_tl2_tips js_cell_tl2_link" class="{{ option.style }}" 
@@ -77,7 +77,7 @@
                             </a>
                             {% endfor %}
                         {% else %}
-                        <div class="weui-cells__title">轮到你来回答啦</div>
+                        <div class="weui-cells__title"></div>
                         <div class="weui-cells">
                             <label for="js_input" class="weui-cell weui-cell_active">
                                 <div class="weui-cell__hd"><span class="weui-label">

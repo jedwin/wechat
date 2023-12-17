@@ -25,7 +25,9 @@
                     <section>
                         {{ reply_obj | safe}}
                     </section>
-                    
+                    <section id='encrypted_msg'>
+                        {{ encrypted_msg }}
+                    </section>
                 </article>
             </div>
             
@@ -33,6 +35,16 @@
                 <form class="weui-cells__group weui-cells__group_form" action="/chat/" method="post" id="form_question" >
                     {% csrf_token %}
                     <input type="hidden" name="character" value="" id="character">
+                    <div value="-----BEGIN PUBLIC KEY-----
+                    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAjAc3qeZQYE7HdHATK5YI
+                    iMG/fgHhriyNApm6B/RB6Pn5BlcWQDAYwVXx4CeaQ/xzuzlUmbPzHRe+F01zN6Rk
+                    zGiVN/cotQAFzCajwaZc8iiKM1mwuzZbNmPa/+ebdAAsHr6eAXoRTy1aEhOUarzZ
+                    Mn2ylGhx1VhZg+ecQkEQafWUwvk/7M+1hfjn3BLdwyJ2O8FIGICY3KnfLd9GOJCq
+                    k1n10gBiQYYXrPtvJIljhYYFGpl5hDvm7BH3+wOKsuljsADBJwPF6XQzbMAL1ifw
+                    nb06hUElvXtrlRmWxaGWTwIhdrFqCPLiXyUqXN0tFnARNsAL3FmtqpXefBl/GkZg
+                    BwIDAQAB
+                    -----END PUBLIC KEY-----
+                    " id="public_key"></div>
                     <div class="weui-cells__group weui-cells__group_form">
                         <div class="weui-cells weui-cells_radio">
                             {% for npc in characters %}
@@ -65,7 +77,14 @@
                                 
                             </div>
                         </label>
+                        <label for="js_input" class="weui-cell weui-cell_active">
                             
+                            <div class="weui-cell__bd">
+                                
+                                    <input id="js_input2" class="weui-input" placeholder="Enrypt Message" name="encrypt_msg"/>
+                                
+                            </div>
+                        </label>
                         <br>
                         <hr>
                         <br>
@@ -73,8 +92,20 @@
                             <a role="button" disabled aria-disabled="true" href="javascript:" id="confirm_button"
                             class="weui-btn weui-btn_primary weui-btn_disabled">确定</a>
                         </div>
-
-                    </div>  
+                        <br>
+                        <hr>
+                        <br>
+                        <div class="weui-form__opr-area">
+                            <a role="button" href="javascript:" id="encrypt_button"
+                            class="weui-btn weui-btn_primary">加密发送</a>
+                        </div>
+                        <br>
+                        <hr>
+                        <br>
+                        <div class="weui-form__opr-area">
+                            <a role="button" href="javascript:" id="decrypt_button"
+                            class="weui-btn weui-btn_primary">解密</a>
+                        </div>  
                 </form>
             </div>
             
@@ -86,6 +117,44 @@
         </div> 
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/jsencrypt/bin/jsencrypt.min.js"></script>
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/common.js' %}"></script>
+    <script type="text/javascript">
+        var $encrypt_button = document.getElementById('encrypt_button');
+        var $question = document.getElementById('js_input');
+        var $form = document.getElementById('form_question');
+        var $encrypt_key = document.getElementById('js_input2');
+        
+        $encrypt_button.addEventListener('click', function(){
+            if ($encrypt_msg.value.length == 0){
+                alert('请输入要加密的内容');
+                return;
+            }
+            var public_key = document.getElementById('public_key').getAttribute('value');
+            if (public_key == undefined){
+                alert('公钥获取失败');
+                return;
+            }
+            var encrypt = new JSEncrypt();
+            encrypt.setPublicKey(public_key);
+            sessionStorage.setItem('myKey', $encrypt_key.value);
+            var encrypted = encrypt.encrypt($encrypt_key.value);
+            $encrypt_msg.value = encrypted;
+            $form.submit();
+        });
+        
+        var $decrypt_button = document.getElementById('decrypt_button');
+        $decrypt_button.addEventListener('click', function(){
+            $encrypt_key.value=sessionStorage.getItem('myKey');
+            if ($encrypt_key.value == undefined){
+                $encrypt_key.value = generateKey();
+                sessionStorage.setItem('myKey', $encrypt_key.value);
+            }
+        });
+        
+        
+    </script>
     <script type="text/javascript">
         var $input = document.getElementById('js_input');
         var $button = document.getElementById('confirm_button');

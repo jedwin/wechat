@@ -67,12 +67,14 @@ class ExploreGameQuestInline(admin.TabularInline):
 
 class WechatPlayerAdmin(admin.ModelAdmin):
     search_fields = ['name', 'nickname']
-    list_display = ('open_id', 'name', 'nickname', 'app', 'waiting_status', 'game_hist', 'user_info')
-    list_editable = ['waiting_status', 'game_hist', 'user_info']
-    list_filter = ['app']
+    list_display = ('name', 'nickname', 'cur_game_name', 'get_is_passed', 'get_quest_count', 'get_cmd_count', 'get_wait_status', 'get_reward_count')
+    list_editable = ['nickname']
+    list_filter = ['app', 'cur_game_name']
+    ordering = ['name', 'cur_game_name', ]
     # inlines = [GameDataInline,]
     # actions = ['load_player_json_file']
     save_on_top = True
+
     #
     # @admin.action(description='加载用户游戏数据')
     # def load_player_json_file(self, request, queryset):
@@ -93,7 +95,19 @@ class WechatPlayerAdmin(admin.ModelAdmin):
 class AppAdmin(admin.ModelAdmin):
     list_display = ('name', 'appid', 'image_count', 'video_count', 'subscriber_count')
     inlines = [GameInline, ]
-    actions = ['get_subscriber_info', 'update_image', 'update_video', 'gen_new_passwd_obj']
+    actions = ['orgenize_user', 'get_subscriber_info', 'update_image', 'update_video', 'gen_new_passwd_obj']
+
+    @admin.action(description='整理用户与玩家信息')
+    def orgenize_user(self, request, queryset):
+        for obj in queryset:
+            result, return_string = obj.orgenize_user()
+            if result:
+                # 如果成功，return_string会返回更新了信息的用户数，以及更新成功和失败的用户数
+                self.message_user(request, f'{return_string}', messages.SUCCESS)
+
+            else:
+                # 如果失败，return_obj会是失败原因字符串
+                self.message_user(request, f'{return_string}', messages.WARNING)
 
     @admin.action(description='更新关注用户信息')
     def get_subscriber_info(self, request, queryset):

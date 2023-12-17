@@ -6,6 +6,47 @@ from random import sample
 from wxcloudrun.models import *
 from wxcloudrun.location_game import *
 from django.core.exceptions import *
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+import base64
+
+# 加密消息
+def encrypt_message(message, public_key):
+    message = message.encode('utf-8')
+    encrypted = public_key.encrypt(
+        message,
+        padding.PKCS1v15()
+    )
+    return base64.b64encode(encrypted).decode('utf-8')
+
+# 解密消息
+def decrypt_message(encrypted_message, private_key):
+    # encrypt_msg was encoded by base64, so decode it first
+    encrypted_message = base64.b64decode(encrypted_message)
+    decrypted = private_key.decrypt(
+        encrypted_message,
+        padding.PKCS1v15()
+    )
+    return decrypted
+
+# 加载私钥
+def load_private_key(file_path):
+    with open(file_path, "rb") as key_file:
+        private_key = serialization.load_ssh_private_key(
+            data=key_file.read(),
+            password=None  # 如果私钥被密码保护，替换为相应的密码
+        )
+    return private_key
+
+# 加载公钥
+def load_public_key(file_path):
+    with open(file_path, "rb") as key_file:
+        public_key = serialization.load_ssh_public_key(
+            data=key_file.read()
+        )
+    return public_key
 
 
 def load_auto_reply_settings(auto_reply_for_non_player_file):
