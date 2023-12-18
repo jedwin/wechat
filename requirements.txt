@@ -14,3 +14,4 @@ django-jazzmin
 django-cors-headers
 sqlalchemy<2.0.0
 openai
+cryptography
