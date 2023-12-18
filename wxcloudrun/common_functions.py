@@ -10,21 +10,59 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
-import base64
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from Crypto.Cipher import AES
+from base64 import b64decode, b64encode
 
-# 加密消息
+# 用于还原用户数据的key
+def decode_base64url(input_str):
+    # 将Base64url编码的字符串转换为标准的Base64编码。
+    # 这通常涉及将'-'替换为'+'，将'_'替换为'/'。
+    base64_encoded_str = input_str.replace('-', '+').replace('_', '/')
+
+    # Base64编码要求字符串长度必须是4的倍数。
+    # 如果需要，添加缺少的'='字符。
+    padding = len(base64_encoded_str) % 4
+    if padding > 0:
+        base64_encoded_str += '=' * (4 - padding)
+
+    # 解码Base64字符串
+    decoded_bytes = b64decode(base64_encoded_str)
+
+    return decoded_bytes
+
+# AES加密函数
+def encrypt_aes(plaintext, key, iv):
+    cipher = AES.new(key, AES.MODE_GCM, nonce=iv)
+    ciphertext, tag = cipher.encrypt_and_digest(plaintext.encode('utf-8'))
+    return b64encode(cipher.nonce + ciphertext + tag)
+
+# AES解密函数
+
+def decrypt_aes_gcm(encrypted_data, key, iv):
+    # 创建AESGCM实例
+    aesgcm = AESGCM(key)
+
+    # 解密数据
+    # 如果使用了额外的认证数据（AAD），需要在这里提供
+    decrypted_data = aesgcm.decrypt(iv, encrypted_data, None)
+
+    return decrypted_data
+
+# RSA加密消息
 def encrypt_message(message, public_key):
     message = message.encode('utf-8')
     encrypted = public_key.encrypt(
         message,
         padding.PKCS1v15()
     )
-    return base64.b64encode(encrypted).decode('utf-8')
+    return b64encode(encrypted).decode('utf-8')
 
-# 解密消息
+# RSA解密消息
 def decrypt_message(encrypted_message, private_key):
     # encrypt_msg was encoded by base64, so decode it first
-    encrypted_message = base64.b64decode(encrypted_message)
+    encrypted_message = b64decode(encrypted_message)
     decrypted = private_key.decrypt(
         encrypted_message,
         padding.PKCS1v15()

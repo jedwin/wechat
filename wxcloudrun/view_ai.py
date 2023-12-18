@@ -3,8 +3,9 @@ from django.shortcuts import HttpResponse, render, HttpResponseRedirect
 import requests
 import os
 from logging import getLogger
-from wxcloudrun.common_functions import load_private_key, load_public_key, encrypt_message, decrypt_message
+from wxcloudrun.common_functions import *
 from cryptography.hazmat.primitives.serialization import PublicFormat, Encoding
+
 import base64
 
 HOME_SERVER = os.environ.get('HOME_SERVER', '')
@@ -31,13 +32,17 @@ def chat(request):
     if request.method == 'POST':
         question = request.POST.get('question', '')
         character = request.POST.get('character', '')
-        encrypt_msg = request.POST.get('encrypt_msg', '')
+        encrypted_msg = request.POST.get('encrypted_msg', '')
         csrf_token = request.POST.get('csrfmiddlewaretoken')
-        
+        encrypted_key = request.POST.get('encrypted_key', '')
+        encrypted_iv = request.POST.get('encrypted_iv', '')
     elif request.method == 'GET':
         question = ''
         character = ''
-        encrypt_msg = ''
+        encrypted_msg = ''
+        encrypted_key = ''
+        encrypted_iv = ''
+
     else:
         return HttpResponse('request method error!')
     public_key = load_public_key('public_key.pem')
@@ -114,17 +119,28 @@ def chat(request):
                         return HttpResponse(f'服务器返回异常！{result_dict}')
                 else:
                     return HttpResponse(f'服务器错误！{r.text}')
-            elif encrypt_msg != '':
-                try:
-                    private_key = load_private_key('private_key.pem')
-                    decryp_msg = decrypt_message(private_key=private_key, encrypted_message=encrypt_msg)
-                    decryp_msg = decryp_msg.decode('utf-8')
-                    ret_dict['reply_obj'] = '解密成功！'
-                    ret_dict['encrypted_msg'] = encrypt_message(public_key=public_key, message=f'服务器已收到：{decryp_msg}')
-                    return render(request, template, ret_dict)
-                except Exception as e:
-                    ret_dict['reply_obj'] = f'解密失败！{e}'
-                    return render(request, template, ret_dict)
+            elif encrypted_msg != '':
+                reply_string = ''
+                # try:
+                private_key = load_private_key('private_key.pem')
+                reply_string += f'加载私钥成功！<br>'
+                decrypted_key_dict = json.loads(decrypt_message(private_key=private_key, encrypted_message=encrypted_key))
+                decrypted_key = decode_base64url(decrypted_key_dict['k'])
+                reply_string += f'解密key成功！{decrypted_key}<br>'
+                decrypted_iv = decrypt_message(private_key=private_key, encrypted_message=encrypted_iv)
+                reply_string += f'解密iv成功！{decrypted_iv}<br>'
+                encrypted_msg = base64.b64decode(encrypted_msg)
+                reply_string += f'收到的加密信息：{encrypted_msg}<br>'
+                decrypted_msg = decrypt_aes_gcm(encrypted_data=encrypted_msg, key=decrypted_key, iv=decrypted_iv)
+                reply_string += f'解密msg成功！{decrypted_msg}<br>'
+                ret_dict['encrypted_msg'] = encrypt_aes(plaintext=f'服务器已收到：{decrypted_msg}', key=decrypted_key, iv=decrypted_iv)
+                reply_string += f'加密msg成功！<br>'
+                ret_dict['reply_obj'] = reply_string
+                return render(request, template, ret_dict)
+                # except Exception as e:
+                #     reply_string += f'解密失败！{e}'
+                #     ret_dict['reply_obj'] = reply_string
+                #     return render(request, template, ret_dict)
             else:
                 
                 return render(request, template, ret_dict)
