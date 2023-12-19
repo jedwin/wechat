@@ -24,27 +24,8 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "not-secret-at-all")
 DEBUG = os.getenv("DJANGO_DEBUG", False) 
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://miaozan-51588-9-1256107271.sh.run.tcloudbase.com',
-                        'https://www.key2go.top', 'https://game.lovelymiu.com', HOME_SERVER]
-
-############## CORS ################
-CORS_ALLOWED_ORIGINS = ['https://miaozan-51588-9-1256107271.sh.run.tcloudbase.com', 
-                        HOME_SERVER, 'https://www.key2go.top', 'https://game.lovelymiu.com:8443']
-CORS_ALLOW_METHODS = ['GET', 'OPTIONS', 'POST']
-CORS_ALLOW_HEADERS = [
-'accept',
-'accept-encoding',
-'authorization',
-'content-type',
-'dnt',
-'origin',
-'user-agent',
-'x-csrftoken',
-'x-requested-with',
-]
-CORS_EXPOSE_HEADERS = []
-CORS_ALLOW_CREDENTIALS = True
-########### End of CORS ############
+CSRF_TRUSTED_ORIGINS = ['https://miaozan-51588-9-1256107271.sh.run.tcloudbase.com', 'https://*.lovelymiu.com',
+                         HOME_SERVER]
 
 
 # Application definition

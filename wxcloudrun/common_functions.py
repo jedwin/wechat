@@ -32,11 +32,17 @@ def decode_base64url(input_str):
 
     return decoded_bytes
 
+# 还原iv
+def base64_to_bytes(base64_str):
+    # Base64解码
+    decoded_bytes = b64decode(base64_str)
+    return decoded_bytes
+
 # AES加密函数
 def encrypt_aes(plaintext, key, iv):
     cipher = AES.new(key, AES.MODE_GCM, nonce=iv)
     ciphertext, tag = cipher.encrypt_and_digest(plaintext.encode('utf-8'))
-    return b64encode(cipher.nonce + ciphertext + tag)
+    return b64encode(ciphertext), b64encode(tag)
 
 # AES解密函数
 

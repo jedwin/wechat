@@ -128,6 +128,16 @@
             return window.btoa(binary);
         }
 
+        function base64ToArrayBuffer(base64) {
+            var binary_string = window.atob(base64);
+            var len = binary_string.length;
+            var bytes = new Uint8Array(len);
+            for (var i = 0; i < len; i++) {
+                bytes[i] = binary_string.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
         async function generateKey() {
             return window.crypto.subtle.generateKey(
                 {
@@ -172,12 +182,10 @@
         
             return new TextDecoder().decode(decryptedData);
         }
-        
         async function exportKeyToJWK(key) {
             const jwk = await window.crypto.subtle.exportKey("jwk", key);
             return jwk;
         }
-        
         
         async function getKeyAsString(key) {
             const jwk = await exportKeyToJWK(key);
@@ -231,18 +239,26 @@
             $question.value = '';
             $form.submit();
         }
-        var $encrypt_button = document.getElementById('encrypt_button');
-       
+
+        async function decrypt_msg(){
+            var $encrypted_msg = document.getElementById('encrypted_msg');
+            var json_key = sessionStorage.getItem('Key');
+            if (json_key == undefined){
+                alert('密钥获取失败');
+                return;
+            }
+            var key = await importKeyFromJWK(json_key, 'AES-GCM', ['encrypt', 'decrypt'])
+            var iv = base64ToArrayBuffer(sessionStorage.getItem('iv'));
+            var decrypted_msg = await decryptData(key, base64ToArrayBuffer($encrypted_msg.innerText), iv);
+            var $form = document.getElementById('form_question');
+            $form.question.value = '解密成功：' + decrypted_msg;
+        }
+
+        var $encrypt_button = document.getElementById('encrypt_button');       
         $encrypt_button.addEventListener('click', encrypt_msg_and_fillform);
         
         var $decrypt_button = document.getElementById('decrypt_button');
-        $decrypt_button.addEventListener('click', function(){
-            $encrypt_key.value=sessionStorage.getItem('myKey');
-            if ($encrypt_key.value == undefined){
-                $encrypt_key.value = generateKey();
-                sessionStorage.setItem('myKey', $encrypt_key.value);
-            }
-        });
+        $decrypt_button.addEventListener('click', decrypt_msg);
         
         
     </script>
