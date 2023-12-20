@@ -135,7 +135,8 @@ def chat(request):
                 decrypted_msg = decrypt_aes_gcm(encrypted_data=encrypted_msg, key=decrypted_key, iv=decrypted_iv)
                 reply_string += f'解密msg成功！{decrypted_msg.decode("utf-8")}<br>'
                 ciphertext, tag = encrypt_aes(plaintext=f'服务器已收到：{decrypted_msg.decode("utf-8")}', key=decrypted_key, iv=decrypted_iv)
-                ret_dict['encrypted_msg'] = f'{ciphertext}|{tag}'
+                ret_dict['encrypted_msg'] = ciphertext
+                ret_dict['encrypted_tag'] = tag
                 reply_string += f'加密msg成功！<br>'
                 ret_dict['reply_obj'] = reply_string
                 return render(request, template, ret_dict)
