@@ -539,7 +539,7 @@ class ExploreGame(models.Model):
                 open_id = sha1(str(new_user.id).encode('utf-8')).hexdigest()
                 new_player = WechatPlayer(app=self.app, open_id=open_id, name=new_user_name, cur_game_name=self.name)
                 new_player.user_info = dict()
-                new_player.user_info['user_id'] = new_user_name
+                new_player.user_info['user_id'] = new_user.id
                 new_player.save()
                 new_clear_code = new_player.hash_with_game(self.name)  # 生成这个用户在这个游戏的通关码
                 marked = False
@@ -826,8 +826,10 @@ class ExploreGame(models.Model):
             passed_player_count: int, 本游戏下面的通关玩家数量
 
         """
+        all_users = User.objects.filter(groups__name=self.name)
+        all_player_count = len(all_users)
         all_player = WechatPlayer.objects.filter(game_hist__has_key=self.name)
-        all_player_count = len(all_player)
+        
         actual_player_count = 0
         passed_player_count = 0
         for player in all_player:

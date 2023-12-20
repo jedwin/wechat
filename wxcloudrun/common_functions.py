@@ -6,6 +6,7 @@ from random import sample
 from wxcloudrun.models import *
 from wxcloudrun.location_game import *
 from django.core.exceptions import *
+from django.contrib.auth.models import User, Group
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -323,9 +324,14 @@ def get_player_summary(appid, game_name):
     try:
         my_app = WechatApp.objects.get(appid=appid)
         my_game = ExploreGame.objects.get(app=my_app, name=game_name)
-        all_players = WechatPlayer.objects.filter(game_hist__has_key=my_game.name)
+        all_users = User.objects.filter(groups__name=game_name)
+        all_players = WechatPlayer.objects.filter(name__in=[x.username for x in all_users])
         for player in all_players:
-            my_game_data = player.game_hist[my_game.name]
+            if player.game_hist:
+                my_game_hist = player.game_hist
+            else:
+                my_game_hist = dict()
+            my_game_data = my_game_hist.get(my_game.name, dict())
             player_info = dict()
             player_info['user_id'] = player.name
             player_info['open_id'] = player.open_id
