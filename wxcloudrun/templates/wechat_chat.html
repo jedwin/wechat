@@ -26,6 +26,9 @@
                     <section id='encrypted_msg'>
                         {{ encrypted_msg }}
                     </section>
+                    <section id='tag'>
+                        {{ encrypted_tag }}
+                    </section>
                 </article>
             </div>
             
@@ -170,16 +173,13 @@
             };
         }
         
-        async function decryptData(key, encryptedData, iv) {
+        async function decryptData(encryptedData, key, iv, tag) {
+            const alg = { name: "AES-GCM", iv: iv, tagLength: 96 };
             const decryptedData = await window.crypto.subtle.decrypt(
-                {
-                    name: "AES-GCM",
-                    iv: iv
-                },
+                alg,
                 key,
-                encryptedData
+                new Uint8Array([...new Uint8Array(encryptedData), ...new Uint8Array(tag)])
             );
-        
             return new TextDecoder().decode(decryptedData);
         }
         async function exportKeyToJWK(key) {
@@ -192,15 +192,20 @@
             return JSON.stringify(jwk);
         }
         
-        async function importKeyFromJWK(jwkString, algorithm, keyUsages) {
-            const jwk = JSON.parse(jwkString);
+        async function importKeyFromJWK(jwkStr) {
+            const jwk = JSON.parse(jwkStr);
+        
             const key = await window.crypto.subtle.importKey(
-                "jwk",
-                jwk,
-                algorithm,
-                true,
-                keyUsages
+                "jwk", // 密钥格式
+                jwk, // JWK对象
+                {   // 加密算法的详情
+                    name: "AES-GCM", // 根据JWK中的alg字段确定算法
+                    // 其他算法特定的参数（如长度等）可以在这里指定
+                },
+                true, // 是否可导出
+                jwk.key_ops // 密钥操作数组，如["encrypt", "decrypt"]
             );
+        
             return key;
         }
         async function encrypt_msg_and_fillform(){
@@ -241,17 +246,25 @@
         }
 
         async function decrypt_msg(){
+            var $form = document.getElementById('form_question');
             var $encrypted_msg = document.getElementById('encrypted_msg');
+            var $tag = document.getElementById('tag');
             var json_key = sessionStorage.getItem('Key');
             if (json_key == undefined){
                 alert('密钥获取失败');
                 return;
             }
-            var key = await importKeyFromJWK(json_key, 'AES-GCM', ['encrypt', 'decrypt'])
+            var key = await importKeyFromJWK(json_key)
             var iv = base64ToArrayBuffer(sessionStorage.getItem('iv'));
-            var decrypted_msg = await decryptData(key, base64ToArrayBuffer($encrypted_msg.innerText), iv);
-            var $form = document.getElementById('form_question');
-            $form.question.value = '解密成功：' + decrypted_msg;
+            var tag = $tag.innerText;
+            var encrypted_msg = $encrypted_msg.innerText;
+            await decryptData(encrypted_msg, key, iv, tag)
+                .then(function(decrypted_msg){
+                    $form.question.value = '解密成功：' + decrypted_msg;
+                })
+                .catch(function(err){
+                    $form.question.value = '解密失败：' + err;
+                });
         }
 
         var $encrypt_button = document.getElementById('encrypt_button');       
