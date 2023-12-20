@@ -43,7 +43,7 @@ def base64_to_bytes(base64_str):
 def encrypt_aes(plaintext, key, iv):
     cipher = AES.new(key, AES.MODE_GCM, nonce=iv)
     ciphertext, tag = cipher.encrypt_and_digest(plaintext.encode('utf-8'))
-    return b64encode(ciphertext), b64encode(tag)
+    return ciphertext, tag
 
 # AES解密函数
 
