@@ -77,13 +77,13 @@ def replace_content_with_html(in_content):
         """
         file_name = matched.group('keyword')
         # 根据file_name后缀名，判断是图片、音频还是视频，从而生成不同的html代码
-        if file_name.lower().endswith('.jpg') or file_name.lower().endswith('.png'):
+        if file_name.lower()[-4:] in ['.jpg', '.png', '.gif']:
             img_url = f'images/' + file_name
             ret_string = f'<p style="text-align: center;"><img class="game_img" src="{HOME_SERVER}{img_url}" alt="{file_name}"></p>'
-        elif file_name.lower().endswith('.mp3') or file_name.lower().endswith('.m4a'):
+        elif file_name.lower()[-4:] in ('.mp3', '.m4a'):
             audio_url = f'mp3/' + file_name
             ret_string = f'<p style="text-align: center;"><audio autoplay controls><source src="{HOME_SERVER}{audio_url}" type="audio/mpeg"></audio></p>'
-        elif file_name.lower().endswith('.mp4') or file_name.lower().endswith('.m4v') or file_name.lower().endswith('.mov'):
+        elif file_name.lower()[-4:] in ('.mov', '.m4v'):
             video_url = f'video/' + file_name
             ret_string = f'<p style="text-align: center;"><video src="{HOME_SERVER}{video_url}" controls="controls"></video></p>'
         else:
