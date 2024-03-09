@@ -323,6 +323,11 @@ class ExploreGame(models.Model):
         new_count = 0
         update_count = 0
         delete_count = 0
+        def remove_quote(in_string):
+            if in_string[0] == '"' and in_string[-1] == '"':
+                return in_string[1:-1]
+            else:
+                return in_string
         try:
             in_file = os.path.join(SETTING_PATH, self.settings_file).encode("utf-8")
             f = open(in_file, 'r', encoding='utf_8_sig')
@@ -342,8 +347,10 @@ class ExploreGame(models.Model):
                 poi_keyword = quest[3]
                 question_type = 'TEXT'  # quest[4]
                 question_data = quest[5].replace(find_string, replace_string)
+                question_data = remove_quote(question_data)
                 hint_type = 'TEXT'  # quest[6]
                 hint_data = quest[7].replace(find_string, replace_string)
+                hint_data = remove_quote(hint_data)
                 answer_list = quest[8]
                 options_list = quest[9]
                 reward_type = 'TEXT'  # quest[10]
