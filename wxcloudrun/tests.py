@@ -1,6 +1,8 @@
 from django.test import TestCase
+from django.contrib.auth.models import User, Group
 from .models import *
 from .location_game import *
+import os
 
 TEST_USER_NAME = 'test'
 TEST_USER_PASSWORD = 'test'
@@ -8,53 +10,60 @@ TEST_APP_NAME = 'test_app'
 TEST_GAME_NAME = 'test_game'
 TEST_QUEST_TRIGGER = 'test_quest'
 TEST_SETTINGS_FILE = 'test.csv'
+TEST_ACCOUNT_FILE = 'test_新账号清单.csv'
+TEST_APP_ID = 'wx0a0a0a0a0a0a0a0a'
 
 
 class TestModel(TestCase):
 
-    def test_login(self):
-        # check if user test is exist
+    def create_app_and_game(self):
         try:
-            user = User.objects.get(username=TEST_USER_NAME)
-            user.delete()
-        except User.DoesNotExist:
-            pass
-        user = User.objects.create_user(username=TEST_USER_NAME, password=TEST_USER_PASSWORD)
-        self.client.login(username=TEST_USER_NAME, password=TEST_USER_PASSWORD)
-        response = self.client.get('/game/')
+            app = WechatApp.objects.get(en_name=TEST_APP_NAME)
+            
+        except WechatApp.DoesNotExist:
+            app = WechatApp.objects.create(en_name=TEST_APP_NAME, name=TEST_GAME_NAME, appid=TEST_APP_ID)
+            print(f'appid: {app.appid} en_name: {app.en_name}, created!')
+
+        try:
+            game = ExploreGame.objects.get(app=app, name=TEST_GAME_NAME)
+        except ExploreGame.DoesNotExist:
+            game = ExploreGame.objects.create(app=app, name=TEST_GAME_NAME, opening='for test purpose', is_active=True)
+        return app, game
+    
+    def test_login(self):
+        app, game = self.create_app_and_game()
+        if os.path.exists(game.account_file):
+            os.remove(game.account_file)
+        result_count = game.gen_users(how_many=10)
+        self.assertGreater(result_count, 0)
+        # 打开已生成的账号文件，获取第一个用户的用户名和密码
+        
+        with open(game.account_file, 'r') as f:
+            lines = f.readlines()
+            line = lines[0]
+            username, password, clear_code = line.split(',')
+            print(f'username: {username}, password: {password}')
+        login_result = self.client.login(username=username, password=password)
+        self.assertTrue(login_result)
+        response = self.client.get(f'/game/', follow=True)
         self.assertEqual(response.status_code, 200)
 
-    def create_game_object(self):
-        # check if game "test" is exist
-        try:
-            game = ExploreGame.objects.get(name=TEST_GAME_NAME)
-            game.delete()
-        except ExploreGame.DoesNotExist:
-            pass
-        
-        try:
-            test_app = WechatApp.objects.get(en_name=TEST_APP_NAME)
-        except WechatApp.DoesNotExist:
-            # app miaozan not exist, create it
-            test_app = WechatApp.objects.create(en_name=TEST_APP_NAME, name='临时测试用', appid='wx0a0a0a0a0a0a0a0a')
-        # self.assertEqual(test_app.en_name, TEST_APP_NAME)
-        game = ExploreGame.objects.create(app=test_app, name=TEST_GAME_NAME, opening='for test purpose', is_active=True)
-        # self.assertEqual(game.name, TEST_GAME_NAME)
-        # # create game_quest for game "test_game"
-        # game_quest = ExploreGameQuest.objects.create(game=game, quest_trigger=TEST_QUEST_TRIGGER, question_data='for test purpose',
-        #                                              hint_data='for test purpose', answer_list='for|test|purpose',)
-        # self.assertEqual(game_quest.quest_trigger, TEST_QUEST_TRIGGER)
-
     def test_import_quest(self):
-        # create the game object
-        self.create_game_object()
-        game = ExploreGame.objects.get(name=TEST_GAME_NAME)
+        app, game = self.create_app_and_game()
+        print(f'game: {game.name} app: {game.app.en_name}, created!')
+        self.assertEqual(game.name, TEST_GAME_NAME)
+        self.assertEqual(game.app, app)
         # set the settings file to test.csv
         game.settings_file = TEST_SETTINGS_FILE
-        game.import_from_csv()
+        result_dict = game.import_from_csv()
+        print(f'import result: {result_dict["result"]}, msg: {result_dict["errmsg"]}')
         # check the quests number is proper
         quests = ExploreGameQuest.objects.filter(game=game)
-        self.assertGreaterEqual(len(quests), 2)
+        print(f'quests: {len(quests)}, imported!')
+        i = 0
+        for q in quests:
+            i += 1
+            print(f'任务{i}：{q.quest_trigger}\t谜面：{q.question_data}\t提示：{q.hint_data}\t答案：{q.answer_list}\t奖励：{q.reward}\t奖励id：{q.reward_id}\tm1：{q.comment_when_unavailable}\tm2：{q.comment_when_available}\tm3：{q.comment_when_clear}')
         
        
         
