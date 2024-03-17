@@ -230,6 +230,80 @@ class ExploreGame(models.Model):
         
         return ret_dict
 
+    def export_to_json(self):
+        """
+        将本游戏入口、通过以及下面所有quest保存为json格式文件
+        返回json对象
+        {'result': True表示成功，False表示有异常
+        'errmsg': string, 异常时开查看这个信息
+        }
+        """
+        ret_dict = dict()
+        ret_dict['result'] = False
+        ret_dict['errmsg'] = 'Initial'
+        find_string = '\r\n'
+        replace_string = '</p><p>'
+        # try:
+        export_dict = dict()
+        export_dict['游戏名称'] = self.name
+        export_dict['所属APP'] = self.app.name
+        export_dict['开场提示'] = self.opening.replace(find_string, replace_string)
+        export_dict['通关条件'] = self.clear_requirement
+        export_dict['通关提示'] = self.clear_notice.replace(find_string, replace_string)
+        export_dict['密码开头字母'] = self.passwd_init
+        export_dict['入口任务'] = self.entry
+        export_dict['账号列表文件名'] = self.account_file
+        export_dict['游戏备注'] = self.remark
+
+        # tmp_file = time.strftime('%Y%m%d%H%M%S',time.localtime()) + '.json'
+        json_file_name = self.settings_file.replace('.csv', '.json')
+        full_name = os.path.join(SETTING_PATH, json_file_name).encode("utf-8")
+        f = open(full_name, 'w', encoding='utf_8_sig')
+        # f.writelines('任务, 前置条件, 地点要求, 用户位置搜索关键词, 谜面类型,谜面,')
+        # f.writelines('提示类型,提示内容,答案列表,选项列表(已废弃),奖励类型,奖励内容,奖励id,')
+        # f.writelines('下一步选项列表,是否显示下一步,返回任务名称,未满足条件时是否显示,')
+        # f.writelines('未满足条件时显示的提示,满足条件时显示的提示,已完成时显示的提示,音频文件链接\n')
+        # except Exception as e:
+        #     ret_dict['errmsg'] = f'setting file can not be created: {e}'
+        #     return ret_dict
+        all_quests = ExploreGameQuest.objects.filter(game=self)
+        count = 0
+        quest_list = list()
+        for quest in all_quests:
+            # quest_dict = dict()
+            quest_trigger = quest.quest_trigger
+            # quest_dict['任务']=quest.quest_trigger.replace(',', '，')
+            quest_param = dict()
+            quest_param['前置条件']=quest.prequire_list.replace(',', '，')
+            # quest_param['地点要求']=quest.location_list.replace(',', '，')
+            # quest_param['用户位置搜索关键词']=quest.poi_keyword.replace(',', '，')
+            # quest_param['谜面类型']=quest.question_type
+            quest_param['谜面']=quest.question_data.replace(find_string, replace_string).replace(',', '，')   #
+            # quest_param['提示类型']=quest.hint_type
+            quest_param['提示内容']=quest.hint_data.replace(find_string, replace_string).replace(',', '，')
+            quest_param['答案列表']=quest.answer_list.replace(',', '，')
+            # quest_param['选项列表(已废弃)']=quest.options_list.replace(',', '，')
+            # quest_param['奖励类型']=quest.reward_type
+            quest_param['奖励内容']=quest.reward.replace(',', '，')
+            quest_param['奖励id']=str(quest.reward_id)
+            quest_param['下一步选项列表']=quest.next_list.replace(',', '，')
+            quest_param['是否显示下一步']=str(quest.show_next)
+            quest_param['返回任务名称']=quest.back_quest.replace(',', '，')
+            quest_param['未满足条件时是否显示']=str(quest.show_if_unavailable)
+            quest_param['未满足条件时显示的提示']=quest.comment_when_unavailable.replace(',', '，')
+            quest_param['满足条件时显示的提示']=quest.comment_when_available.replace(',', '，')
+            quest_param['已完成时显示的提示']=quest.comment_when_clear.replace('\n', '')
+            export_dict[quest_trigger] = quest_param
+            # quest_list.append(quest_dict)
+            count += 1
+        # export_dict['任务列表'] = quest_list
+        f.write(json.dumps(export_dict, ensure_ascii=False, indent=4))
+        f.close()
+
+        ret_dict['result'] = True
+        ret_dict['errmsg'] = f'export {count} quests'
+        return ret_dict
+
     def export_to_obsidian(self):
         """
         将本游戏下面所有quest保存为obsidian的多markdown文件格式
@@ -324,6 +398,8 @@ class ExploreGame(models.Model):
         update_count = 0
         delete_count = 0
         def remove_quote(in_string):
+            if len(in_string) == 0:
+                return in_string
             if in_string[0] == '"' and in_string[-1] == '"':
                 return in_string[1:-1]
             else:
@@ -338,40 +414,66 @@ class ExploreGame(models.Model):
         try:
             all_rows = f.readlines()
             lines_number = len(all_rows)
+            if lines_number < 2:
+                ret_dict['errmsg'] = f'csv文件 {self.settings_file} 的行数不足2行'
+                return ret_dict
             quest_list = list()
             for i in range(1, lines_number):
                 quest = all_rows[i].replace('\n','').split(',')
+                if len(quest) < 19:
+                    ret_dict['errmsg'] = f'csv文件 {self.settings_file} 的第{i}行存在问题: 列数量不足19，只有{len(quest)}'
+                    return ret_dict
+                j = 0
                 quest_trigger = quest[0]
+                j += 1
                 prequire_list = quest[1]
+                j += 1
                 location_list = quest[2]
+                j += 1
                 poi_keyword = quest[3]
+                j += 1
                 question_type = 'TEXT'  # quest[4]
+                j += 1
                 question_data = quest[5].replace(find_string, replace_string)
                 question_data = remove_quote(question_data)
+                j += 1
                 hint_type = 'TEXT'  # quest[6]
+                j += 1
                 hint_data = quest[7].replace(find_string, replace_string)
                 hint_data = remove_quote(hint_data)
+                j += 1
                 answer_list = quest[8]
+                j += 1
                 options_list = quest[9]
+                j += 1
                 reward_type = 'TEXT'  # quest[10]
+                j += 1
                 reward = quest[11]
+                j += 1
                 reward_id = quest[12]
                 if len(reward_id) > 0:
                     reward_id = int(reward_id)
                 else:
                     reward_id = 0
+                j += 1
                 next_list = quest[13]
+                j += 1
                 if quest[14].upper() == 'TRUE':
                     show_next = True
                 else:
                     show_next = False
+                j += 1
                 back_quest = quest[15]
+                j += 1
                 if quest[16].upper() == 'TRUE':
                     show_if_unavailable = True
                 else:
                     show_if_unavailable = False
+                j += 1
                 comment_when_unavailable = quest[17]
+                j += 1
                 comment_when_available = quest[18]
+                j += 1
                 comment_when_clear = quest[19]
 
                 # 下面做一些数据的修正
@@ -435,7 +537,7 @@ class ExploreGame(models.Model):
             ret_dict['errmsg'] = f'删除了 {delete_count} 个旧关卡, 导入 {new_count} 个新关卡，更新了 {update_count} 个已有关卡。'
             return ret_dict
         except IndexError as e:
-            ret_dict['errmsg'] = f'csv文件 {self.settings_file} 的第{i}行存在问题: {e}'
+            ret_dict['errmsg'] = f'csv文件 {self.settings_file} 的第{i}行第{j}列存在问题: {e}'
             return ret_dict
         except UnicodeDecodeError as e:
             ret_dict['errmsg'] = f'csv文件 {self.settings_file} 无法解码，请检查是否使用了UTF-8编码保存: {e}'

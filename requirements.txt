@@ -7,8 +7,8 @@ urllib3
 certifi
 requests
 tzdata
-# psycopg2-binary==2.9.1
-psycopg2-binary
+psycopg2-binary # ==2.9.1
+# psycopg2-binary
 requests_oauthlib
 django-jazzmin
 django-cors-headers

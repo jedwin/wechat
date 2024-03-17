@@ -305,10 +305,10 @@ class ExploreGameAdmin(admin.ModelAdmin):
 
 class ExploreGameQuestAdmin(admin.ModelAdmin):
     search_fields = ['quest_trigger', ]
-    list_display = ['quest_trigger', 'prequire_list', 'next_list', 'show_next', 'answer_list', 'back_quest',
-                    'reward_id', 'show_if_unavailable', 'reward', 'comment_when_unavailable', 'comment_when_available', 'comment_when_clear']
-    list_editable = ['prequire_list', 'reward_id', 'next_list', 'show_next', 'answer_list', 'back_quest', 'show_if_unavailable', 'reward', 
-                     'comment_when_unavailable', 'comment_when_available', 'comment_when_clear']
+    list_display = ['quest_trigger', 'prequire_list', 'next_list', 'show_next', 'answer_list', 
+                    'reward_id', 'show_if_unavailable', 'comment_when_clear'] # 'comment_when_unavailable', 'comment_when_available', 
+    list_editable = ['prequire_list', 'next_list', 'show_next', 'answer_list', 
+                     'reward_id', 'show_if_unavailable', 'comment_when_clear'] # 'comment_when_unavailable', 'comment_when_available', 
     list_filter = ['game']
 
 
