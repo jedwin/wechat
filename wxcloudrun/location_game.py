@@ -390,8 +390,8 @@ class ExploreGame(models.Model):
 
     def import_from_csv(self):
         ret_dict = dict()
-        ret_dict['result'] = False
-        ret_dict['errmsg'] = 'Initial'
+        ret_dict['result'] = True
+        ret_dict['errmsg'] = ''
         replace_string = '\r\n'
         find_string = '</p><p>'
         new_count = 0
@@ -408,22 +408,27 @@ class ExploreGame(models.Model):
             in_file = os.path.join(SETTING_PATH, self.settings_file).encode("utf-8")
             f = open(in_file, 'r', encoding='utf_8_sig')
         except:
+            ret_dict['result'] = False
             ret_dict['errmsg'] = f'can not open setting file: {self.settings_file}'
             return ret_dict
 
-        try:
-            all_rows = f.readlines()
-            lines_number = len(all_rows)
-            if lines_number < 2:
-                ret_dict['errmsg'] = f'csv文件 {self.settings_file} 的行数不足2行'
-                return ret_dict
-            quest_list = list()
-            for i in range(1, lines_number):
+        
+        all_rows = f.readlines()
+        lines_number = len(all_rows)
+        if lines_number < 2:
+            ret_dict['result'] = False
+            ret_dict['errmsg'] = f'csv文件 {self.settings_file} 的行数不足2行'
+            return ret_dict
+        quest_list = list()
+        for i in range(1, lines_number):
+            try:
                 quest = all_rows[i].replace('\n','').split(',')
-                if len(quest) < 19:
-                    ret_dict['errmsg'] = f'csv文件 {self.settings_file} 的第{i}行存在问题: 列数量不足19，只有{len(quest)}'
-                    return ret_dict
-                j = 0
+                if len(quest) != 21:
+                    ret_dict['result'] = False
+                    ret_dict['errmsg'] += f'csv文件 {self.settings_file} 的第{i+1}行存在问题: 列数量不是21，而是{len(quest)}'
+                    ret_dict['errmsg'] += '\n'
+                    continue
+                j = 1
                 quest_trigger = quest[0]
                 j += 1
                 prequire_list = quest[1]
@@ -526,25 +531,28 @@ class ExploreGame(models.Model):
                         quest_list.append(quest_trigger)
                     new_count += 1
                     my_quest.save()
-            
-            # 删除没有在csv文件中出现的关卡
-            all_quests = ExploreGameQuest.objects.filter(game=self)
-            for quest in all_quests:
-                if quest.quest_trigger not in quest_list:
-                    quest.delete()
-                    delete_count += 1
-            ret_dict['result'] = True
-            ret_dict['errmsg'] = f'删除了 {delete_count} 个旧关卡, 导入 {new_count} 个新关卡，更新了 {update_count} 个已有关卡。'
-            return ret_dict
-        except IndexError as e:
-            ret_dict['errmsg'] = f'csv文件 {self.settings_file} 的第{i}行第{j}列存在问题: {e}'
-            return ret_dict
-        except UnicodeDecodeError as e:
-            ret_dict['errmsg'] = f'csv文件 {self.settings_file} 无法解码，请检查是否使用了UTF-8编码保存: {e}'
-            return ret_dict
-        except Exception as e:
-            ret_dict['errmsg'] = f'导入csv文件 {self.settings_file} 时出错。 {e}'
-            return ret_dict
+            except IndexError as e:
+                ret_dict['result'] = False
+                ret_dict['errmsg'] += f'csv文件 {self.settings_file} 的第{i+1}行第{j}列存在问题: {e}'
+                ret_dict['errmsg'] += '\n'
+                continue
+            except Exception as e:
+                ret_dict['result'] = False
+                ret_dict['errmsg'] += f'导入csv文件 {self.settings_file}的第{i+1}行第{j}列时出错。 {e}'
+                ret_dict['errmsg'] += '\n'
+                continue
+        
+        # 删除没有在csv文件中出现的关卡
+        all_quests = ExploreGameQuest.objects.filter(game=self)
+        for quest in all_quests:
+            if quest.quest_trigger not in quest_list:
+                quest.delete()
+                delete_count += 1
+        # ret_dict['result'] = True
+        ret_dict['errmsg'] += f'删除了 {delete_count} 个旧关卡, 导入 {new_count} 个新关卡，更新了 {update_count} 个已有关卡。'
+        
+        return ret_dict
+        
 
     def gen_passwords(self, how_many=20):
         """
@@ -671,6 +679,8 @@ class ExploreGame(models.Model):
         fo.writelines('\n'.join(existing_users_str_list))
         fo.writelines('\n')
         fo.close()
+        self.account_file = output_file
+        self.save()
         return count
 
     def check_progress(self, reward_list):

@@ -1,0 +1,4 @@
+/wxcloudrun/__pycache__/
+/.venv/
+.env
+/logs/
