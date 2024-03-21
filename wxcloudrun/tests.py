@@ -14,6 +14,7 @@ TEST_SETTINGS_FILE = 'test.csv'
 TEST_ACCOUNT_FILE = f'/settings/{TEST_GAME_NAME}_新账号清单.csv'
 TEST_APP_ID = 'wx0a0a0a0a0a0a0a0a'
 TEST_GAME_OPENING = 'for test purpose'
+TEST_GAME_ENTRY = '游戏入口'
 
 class TestModel(TestCase):
 
@@ -23,13 +24,14 @@ class TestModel(TestCase):
         # app.save()
         # print(f'appid: {app.appid} en_name: {app.en_name}, created!')
         # create a game
-        game = ExploreGame.objects.create(app=app, name=TEST_GAME_NAME, opening=TEST_GAME_OPENING, is_active=True)
+        game = ExploreGame.objects.create(app=app, name=TEST_GAME_NAME, opening=TEST_GAME_OPENING, 
+                                          is_active=True)
         # game.save()
 
         # import the quests from csv file
         game.settings_file = TEST_SETTINGS_FILE
         result_dict = game.import_from_csv()
-
+        game.entry = TEST_GAME_ENTRY
         # create a group and a user
         group = Group.objects.create(name=TEST_GAME_NAME)
         # group.save()
@@ -40,19 +42,6 @@ class TestModel(TestCase):
         return True
     
     def test_login(self):
-        # app, game = self.setUp()
-
-        # if os.path.exists(TEST_ACCOUNT_FILE):
-        #     os.remove(TEST_ACCOUNT_FILE)
-        # result_count = game.gen_users(how_many=10)
-        # self.assertGreater(result_count, 0)
-        # 打开已生成的账号文件，获取第一个用户的用户名和密码
-        
-        # with open(game.account_file, 'r') as f:
-        #     lines = f.readlines()
-        #     line = lines[0]
-        #     username, password, clear_code = line.split(',')
-        #     print(f'username: {username}, password: {password}')
         
         self.assertIsNotNone(self.user)
         self.factory = RequestFactory()
