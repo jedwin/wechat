@@ -8,7 +8,7 @@ if HOME_SERVER[-1] == '/':
     HOME_SERVER = HOME_SERVER[:-1]  # 去掉末尾的斜杠，以免在CORS_ALLOWED_ORIGINS中出错
 CUR_PATH = os.path.dirname(os.path.realpath(__file__))  
 # LOG_PATH = os.path.join(os.path.dirname(CUR_PATH), 'logs') # LOG_PATH是存放日志的路径
-LOG_PATH = '/logs/'
+LOG_PATH = 'logs/'
 if not os.path.exists(LOG_PATH):
     os.makedirs(LOG_PATH)  # 如果不存在这个logs文件夹，就自动创建一个
 

@@ -16,8 +16,6 @@ TEST_ACCOUNT_FILE = f'/settings/{TEST_GAME_NAME}_新账号清单.csv'
 TEST_APP_ID = 'wx0a0a0a0a0a0a0a0a'
 TEST_GAME_OPENING = 'for test purpose'
 TEST_GAME_ENTRY = '游戏入口'
-TEST_ACCOUNT_FILE = f'/settings/{TEST_GAME_NAME}_新账号清单.csv'
-TEST_APP_ID = 'wx0a0a0a0a0a0a0a0a'
 
 
 class TestModel(TestCase):
@@ -25,87 +23,52 @@ class TestModel(TestCase):
     def setUp(self):
         # create an app
         app = WechatApp.objects.create(en_name=TEST_APP_NAME, name=TEST_GAME_NAME, appid=TEST_APP_ID)
-        # app.save()
-        # print(f'appid: {app.appid} en_name: {app.en_name}, created!')
+
         # create a game
         game = ExploreGame.objects.create(app=app, name=TEST_GAME_NAME, opening=TEST_GAME_OPENING, 
                                           is_active=True)
-        # game.save()
 
         # import the quests from csv file
         game.settings_file = TEST_SETTINGS_FILE
         result_dict = game.import_from_csv()
+        print(f'import result: {result_dict["result"]}, msg: {result_dict["errmsg"]}')
         game.entry = TEST_GAME_ENTRY
+        
         # create a group and a user
         group = Group.objects.create(name=TEST_GAME_NAME)
-        # group.save()
         user = User.objects.create(username=TEST_USER_NAME, password=TEST_USER_PASSWORD)
-        user.groups.add(group)
-        # user.save()
+        
+
         self.user = user
         return True
     
     def test_login(self):
-        
-        self.assertIsNotNone(self.user)
+
         self.factory = RequestFactory()
         request = self.factory.get(f"/game/?app_en_name={TEST_APP_NAME}&game_name={TEST_GAME_NAME}")
         request.user = self.user
+        
+        # 测试无权限时的返回
         response = views2.game(request)
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f"无权限进入本游戏")
+        print('无权限时返回正常')
+
+        # 测试有权限时的返回
+        group = Group.objects.get(name=TEST_GAME_NAME)
+        self.user.groups.add(group)
+        response = views2.game(request)
         self.assertContains(response, f"<p>{TEST_GAME_OPENING}</p>")
+        print('有权限时返回正常')
 
-    # def test_import_quest(self):
-    #     app, game = self.create_app_and_game()
-    #     print(f'game: {game.name} app: {game.app.en_name}, created!')
-    #     self.assertEqual(game.name, TEST_GAME_NAME)
-    #     self.assertEqual(game.app, app)
-    #     # set the settings file to test.csv
-    #     game.settings_file = TEST_SETTINGS_FILE
-    #     result_dict = game.import_from_csv()
-    #     print(f'import result: {result_dict["result"]}, msg: {result_dict["errmsg"]}')
-    #     # check the quests number is proper
-    #     quests = ExploreGameQuest.objects.filter(game=game)
-    #     print(f'quests: {len(quests)}, imported!')
-    #     i = 0
-    #     for q in quests:
-    #         i += 1
-    #         print(f'任务{i}：{q.quest_trigger}\t谜面：{q.question_data}\t提示：{q.hint_data}\t答案：{q.answer_list}\t奖励：{q.reward}\t奖励id：{q.reward_id}\tm1：{q.comment_when_unavailable}\tm2：{q.comment_when_available}\tm3：{q.comment_when_clear}')
-
-    def create_app_and_game(self):
-        try:
-            app = WechatApp.objects.get(en_name=TEST_APP_NAME)
-            
-        except WechatApp.DoesNotExist:
-            app = WechatApp.objects.create(en_name=TEST_APP_NAME, name=TEST_GAME_NAME, appid=TEST_APP_ID)
-            print(f'appid: {app.appid} en_name: {app.en_name}, created!')
-
-        try:
-            game = ExploreGame.objects.get(app=app, name=TEST_GAME_NAME)
-        except ExploreGame.DoesNotExist:
-            game = ExploreGame.objects.create(app=app, name=TEST_GAME_NAME, opening='for test purpose', is_active=True)
-        return app, game
-    
-    def test_login(self):
-        app, game = self.create_app_and_game()
-        if os.path.exists(TEST_ACCOUNT_FILE):
-            os.remove(TEST_ACCOUNT_FILE)
-        result_count = game.gen_users(how_many=10)
-        self.assertGreater(result_count, 0)
-        # 打开已生成的账号文件，获取第一个用户的用户名和密码
-        
-        with open(game.account_file, 'r') as f:
-            lines = f.readlines()
-            line = lines[0]
-            username, password, clear_code = line.split(',')
-            print(f'username: {username}, password: {password}')
-        self.user = User.objects.get(username=username)
-        self.assertIsNotNone(self.user)
-        self.factory = RequestFactory()
-        request = self.factory.get("/game/")
-        response = game(request)
+        # 测试不指定游戏时的返回
+        request = self.factory.get(f"/game/?app_en_name={TEST_APP_NAME}")
+        request.user = self.user
+        response = views2.game(request)
         self.assertEqual(response.status_code, 200)
-
+        self.assertContains(response, f"请选择你要进行的游戏")
+        print('不指定游戏时返回正常')
+        
     # def test_import_quest(self):
     #     app, game = self.create_app_and_game()
     #     print(f'game: {game.name} app: {game.app.en_name}, created!')
@@ -122,7 +85,5 @@ class TestModel(TestCase):
     #     for q in quests:
     #         i += 1
     #         print(f'任务{i}：{q.quest_trigger}\t谜面：{q.question_data}\t提示：{q.hint_data}\t答案：{q.answer_list}\t奖励：{q.reward}\t奖励id：{q.reward_id}\tm1：{q.comment_when_unavailable}\tm2：{q.comment_when_available}\tm3：{q.comment_when_clear}')
-        
-       
-        
 
+    
