@@ -205,6 +205,17 @@ class ExploreGameAdmin(admin.ModelAdmin):
             else:
                 self.message_user(request, f'{errmsg}', messages.WARNING)
 
+    @admin.action(description='保存游戏配置成JSON')
+    def export2csv(self, request, queryset):
+        for obj in queryset:
+            result_dict = obj.export_to_json()
+            result = result_dict['result']
+            errmsg = result_dict['errmsg']
+            if result:
+                self.message_user(request, f'{errmsg}', messages.SUCCESS)
+            else:
+                self.message_user(request, f'{errmsg}', messages.WARNING)
+
     @admin.action(description='保存游戏配置成Obsidian格式')
     def export2obsidian(self, request, queryset):
         for obj in queryset:

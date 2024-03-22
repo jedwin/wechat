@@ -304,6 +304,109 @@ class ExploreGame(models.Model):
         ret_dict['errmsg'] = f'export {count} quests'
         return ret_dict
 
+    def import_from_json(self):
+        ret_dict = dict()
+        ret_dict['result'] = True
+        ret_dict['errmsg'] = ''
+        replace_string = '\r\n'
+        find_string = '</p><p>'
+        new_count = 0
+        update_count = 0
+        delete_count = 0
+        try:
+            settings_file = self.settings_file
+            settings_file = settings_file.replace('.csv', '.json')
+            # 如果文件名中有'/'，则认为是相对路径，否则是相对路径
+            if '/' in settings_file:
+                in_file = settings_file.encode("utf-8")
+            else:
+                in_file = os.path.join(SETTING_PATH, self.settings_file).encode("utf-8")
+            
+            # open json file and load it
+            f = open(in_file, 'r', encoding='utf_8_sig')
+
+        except:
+            ret_dict['result'] = False
+            ret_dict['errmsg'] = f'can not open setting file: {in_file.decode("utf-8")}'
+            return ret_dict
+
+        try:
+            # load json file to dict
+            json_dict = json.load(f)
+            
+        except Exception as e:
+            ret_dict['result'] = False
+            ret_dict['errmsg'] = f'导入json文件时出错: {e}'
+            return ret_dict
+        
+        imported_quest_list = list()
+        for k, v in json_dict.items():
+            if k == '游戏名称':
+                pass
+                # self.name = v
+            elif k == '所属APP':
+                pass
+            #     self.app = WechatApp.objects.get(name=v)
+            elif k == '开场提示':
+                self.opening = v
+            elif k == '通关条件':
+                self.clear_requirement = v
+            elif k == '通关提示':
+                self.clear_notice = v
+            elif k == '密码开头字母':
+                self.passwd_init = v
+            elif k == '入口任务':
+                self.entry = v
+            elif k == '账号列表文件名':
+                self.account_file = v
+            elif k == '游戏备注':
+                self.remark = v
+            else:
+                imported_quest_list.append(k)
+                my_quests = ExploreGameQuest.objects.filter(game=self, quest_trigger=k)
+                if len(my_quests) > 0:
+                    my_quest = my_quests[0]
+                    update_count += 1
+                else:
+                    my_quest = ExploreGameQuest.objects.create(game=self, quest_trigger=k)
+                    new_count += 1
+                try:
+                    my_quest = ExploreGameQuest.objects.get(game=self, quest_trigger=k)
+                    my_quest.quest_trigger = k
+                    my_quest.prequire_list = v['前置条件']
+                    # my_quest.location_list = v['地点要求']
+                    # my_quest.poi_keyword = v['用户位置搜索关键词']
+                    my_quest.question_type = 'TEXT'  # v['谜面类型']
+                    my_quest.question_data = v['谜面'].replace(find_string, replace_string)
+                    my_quest.hint_type = 'TEXT'  # v['提示类型']
+                    my_quest.hint_data = v['提示内容'].replace(find_string, replace_string)
+                    my_quest.answer_list = v['答案列表']
+                    my_quest.options_list = ''  # v['选项列表(已废弃)']
+                    my_quest.reward_type = 'TEXT'  # v['奖励类型']
+                    my_quest.reward = v['奖励内容']
+                    my_quest.reward_id = v['奖励id']
+                    my_quest.next_list = v['下一步选项列表']
+                    my_quest.show_next = v['是否显示下一步']
+                    my_quest.back_quest = v['返回任务名称']
+                    my_quest.show_if_unavailable = v['未满足条件时是否显示']
+                    my_quest.comment_when_unavailable = v['未满足条件时显示的提示']
+                    my_quest.comment_when_available = v['满足条件时显示的提示']
+                    my_quest.comment_when_clear = v['已完成时显示的提示']
+                    my_quest.save()
+                except Exception as e:
+                    ret_dict['result'] = False
+                    ret_dict['errmsg'] += f'导入关卡{k}时出错，内容：{v}。出错提示： {e}'
+                    ret_dict['errmsg'] += '\n'
+        # 删除不在json文件中的任务
+        for quest in ExploreGameQuest.objects.filter(game=self):
+            if quest.quest_trigger not in imported_quest_list:
+                quest.delete()
+                delete_count += 1
+        self.save()
+        ret_dict['errmsg'] += f'导入{settings_file}文件成功，新增{new_count}个任务，更新{update_count}个任务，删除{delete_count}个任务'
+        return ret_dict        
+
+
     def export_to_obsidian(self):
         """
         将本游戏下面所有quest保存为obsidian的多markdown文件格式

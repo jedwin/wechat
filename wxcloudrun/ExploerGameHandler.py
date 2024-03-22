@@ -546,7 +546,7 @@ def set_quest(cur_game, trigger, ret_dict, open_id, reward_list=list(), cur_play
                         if quest_option:
                             ret_dict['reply_options'].append(quest_option)
                     except ObjectDoesNotExist:
-                        logger.error(f'{next_trigger} is not exists')
+                        logger.error(f'{cur_quest.quest_trigger} 中的下一步 {next_trigger} 不存在，请修正配置')
 
         ret_dict['hint_string'] = cur_quest.reply_msg(type='hint', toUser=open_id,
                                                     fromUser=fromUser, for_text=for_text)
