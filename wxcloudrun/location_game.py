@@ -405,11 +405,16 @@ class ExploreGame(models.Model):
             else:
                 return in_string
         try:
-            in_file = os.path.join(SETTING_PATH, self.settings_file).encode("utf-8")
+            settings_file = self.settings_file
+            # 如果文件名中有'/'，则认为是相对路径，否则是相对路径
+            if '/' in settings_file:
+                in_file = settings_file.encode("utf-8")
+            else:
+                in_file = os.path.join(SETTING_PATH, self.settings_file).encode("utf-8")
             f = open(in_file, 'r', encoding='utf_8_sig')
         except:
             ret_dict['result'] = False
-            ret_dict['errmsg'] = f'can not open setting file: {self.settings_file}'
+            ret_dict['errmsg'] = f'can not open setting file: {in_file.decode("utf-8")}'
             return ret_dict
 
         
