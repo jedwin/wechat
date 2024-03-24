@@ -438,11 +438,11 @@ def game(request):
         auto_enter_game = cur_app.auto_enter_game
         game_brought_text = cur_app.game_brought_text
         game_not_brought_text = cur_app.game_not_brought_text
+        # get the min set from all_game_list and group_list
+        all_game_list = [x.name for x in ExploreGame.objects.filter(is_active=True)]
+        permit_game_list = list(set(all_game_list) & set(group_list))
         if len(game_name) == 0: # 未携带game_name
             template = 'choose_game.html'
-            all_game_list = [x.name for x in ExploreGame.objects.filter(is_active=True)]
-            # get the min set from all_game_list and group_list
-            permit_game_list = list(set(all_game_list) & set(group_list))
             show_game_list = list()
             for game_name in all_game_list:
                 if game_name in group_list:
@@ -478,11 +478,16 @@ def game(request):
                 logger.error(f'error_msg={errmsg}')
                 return render(request, template, ret_dict)
             else:
-                if game_name in group_list:
+                if game_name in permit_game_list:
                     ret_dict = handle_player_command(app_en_name=app_en_name, game_name=game_name, open_id=user_id,
                                                      user_name=user_name, cmd=cmd, for_text=False)
                     ret_dict['home_server'] = HOME_SERVER  # 用于更新静态图片服务器的地址
-
+                elif game_name in group_list:
+                    # 有权限进入游戏，但游戏未激活
+                    ret_dict['error_msg'] = GAME_IS_NOT_ACTIVE
+                    ret_dict['cur_game_name'] = game_name
+                    ret_dict['app_en_name'] = app_en_name
+                    logger.error(f'account {user} try to access a inactive game: {game_name}')
                 else:
                     ret_dict['error_msg'] = f'账号{user}无权限进入本游戏'
                     ret_dict['cur_game_name'] = game_name

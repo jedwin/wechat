@@ -342,8 +342,9 @@ class ExploreGame(models.Model):
         imported_quest_list = list()
         for k, v in json_dict.items():
             if k == '游戏名称':
-                pass
-                # self.name = v
+                # pass
+                self.name = v
+                
             elif k == '所属APP':
                 pass
             #     self.app = WechatApp.objects.get(name=v)
