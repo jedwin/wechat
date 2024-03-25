@@ -10,11 +10,18 @@ import logging
 
 logger = logging.getLogger('django')
 
-def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', user_name='', for_text=True):
+def handle_player_command(app_en_name='', open_id='', game_name='', cmd='', user_name='', for_text=False) -> dict:
     """
     用于处理某个玩家对某个游戏发出了某个指令
     所有参数都是字符串
-    返回字典对象
+    :param app_en_name: 游戏所属的app的英文名
+    :param open_id: 玩家对应的django user的id，之所以叫open_id，是因为旧版本是部署在微信云主机，使用微信鉴权，只能得到用户的openid
+    :param game_name: 游戏的名称
+    :param cmd: 玩家输入的指令
+    :param user_name: 玩家的昵称
+    :param for_text: 是否返回旧版的文字格式，如果为False，就返回json格式
+
+    :return: Dict对象，包含了处理完这个指令后的所有信息，用于前端显示
     {'game_is_valid': true/false,
     'game_is_active': true/false,
     'player_is_audit': true/false,
