@@ -6,3 +6,4 @@
 *.tmp
 /test*.*
 /.idea/
+.DS_Store
