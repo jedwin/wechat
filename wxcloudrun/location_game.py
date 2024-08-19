@@ -43,6 +43,14 @@ if len(HOME_SERVER) > 0:
         HOME_SERVER += '/'
 else:
     HOME_SERVER = '/'
+
+RESOURCE_SERVER = os.environ.get('RESOURCE_SERVER', '')  # 存放图片、视频等资源的服务器地址
+if len(RESOURCE_SERVER) > 0:
+    if RESOURCE_SERVER[-1] != '/':
+        RESOURCE_SERVER += '/'
+else:
+    RESOURCE_SERVER = HOME_SERVER
+
 domain_name = 'lovelymiu.com'                    # 用于创建新账号的邮件地址域名
 
 SETTING_PATH = '/settings/'      # 游戏设置文件存放路径
