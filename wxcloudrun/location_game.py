@@ -87,13 +87,13 @@ def replace_content_with_html(in_content):
         # 根据file_name后缀名，判断是图片、音频还是视频，从而生成不同的html代码
         if file_name.lower()[-4:] in ['.jpg', '.png', '.gif']:
             img_url = f'images/' + file_name
-            ret_string = f'<p style="text-align: center;"><img class="game_img" src="{HOME_SERVER}{img_url}" alt="{file_name}"></p>'
+            ret_string = f'<p style="text-align: center;"><img class="game_img" src="{RESOURCE_SERVER}{img_url}" alt="{file_name}"></p>'
         elif file_name.lower()[-4:] in ('.mp3', '.m4a'):
             audio_url = f'mp3/' + file_name
-            ret_string = f'<p style="text-align: center;"><audio autoplay controls><source src="{HOME_SERVER}{audio_url}" type="audio/mpeg"></audio></p>'
+            ret_string = f'<p style="text-align: center;"><audio autoplay controls><source src="{RESOURCE_SERVER}{audio_url}" type="audio/mpeg"></audio></p>'
         elif file_name.lower()[-4:] in ('.mov', '.m4v'):
             video_url = f'video/' + file_name
-            ret_string = f'<p style="text-align: center;"><video src="{HOME_SERVER}{video_url}" controls="controls"></video></p>'
+            ret_string = f'<p style="text-align: center;"><video src="{RESOURCE_SERVER}{video_url}" controls="controls"></video></p>'
         else:
             # 如果不是图片、音频、视频，则直接返回空字符串
             ret_string = ''
